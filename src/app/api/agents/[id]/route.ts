@@ -1,11 +1,21 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { createClient } from "@/lib/supabase/server";
 
 export async function PATCH(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const auth = await createClient();
+    const {
+      data: { user },
+    } = await auth.auth.getUser();
+
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const { id } = await params;
     const body = await request.json();
     const status = body.status as string | undefined;
@@ -22,6 +32,7 @@ export async function PATCH(
       .from("agents")
       .update({ status })
       .eq("id", id)
+      .eq("owner_id", user.id)
       .select()
       .single();
 

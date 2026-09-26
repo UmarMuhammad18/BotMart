@@ -1,12 +1,23 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { createClient } from "@/lib/supabase/server";
 
 export async function GET() {
   try {
+    const auth = await createClient();
+    const {
+      data: { user },
+    } = await auth.auth.getUser();
+
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const supabase = createAdminClient();
     const { data, error } = await supabase
       .from("agents")
       .select("*")
+      .eq("owner_id", user.id)
       .order("created_at", { ascending: false });
 
     if (error) {
@@ -22,6 +33,15 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
+    const auth = await createClient();
+    const {
+      data: { user },
+    } = await auth.auth.getUser();
+
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const supabase = createAdminClient();
     const body = await request.json();
     const { name, description, budget, policy } = body;
@@ -37,7 +57,7 @@ export async function POST(request: Request) {
         description: description || null,
         budget: budget || 1000,
         policy: policy || {},
-        owner_id: "hackathon-user",
+        owner_id: user.id,
         status: "active",
       })
       .select()

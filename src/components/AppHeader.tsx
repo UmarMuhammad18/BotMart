@@ -1,8 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { Bot, Zap } from "lucide-react";
+import { usePathname, useRouter } from "next/navigation";
+import { Bot, Zap, LogOut } from "lucide-react";
+import { useEffect, useState } from "react";
+import { createClient } from "@/lib/supabase/client";
+import type { User } from "@supabase/supabase-js";
 
 const links = [
   { href: "/agents",    label: "Agents" },
@@ -13,7 +16,26 @@ const links = [
 
 export function AppHeader({ active }: { active?: string }) {
   const pathname = usePathname();
+  const router = useRouter();
   const currentPath = active ?? pathname;
+  const [user, setUser] = useState<User | null>(null);
+
+  useEffect(() => {
+    const supabase = createClient();
+    supabase.auth.getUser().then(({ data }) => setUser(data.user));
+    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+    });
+    return () => listener.subscription.unsubscribe();
+  }, []);
+
+  const handleSignOut = async () => {
+    const supabase = createClient();
+    await supabase.auth.signOut();
+    setUser(null);
+    router.push("/");
+    router.refresh();
+  };
 
   return (
     <header className="sticky top-0 z-50 border-b border-white/[0.07] bg-[#050507]/80 backdrop-blur-xl">
@@ -55,6 +77,36 @@ export function AppHeader({ active }: { active?: string }) {
             );
           })}
         </nav>
+
+        {/* Auth */}
+        <div className="flex items-center gap-3 shrink-0">
+          {user ? (
+            <>
+              <span className="hidden md:inline text-xs text-zinc-500 truncate max-w-[160px]">
+                {user.email}
+              </span>
+              <button
+                onClick={handleSignOut}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium text-zinc-400 hover:text-zinc-100 hover:bg-white/[0.06] transition-colors"
+              >
+                <LogOut size={14} />
+                <span className="hidden sm:inline">Log out</span>
+              </button>
+            </>
+          ) : (
+            <>
+              <Link
+                href="/auth/login"
+                className="px-3 py-1.5 rounded-lg text-sm font-medium text-zinc-400 hover:text-zinc-100 transition-colors"
+              >
+                Log in
+              </Link>
+              <Link href="/auth/sign-up" className="btn-primary text-sm py-1.5 px-3.5">
+                Sign up
+              </Link>
+            </>
+          )}
+        </div>
       </div>
     </header>
   );
