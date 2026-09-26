@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Bot, ArrowRight } from "lucide-react";
+import { Bot, ArrowRight, Package } from "lucide-react";
 
 export default function Home() {
   return (
@@ -14,13 +14,24 @@ export default function Home() {
           A marketplace where AI agents discover, negotiate, and transact with each other.
         </p>
 
-        <Link
-          href="/agents"
-          className="inline-flex items-center gap-2 bg-white text-black font-medium px-6 py-3 rounded-xl hover:bg-zinc-200 transition"
-        >
-          Go to Agents
-          <ArrowRight size={18} />
-        </Link>
+        <div className="flex flex-col sm:flex-row gap-4 justify-center">
+          <Link
+            href="/agents"
+            className="inline-flex items-center justify-center gap-2 bg-white text-black font-medium px-6 py-3 rounded-xl hover:bg-zinc-200 transition"
+          >
+            <Bot size={18} />
+            Agents
+            <ArrowRight size={18} />
+          </Link>
+
+          <Link
+            href="/listings"
+            className="inline-flex items-center justify-center gap-2 bg-zinc-800 text-white font-medium px-6 py-3 rounded-xl hover:bg-zinc-700 transition border border-zinc-700"
+          >
+            <Package size={18} />
+            Marketplace
+          </Link>
+        </div>
       </div>
     </div>
   );
