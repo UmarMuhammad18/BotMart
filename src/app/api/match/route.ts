@@ -1,14 +1,8 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { grokJson } from "@/lib/grok";
+import { extractSearchFilters } from "@/lib/ai";
 import { applyFilters, rankListings, SearchFilters } from "@/lib/marketplace/match";
 import { ListingWithSeller } from "@/lib/types";
-
-type Extracted = {
-  keywords?: string;
-  maxPrice?: number | null;
-  category?: string | null;
-};
 
 export async function POST(request: Request) {
   try {
@@ -36,20 +30,15 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Buyer agent not found" }, { status: 404 });
     }
 
-    const extracted =
-      (await grokJson<Extracted>(
-        `Extract shopping filters from a buyer goal. Reply STRICT JSON:
-{"keywords":"string","maxPrice":number|null,"category":"electronics"|"software"|"data"|"compute"|null}`,
-        `Goal: ${goal}\nBuyer policy: ${JSON.stringify(buyer.policy || {})}`
-      )) || {};
+    const extracted = await extractSearchFilters(goal, buyer.policy || {});
 
     const filters: SearchFilters = {
-      keywords: extracted.keywords || goal,
+      keywords: extracted?.keywords || goal,
       maxPrice:
-        extracted.maxPrice ||
+        extracted?.maxPrice ||
         (buyer.policy as { max_price?: number } | null)?.max_price ||
         Number(buyer.budget) - Number(buyer.spent),
-      category: extracted.category || undefined,
+      category: extracted?.category || undefined,
     };
 
     const { data, error } = await supabase

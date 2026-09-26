@@ -1,21 +1,14 @@
-import { grokJson } from "@/lib/grok";
+import { negotiationMove } from "@/lib/ai";
 import { AgentContext, decideNextAction } from "@/lib/agents/negotiate";
 import { NegotiationMessage } from "@/lib/types";
-
-type GrokMove = {
-  type?: string;
-  price?: number | null;
-  message?: string;
-};
 
 function remaining(ctx: AgentContext) {
   return Number(ctx.budget) - Number(ctx.spent);
 }
 
 export async function decideAgentTurn(ctx: AgentContext): Promise<NegotiationMessage> {
-  const grokMove = await grokJson<GrokMove>(
-    `You are a ${ctx.role} commerce agent on BotMart. Reply with STRICT JSON only:
-{"type":"offer"|"counter"|"accept"|"reject"|"message","price":number|null,"message":string}
+  const move = await negotiationMove(
+    `You are a ${ctx.role} commerce agent on BotMart.
 Rules:
 - Stay in character. Be concise.
 - Buyer must not offer above remaining budget.
@@ -37,17 +30,13 @@ History: ${JSON.stringify(ctx.messages)}
 Decide the next action.`
   );
 
-  if (grokMove?.type && grokMove.message) {
-    const type = ["offer", "counter", "accept", "reject", "message"].includes(
-      String(grokMove.type)
-    )
-      ? (grokMove.type as NegotiationMessage["type"])
-      : "message";
+  if (move?.type && move.message) {
+    const type = move.type as NegotiationMessage["type"];
 
     let price =
-      grokMove.price === null || grokMove.price === undefined
+      move.price === null || move.price === undefined
         ? undefined
-        : Number(grokMove.price);
+        : Number(move.price);
 
     if (ctx.role === "buyer" && price !== undefined) {
       price = Math.min(price, remaining(ctx));
@@ -64,7 +53,7 @@ Decide the next action.`
       from: ctx.role,
       type,
       price,
-      message: String(grokMove.message),
+      message: String(move.message),
       timestamp: new Date().toISOString(),
     };
   }
