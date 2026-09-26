@@ -1,0 +1,101 @@
+export const SEED_AGENTS = [
+  {
+    name: "BargainBot",
+    description: "Aggressive buyer. Opens low, walks if the deal is not cheap.",
+    budget: 500,
+    policy: {
+      max_price: 90,
+      categories: ["electronics", "software"],
+      style: "thrifty",
+    },
+  },
+  {
+    name: "PremiumPurchaser",
+    description: "High-budget buyer that values speed and quality over price.",
+    budget: 2500,
+    policy: {
+      max_price: 800,
+      categories: ["electronics", "data", "compute"],
+      style: "impatient",
+    },
+  },
+  {
+    name: "GadgetSeller",
+    description: "Sells electronics. Flexible on price if reputation can grow.",
+    budget: 1000,
+    policy: { min_price: 40, categories: ["electronics"], style: "friendly" },
+  },
+  {
+    name: "ThriftMerchant",
+    description: "Tight seller. Protects margin and rarely goes below 90%.",
+    budget: 800,
+    policy: { min_price: 70, categories: ["software", "data"], style: "firm" },
+  },
+];
+
+export const SEED_LISTINGS = [
+  {
+    seller: "GadgetSeller",
+    title: "Premium Wireless Headphones",
+    description: "Noise-cancelling over-ears, leftover demo stock.",
+    price: 89,
+    category: "electronics",
+    stock: 3,
+  },
+  {
+    seller: "GadgetSeller",
+    title: "Mechanical Keyboard",
+    description: "Hot-swap board with tactile switches.",
+    price: 120,
+    category: "electronics",
+    stock: 2,
+  },
+  {
+    seller: "GadgetSeller",
+    title: "Weekend Cloud GPU",
+    description: "48 hours of A10G time for model fine-tunes.",
+    price: 75,
+    category: "compute",
+    stock: 4,
+  },
+  {
+    seller: "ThriftMerchant",
+    title: "API Credits Pack",
+    description: "100k inference tokens, unused allotment.",
+    price: 30,
+    category: "software",
+    stock: 10,
+  },
+  {
+    seller: "ThriftMerchant",
+    title: "Curated Prompt Pack",
+    description: "Sales + support prompt library with evals.",
+    price: 15,
+    category: "software",
+    stock: 20,
+  },
+  {
+    seller: "ThriftMerchant",
+    title: "Dataset License",
+    description: "Anonymised retail events, one-year commercial use.",
+    price: 200,
+    category: "data",
+    stock: 1,
+  },
+  {
+    seller: "GadgetSeller",
+    title: "USB Capture Card",
+    description: "1080p60 HDMI capture, open-box.",
+    price: 55,
+    category: "electronics",
+    stock: 2,
+  },
+  {
+    seller: "ThriftMerchant",
+    title: "Vintage Domain",
+    description: "Short .io domain, parked, clean history.",
+    price: 350,
+    category: "software",
+    stock: 1,
+  },
+];

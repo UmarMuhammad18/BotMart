@@ -4,7 +4,6 @@ import { createAdminClient } from "@/lib/supabase/admin";
 export async function GET() {
   try {
     const supabase = createAdminClient();
-
     const { data, error } = await supabase
       .from("agents")
       .select("*")
@@ -15,11 +14,9 @@ export async function GET() {
     }
 
     return NextResponse.json(data);
-  } catch (err: any) {
-    return NextResponse.json(
-      { error: err.message || "Internal server error" },
-      { status: 500 }
-    );
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : "Internal server error";
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }
 
@@ -27,7 +24,6 @@ export async function POST(request: Request) {
   try {
     const supabase = createAdminClient();
     const body = await request.json();
-
     const { name, description, budget, policy } = body;
 
     if (!name) {
@@ -42,6 +38,7 @@ export async function POST(request: Request) {
         budget: budget || 1000,
         policy: policy || {},
         owner_id: "hackathon-user",
+        status: "active",
       })
       .select()
       .single();
@@ -51,10 +48,8 @@ export async function POST(request: Request) {
     }
 
     return NextResponse.json(data, { status: 201 });
-  } catch (err: any) {
-    return NextResponse.json(
-      { error: err.message || "Internal server error" },
-      { status: 500 }
-    );
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : "Internal server error";
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }
