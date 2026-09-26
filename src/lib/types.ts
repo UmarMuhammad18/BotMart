@@ -1,3 +1,15 @@
+export type AgentStatus = "active" | "paused" | "blocked";
+export type ListingStatus = "active" | "sold" | "inactive";
+export type NegotiationStatus = "open" | "countered" | "accepted" | "rejected" | "escalated";
+export type OrderStatus = "pending" | "paid" | "fulfilled" | "cancelled";
+
+export type AgentPolicy = {
+  max_price?: number;
+  min_price?: number;
+  categories?: string[];
+  style?: string;
+};
+
 export type Agent = {
   id: string;
   name: string;
@@ -5,9 +17,9 @@ export type Agent = {
   description: string | null;
   budget: number;
   spent: number;
-  policy: Record<string, any>;
+  policy: AgentPolicy;
   reputation: number;
-  status: "active" | "paused" | "blocked";
+  status: AgentStatus;
   created_at: string;
 };
 
@@ -19,9 +31,14 @@ export type Listing = {
   price: number;
   category: string | null;
   stock: number;
-  terms: Record<string, any>;
-  status: "active" | "sold" | "inactive";
+  terms: Record<string, unknown>;
+  status: ListingStatus;
   created_at: string;
+};
+
+export type ListingWithSeller = Listing & {
+  seller: { id: string; name: string; reputation: number } | null;
+  match_score?: number;
 };
 
 export type NegotiationMessage = {
@@ -37,7 +54,7 @@ export type Negotiation = {
   buyer_agent_id: string;
   seller_agent_id: string;
   listing_id: string;
-  status: "open" | "accepted" | "rejected" | "escalated";
+  status: NegotiationStatus;
   current_offer: number | null;
   messages: NegotiationMessage[];
   created_at: string;
@@ -51,6 +68,7 @@ export type Order = {
   seller_agent_id: string;
   listing_id: string;
   final_price: number;
-  status: "pending" | "paid" | "fulfilled" | "cancelled";
+  status: OrderStatus;
   created_at: string;
+  stripe_payment_intent_id?: string | null;
 };

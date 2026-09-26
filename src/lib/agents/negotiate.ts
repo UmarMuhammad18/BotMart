@@ -1,9 +1,10 @@
-import { NegotiationMessage } from "@/lib/types";
+import { AgentPolicy, NegotiationMessage } from "@/lib/types";
 
-type AgentContext = {
+export type AgentContext = {
   name: string;
   budget: number;
   spent: number;
+  policy?: AgentPolicy;
   role: "buyer" | "seller";
   listingTitle: string;
   listingPrice: number;
@@ -12,16 +13,20 @@ type AgentContext = {
 };
 
 /**
- * Simple rule-based negotiation brain for the hackathon MVP.
- * This can later be replaced with a real Grok / OpenAI call.
+ * Rule-based fallback when Grok is unavailable.
  */
 export function decideNextAction(ctx: AgentContext): NegotiationMessage {
   const lastMessage = ctx.messages[ctx.messages.length - 1];
   const timestamp = new Date().toISOString();
+  const maxPrice = ctx.policy?.max_price;
+  const minPrice = ctx.policy?.min_price;
 
   // ========== BUYER LOGIC ==========
   if (ctx.role === "buyer") {
-    const remainingBudget = ctx.budget - ctx.spent;
+    const remainingBudget = Math.min(
+      ctx.budget - ctx.spent,
+      maxPrice ?? Number.POSITIVE_INFINITY
+    );
 
     // First message → make an opening offer (15-25% below asking)
     if (ctx.messages.length === 0) {
@@ -107,7 +112,10 @@ export function decideNextAction(ctx: AgentContext): NegotiationMessage {
   }
 
   // ========== SELLER LOGIC ==========
-  const minAcceptable = Math.round(ctx.listingPrice * 0.75); // won't go below 75%
+  const minAcceptable = Math.max(
+    minPrice ?? 0,
+    Math.round(ctx.listingPrice * 0.75)
+  );
 
   // Buyer accepted → confirm
   if (lastMessage?.type === "accept") {
