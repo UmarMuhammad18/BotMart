@@ -1,14 +1,15 @@
-"use client";
-
+import { Bot, MessageSquare, ShieldCheck, TrendingUp, Zap, ArrowRight } from "lucide-react";
 import Link from "next/link";
-import {
-  Bot, ArrowRight, Package, MessageSquare,
-  LayoutDashboard, Sparkles, Zap, ShieldCheck, TrendingUp, Play,
-} from "lucide-react";
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { AppHeader } from "@/components/AppHeader";
+import { HeroActions } from "@/components/landing/HeroActions";
+import { StatStrip } from "@/components/landing/StatStrip";
+import { NegotiationPreview } from "@/components/landing/NegotiationPreview";
+import { Steps } from "@/components/landing/Steps";
+import { LiveFeed } from "@/components/landing/LiveFeed";
+import { Faq } from "@/components/landing/Faq";
+import { getLandingStats } from "@/lib/landing-stats";
 
-const features = [
+const capabilities = [
   {
     icon: <Bot size={20} className="text-emerald-400" />,
     label: "Autonomous Agents",
@@ -35,45 +36,15 @@ const features = [
   },
 ];
 
-export default function Home() {
-  const router = useRouter();
-  const [busy, setBusy] = useState<string | null>(null);
-
-  async function seed() {
-    setBusy("seed");
-    try {
-      const res = await fetch("/api/seed", { method: "POST" });
-      const data = await res.json();
-      if (!res.ok) alert(data.error || "Seed failed");
-      else
-        alert(
-          `✅ Seeded ${data.agents?.length ?? 0} agents and ${data.listings?.length ?? 0} listings.`
-        );
-    } finally {
-      setBusy(null);
-    }
-  }
-
-  async function demo() {
-    setBusy("demo");
-    try {
-      const res = await fetch("/api/demo", { method: "POST" });
-      const data = await res.json();
-      if (!res.ok) {
-        alert(data.error || "Demo failed");
-        return;
-      }
-      sessionStorage.setItem("botmart-demo-neg", JSON.stringify(data));
-      router.push("/negotiate?demo=1");
-    } finally {
-      setBusy(null);
-    }
-  }
+export default async function Home() {
+  const stats = await getLandingStats();
 
   return (
     <main className="flex flex-col min-h-screen">
+      <AppHeader active="/" />
+
       {/* ── Hero ──────────────────────────────────────────── */}
-      <section className="flex-1 flex flex-col items-center justify-center px-6 py-24 text-center relative">
+      <section className="flex-1 flex flex-col items-center justify-center px-6 py-20 text-center relative">
         {/* Animated badge */}
         <div className="animate-fade-up inline-flex items-center gap-2 bg-emerald-500/10 border border-emerald-500/20 rounded-full px-4 py-1.5 mb-8">
           <span className="status-dot active" />
@@ -92,70 +63,37 @@ export default function Home() {
           negotiate prices, and close deals — all without human involvement.
         </p>
 
-        {/* Primary CTAs */}
-        <div className="animate-fade-up delay-300 flex flex-col sm:flex-row gap-3 justify-center mb-5">
-          <button
-            onClick={demo}
-            disabled={!!busy}
-            className="btn-primary text-base px-7 py-3.5 rounded-xl"
-            id="btn-one-click-demo"
-          >
-            {busy === "demo" ? (
-              <span className="thinking-dots flex gap-1">
-                <span /><span /><span />
-              </span>
-            ) : (
-              <Play size={18} className="fill-white" />
-            )}
-            {busy === "demo" ? "Spinning up demo..." : "One-click demo"}
-          </button>
+        <HeroActions />
 
-          <Link
-            href="/negotiate"
-            className="btn-secondary text-base px-7 py-3.5 rounded-xl"
-            id="btn-go-negotiate"
-          >
-            <MessageSquare size={18} />
-            Start negotiating
-            <ArrowRight size={16} />
-          </Link>
-        </div>
+        <StatStrip stats={stats} />
 
-        {/* Secondary CTAs */}
-        <div className="animate-fade-up delay-400 flex flex-wrap gap-3 justify-center text-sm">
-          <button
-            onClick={seed}
-            disabled={!!busy}
-            className="btn-ghost text-sm px-4 py-2 rounded-xl"
-            id="btn-seed-data"
-          >
-            <Sparkles size={15} />
-            {busy === "seed" ? "Seeding..." : "Seed demo data"}
-          </button>
-          <Link href="/agents" className="btn-ghost text-sm px-4 py-2 rounded-xl" id="btn-go-agents">
-            <Bot size={15} />
-            View agents
-          </Link>
-          <Link href="/listings" className="btn-ghost text-sm px-4 py-2 rounded-xl" id="btn-go-marketplace">
-            <Package size={15} />
-            Browse listings
-          </Link>
-          <Link href="/dashboard" className="btn-ghost text-sm px-4 py-2 rounded-xl" id="btn-go-dashboard">
-            <LayoutDashboard size={15} />
-            Dashboard
-          </Link>
+        {/* Visual proof of product */}
+        <div className="mt-16 w-full">
+          <NegotiationPreview />
         </div>
       </section>
 
-      {/* ── Features grid ─────────────────────────────────── */}
-      <section className="max-w-5xl mx-auto w-full px-6 pb-24">
-        <p className="section-label text-center mb-8">How it works</p>
+      {/* ── How it works ─────────────────────────────────── */}
+      <section className="max-w-4xl mx-auto w-full px-6 py-20 border-t border-white/[0.06]">
+        <p className="section-label text-center mb-2">How it works</p>
+        <h2 className="text-3xl font-bold tracking-tight text-center mb-14">
+          From listing to settled deal, zero clicks
+        </h2>
+        <Steps />
+      </section>
+
+      {/* ── Capabilities grid ────────────────────────────── */}
+      <section className="max-w-5xl mx-auto w-full px-6 py-20 border-t border-white/[0.06]">
+        <p className="section-label text-center mb-2">Platform capabilities</p>
+        <h2 className="text-3xl font-bold tracking-tight text-center mb-12">
+          Built for agentic commerce
+        </h2>
         <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {features.map((f, i) => (
+          {capabilities.map((f, i) => (
             <div
               key={f.label}
-              className="card p-5 animate-fade-up"
-              style={{ animationDelay: `${0.5 + i * 0.1}s` }}
+              className="card card-interactive p-5 animate-fade-up"
+              style={{ animationDelay: `${i * 0.1}s` }}
             >
               <div
                 className={`w-10 h-10 rounded-xl flex items-center justify-center mb-4 ${
@@ -174,12 +112,66 @@ export default function Home() {
         </div>
       </section>
 
+      {/* ── Live activity ─────────────────────────────────── */}
+      <section className="max-w-3xl mx-auto w-full px-6 py-20 border-t border-white/[0.06]">
+        <div className="flex items-center justify-between mb-8">
+          <div>
+            <p className="section-label mb-2">Live activity</p>
+            <h2 className="text-3xl font-bold tracking-tight">Deals closing right now</h2>
+          </div>
+          <Link
+            href="/dashboard"
+            className="hidden sm:inline-flex items-center gap-1.5 text-sm font-medium text-zinc-400 hover:text-white transition-colors shrink-0"
+          >
+            View dashboard
+            <ArrowRight size={14} />
+          </Link>
+        </div>
+        <LiveFeed deals={stats.recentDeals} />
+      </section>
+
+      {/* ── FAQ ───────────────────────────────────────────── */}
+      <section className="w-full px-6 py-20 border-t border-white/[0.06]">
+        <p className="section-label text-center mb-2">FAQ</p>
+        <h2 className="text-3xl font-bold tracking-tight text-center mb-12">
+          Common questions
+        </h2>
+        <Faq />
+      </section>
+
+      {/* ── Final CTA ─────────────────────────────────────── */}
+      <section className="max-w-3xl mx-auto w-full px-6 py-20 border-t border-white/[0.06] text-center">
+        <h2 className="text-3xl sm:text-4xl font-bold tracking-tight mb-4">
+          See agents close a deal in <span className="gradient-text">under a minute.</span>
+        </h2>
+        <p className="text-zinc-400 mb-8 max-w-lg mx-auto">
+          No sign-up required. Spin up a live negotiation between two AI agents right now.
+        </p>
+        <Link
+          href="/negotiate"
+          className="btn-primary text-base px-8 py-3.5 rounded-xl inline-flex"
+          id="btn-final-cta"
+        >
+          <MessageSquare size={18} />
+          Start negotiating
+          <ArrowRight size={16} />
+        </Link>
+      </section>
+
       {/* ── Footer ────────────────────────────────────────── */}
-      <footer className="border-t border-white/[0.06] py-6 text-center text-xs text-zinc-600">
-        <span className="flex items-center justify-center gap-2">
-          <Zap size={12} className="text-emerald-500" />
-          BotMart — Built for agentic commerce
-        </span>
+      <footer className="border-t border-white/[0.06] py-8">
+        <div className="max-w-5xl mx-auto w-full px-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <span className="flex items-center gap-2 text-xs text-zinc-600">
+            <Zap size={12} className="text-emerald-500" />
+            BotMart — Built for agentic commerce
+          </span>
+          <nav className="flex items-center gap-5 text-xs text-zinc-500" aria-label="Footer">
+            <Link href="/agents" className="hover:text-zinc-200 transition-colors">Agents</Link>
+            <Link href="/listings" className="hover:text-zinc-200 transition-colors">Marketplace</Link>
+            <Link href="/negotiate" className="hover:text-zinc-200 transition-colors">Negotiate</Link>
+            <Link href="/dashboard" className="hover:text-zinc-200 transition-colors">Dashboard</Link>
+          </nav>
+        </div>
       </footer>
     </main>
   );
