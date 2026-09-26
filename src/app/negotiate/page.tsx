@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 import { AppHeader } from "@/components/AppHeader";
 import { gbp } from "@/lib/utils";
+import { createClient } from "@/lib/supabase/client";
 
 /* ── Types ─────────────────────────────────────────────── */
 type Agent = { id: string; name: string; budget: number; spent: number };
@@ -204,6 +205,42 @@ function NegotiateInner() {
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams]);
+
+  /* Live-sync this negotiation across tabs/viewers via Supabase Realtime.
+     Any client running the demo or clicking "Next Turn" updates the row in
+     Postgres; every other tab watching the same negotiation id sees the new
+     messages/status the instant they land, no polling required. */
+  useEffect(() => {
+    if (!negotiation?.id) return;
+    const supabase = createClient();
+    const channel = supabase
+      .channel(`negotiation-${negotiation.id}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "negotiations",
+          filter: `id=eq.${negotiation.id}`,
+        },
+        (payload) => {
+          const row = payload.new as {
+            id: string; status: string; current_offer: number | null;
+            messages: Message[];
+          };
+          setNegotiation((prev) =>
+            prev && prev.id === row.id
+              ? { ...prev, status: row.status, current_offer: row.current_offer, messages: row.messages }
+              : prev
+          );
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [negotiation?.id]);
 
   async function fetchAgents() {
     const res = await fetch("/api/agents");

@@ -1,5 +1,9 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import { CheckCircle2, Sparkles } from "lucide-react";
 import { gbp } from "@/lib/utils";
+import { createClient } from "@/lib/supabase/client";
 import type { RecentDeal } from "@/lib/landing-stats";
 
 function timeAgo(iso: string) {
@@ -12,7 +16,58 @@ function timeAgo(iso: string) {
   return `${Math.floor(hours / 24)}d ago`;
 }
 
-export function LiveFeed({ deals }: { deals: RecentDeal[] }) {
+type OrderRow = {
+  id: string;
+  final_price: number;
+  buyer_agent_id: string;
+  seller_agent_id: string;
+  listing_id: string;
+  created_at: string;
+};
+
+/**
+ * Live activity feed for the landing page. Renders the server-fetched
+ * `initialDeals` immediately, then subscribes to Supabase Realtime so any
+ * deal closed by any agent, anywhere, streams in without a page refresh.
+ */
+export function LiveFeed({ deals: initialDeals }: { deals: RecentDeal[] }) {
+  const [deals, setDeals] = useState(initialDeals);
+
+  useEffect(() => {
+    const supabase = createClient();
+
+    const channel = supabase
+      .channel("landing-orders-feed")
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "orders" },
+        async (payload) => {
+          const order = payload.new as OrderRow;
+          const [buyerRes, sellerRes, listingRes] = await Promise.all([
+            supabase.from("agents").select("name").eq("id", order.buyer_agent_id).single(),
+            supabase.from("agents").select("name").eq("id", order.seller_agent_id).single(),
+            supabase.from("listings").select("title").eq("id", order.listing_id).single(),
+          ]);
+
+          const deal: RecentDeal = {
+            id: order.id,
+            finalPrice: Number(order.final_price || 0),
+            buyerName: buyerRes.data?.name ?? "Buyer agent",
+            sellerName: sellerRes.data?.name ?? "Seller agent",
+            listingTitle: listingRes.data?.title ?? "listing",
+            createdAt: order.created_at,
+          };
+
+          setDeals((prev) => [deal, ...prev].slice(0, 4));
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
+
   if (deals.length === 0) {
     return (
       <div className="card p-8 text-center">

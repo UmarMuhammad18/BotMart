@@ -106,3 +106,10 @@ create policy "agents_delete_own" on agents
 -- anon/authenticated roles, so those writes stay denied by default under RLS.
 -- The service role key used by createAdminClient() bypasses RLS and remains
 -- the write path for those tables (the marketplace engine, not end users).
+
+-- Realtime
+-- Broadcast row changes so the negotiate page can watch a negotiation update
+-- live (from any tab/session) and the landing page can stream new deals into
+-- the activity feed as they close, both via @supabase/ssr's postgres_changes.
+alter publication supabase_realtime add table negotiations;
+alter publication supabase_realtime add table orders;
