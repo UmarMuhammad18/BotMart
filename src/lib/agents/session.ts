@@ -1,13 +1,14 @@
 import { decideAgentTurn } from "@/lib/agents/brain";
+import { applyNegotiationOutcome, logDecision } from "@/lib/agents/reputation";
 import { createTestPaymentIntent } from "@/lib/stripe";
 import { NegotiationMessage } from "@/lib/types";
 import { SupabaseClient } from "@supabase/supabase-js";
 
 const NEG_SELECT = `
   *,
-  buyer:agents!buyer_agent_id (id, name, budget, spent, policy, status, reputation),
-  seller:agents!seller_agent_id (id, name, budget, spent, policy, status, reputation),
-  listing:listings (id, title, price, stock, seller_agent_id)
+  buyer:agents!buyer_agent_id (id, name, budget, spent, policy, status, reputation, trades_completed, trades_failed, memory, goal),
+  seller:agents!seller_agent_id (id, name, budget, spent, policy, status, reputation, trades_completed, trades_failed, memory, goal),
+  listing:listings (id, title, price, stock, seller_agent_id, category)
 `;
 
 function agentContext(
@@ -69,7 +70,10 @@ export async function startNegotiation(
   }
 
   if (buyer.id === listing.seller_agent_id) {
-    return { error: "Buyer and seller must be different agents", status: 400 as const };
+    return {
+      error: "Buyer and seller must be different agents",
+      status: 400 as const,
+    };
   }
 
   const { data: negotiation, error: negError } = await supabase
@@ -93,6 +97,15 @@ export async function startNegotiation(
     agentContext(buyer, "buyer", listing, null, [])
   );
 
+  await logDecision(supabase, {
+    agentId: buyer.id,
+    negotiationId: negotiation.id,
+    role: "buyer",
+    actionType: firstMessage.type,
+    payload: firstMessage,
+    source: "grok",
+  });
+
   const { data: updated, error: updateError } = await supabase
     .from("negotiations")
     .update({
@@ -112,7 +125,10 @@ export async function startNegotiation(
   return { data: updated, status: 201 as const };
 }
 
-export async function runNextTurn(supabase: SupabaseClient, negotiation_id: string) {
+export async function runNextTurn(
+  supabase: SupabaseClient,
+  negotiation_id: string
+) {
   const { data: neg, error: negError } = await supabase
     .from("negotiations")
     .select(NEG_SELECT)
@@ -130,9 +146,22 @@ export async function runNextTurn(supabase: SupabaseClient, negotiation_id: stri
   if (neg.buyer?.status !== "active" || neg.seller?.status !== "active") {
     await supabase
       .from("negotiations")
-      .update({ status: "escalated", updated_at: new Date().toISOString() })
+      .update({
+        status: "escalated",
+        updated_at: new Date().toISOString(),
+      })
       .eq("id", negotiation_id);
-    return { error: "An agent was paused or blocked. Negotiation escalated.", status: 400 as const };
+
+    await applyNegotiationOutcome(supabase, {
+      buyerId: neg.buyer_agent_id,
+      sellerId: neg.seller_agent_id,
+      outcome: "escalated",
+    });
+
+    return {
+      error: "An agent was paused or blocked. Negotiation escalated.",
+      status: 400 as const,
+    };
   }
 
   const messages: NegotiationMessage[] = neg.messages || [];
@@ -144,9 +173,19 @@ export async function runNextTurn(supabase: SupabaseClient, negotiation_id: stri
     agentContext(agent, nextRole, neg.listing, neg.current_offer, messages)
   );
 
+  await logDecision(supabase, {
+    agentId: agent.id,
+    negotiationId: negotiation_id,
+    role: nextRole,
+    actionType: nextMessage.type,
+    payload: nextMessage,
+    source: "grok",
+  });
+
   const newMessages = [...messages, nextMessage];
 
-  let newStatus: string = nextMessage.type === "counter" ? "countered" : "open";
+  let newStatus: string =
+    nextMessage.type === "counter" ? "countered" : "open";
   if (nextMessage.type === "accept") newStatus = "accepted";
   if (nextMessage.type === "reject") newStatus = "rejected";
   if (newStatus === "open" && newMessages.length >= 14) newStatus = "escalated";
@@ -176,7 +215,10 @@ export async function runNextTurn(supabase: SupabaseClient, negotiation_id: stri
 
     await supabase
       .from("agents")
-      .update({ spent: (Number(neg.buyer.spent) || 0) + nextMessage.price })
+      .update({
+        spent: (Number(neg.buyer.spent) || 0) + nextMessage.price,
+        updated_at: new Date().toISOString(),
+      })
       .eq("id", neg.buyer_agent_id);
 
     const nextStock = Math.max(0, (neg.listing.stock || 1) - 1);
@@ -187,6 +229,35 @@ export async function runNextTurn(supabase: SupabaseClient, negotiation_id: stri
         status: nextStock === 0 ? "sold" : "active",
       })
       .eq("id", neg.listing_id);
+
+    // Append a short memory note to both agents
+    const note = {
+      text: `Closed deal on "${neg.listing.title}" at £${nextMessage.price}`,
+      at: new Date().toISOString(),
+      negotiation_id: negotiation_id,
+    };
+    for (const a of [neg.buyer, neg.seller]) {
+      const mem = Array.isArray(a.memory) ? a.memory : [];
+      await supabase
+        .from("agents")
+        .update({
+          memory: [...mem.slice(-19), note],
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", a.id);
+    }
+  }
+
+  if (
+    newStatus === "accepted" ||
+    newStatus === "rejected" ||
+    newStatus === "escalated"
+  ) {
+    await applyNegotiationOutcome(supabase, {
+      buyerId: neg.buyer_agent_id,
+      sellerId: neg.seller_agent_id,
+      outcome: newStatus as "accepted" | "rejected" | "escalated",
+    });
   }
 
   const { data: updated, error: updateError } = await supabase
