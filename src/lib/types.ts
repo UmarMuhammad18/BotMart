@@ -1,6 +1,11 @@
 export type AgentStatus = "active" | "paused" | "blocked";
 export type ListingStatus = "active" | "sold" | "inactive";
-export type NegotiationStatus = "open" | "countered" | "accepted" | "rejected" | "escalated";
+export type NegotiationStatus =
+  | "open"
+  | "countered"
+  | "accepted"
+  | "rejected"
+  | "escalated";
 export type OrderStatus = "pending" | "paid" | "fulfilled" | "cancelled";
 
 export type AgentPolicy = {
@@ -8,6 +13,12 @@ export type AgentPolicy = {
   min_price?: number;
   categories?: string[];
   style?: string;
+};
+
+export type AgentMemoryNote = {
+  text: string;
+  at: string;
+  negotiation_id?: string;
 };
 
 export type Agent = {
@@ -20,7 +31,12 @@ export type Agent = {
   policy: AgentPolicy;
   reputation: number;
   status: AgentStatus;
+  goal: string | null;
+  memory: AgentMemoryNote[];
+  trades_completed: number;
+  trades_failed: number;
   created_at: string;
+  updated_at?: string;
 };
 
 export type Listing = {
@@ -71,4 +87,15 @@ export type Order = {
   status: OrderStatus;
   created_at: string;
   stripe_payment_intent_id?: string | null;
+};
+
+export type AgentDecision = {
+  id: string;
+  agent_id: string;
+  negotiation_id: string | null;
+  role: string | null;
+  action_type: string | null;
+  payload: Record<string, unknown>;
+  source: "rules" | "grok";
+  created_at: string;
 };
