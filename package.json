@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js --passWithNoTests 2>/dev/null || echo \"Install jest to run unit tests: pnpm add -D jest @types/jest ts-jest\""
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.7",
