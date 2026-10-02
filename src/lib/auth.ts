@@ -1,60 +1,69 @@
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { createAdminClient } from "@/lib/supabase/admin";
+import type { User } from "@supabase/supabase-js";
 
 /**
  * Auth helpers for BotMart.
  *
- * Phase 1 (current): optional — if no session, APIs still work with admin client
- * for local/dev demos.
- * Phase 2: enforce ownership once Supabase Auth is enabled in the dashboard.
+ * - No session → demo mode (open access, owner_id may be null / "hackathon-user")
+ * - With session → ownership enforced on create / control / run
  *
- * Enable in Supabase:
- *   Authentication → Providers → Email (magic link)
- * Then set NEXT_PUBLIC_SUPABASE_URL + keys as usual.
+ * Enable in Supabase Dashboard:
+ *   Authentication → Providers → Email → enable Magic Link
+ *   Authentication → URL Configuration → Redirect URLs:
+ *     http://localhost:3000/auth/callback
+ *     https://YOUR_DOMAIN/auth/callback
  */
 
-export async function getSessionUser() {
-  try {
-    const cookieStore = await cookies();
-    const supabase = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      {
-        cookies: {
-          getAll() {
-            return cookieStore.getAll();
-          },
-          setAll(cookiesToSet) {
-            try {
-              cookiesToSet.forEach(({ name, value, options }) =>
-                cookieStore.set(name, value, options)
-              );
-            } catch {
-              /* Server Component */
-            }
-          },
+export async function createAuthClient() {
+  const cookieStore = await cookies();
+  return createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll() {
+          return cookieStore.getAll();
         },
-      }
-    );
+        setAll(cookiesToSet) {
+          try {
+            cookiesToSet.forEach(({ name, value, options }) =>
+              cookieStore.set(name, value, options)
+            );
+          } catch {
+            /* Server Component */
+          }
+        },
+      },
+    }
+  );
+}
 
+export async function getSessionUser(): Promise<User | null> {
+  try {
+    const supabase = await createAuthClient();
     const {
       data: { user },
     } = await supabase.auth.getUser();
-
     return user;
   } catch {
     return null;
   }
 }
 
+export async function requireUserId(): Promise<string | null> {
+  const user = await getSessionUser();
+  return user?.id ?? null;
+}
+
 /**
- * Returns true if the user owns the agent, or if there is no auth session
- * (dev/demo mode allows everything).
+ * When logged in: only owner (or unclaimed agent) can control.
+ * When not logged in: demo mode allows everything.
  */
 export async function canControlAgent(agentId: string): Promise<boolean> {
   const user = await getSessionUser();
-  if (!user) return true; // demo mode
+  if (!user) return true;
 
   const admin = createAdminClient();
   const { data } = await admin
@@ -64,11 +73,16 @@ export async function canControlAgent(agentId: string): Promise<boolean> {
     .single();
 
   if (!data) return false;
-  if (!data.owner_id) return true; // unclaimed agent
+  if (!data.owner_id || data.owner_id === "hackathon-user") return true;
   return data.owner_id === user.id;
 }
 
-export async function requireUserId(): Promise<string | null> {
-  const user = await getSessionUser();
-  return user?.id ?? null;
+export async function assertCanControlAgent(
+  agentId: string
+): Promise<{ ok: true } | { ok: false; error: string; status: number }> {
+  const allowed = await canControlAgent(agentId);
+  if (!allowed) {
+    return { ok: false, error: "You do not own this agent", status: 403 };
+  }
+  return { ok: true };
 }
