@@ -7,6 +7,7 @@ import { Agent } from "@/lib/types";
 import {
   Bot, CheckCircle, XCircle, AlertCircle, Package,
   RotateCcw, Pause, Skull, RefreshCw, Zap, TrendingUp,
+  Play, Loader2, Activity,
 } from "lucide-react";
 
 type NegotiationRow = {
@@ -22,6 +23,18 @@ type OrderRow = {
   id: string; status: string; final_price: number; created_at: string;
   stripe_payment_intent_id?: string | null;
   buyer: { name: string }; seller: { name: string }; listing: { title: string };
+};
+
+type DecisionRow = {
+  id: string;
+  agent_id: string;
+  negotiation_id: string | null;
+  role: string | null;
+  action_type: string | null;
+  payload: Record<string, unknown>;
+  source: string;
+  created_at: string;
+  agent?: { id: string; name: string } | null;
 };
 
 function NegStatusBadge({ status }: { status: string }) {
@@ -49,19 +62,24 @@ export default function DashboardPage() {
   const [agents, setAgents] = useState<Agent[]>([]);
   const [negotiations, setNegotiations] = useState<NegotiationRow[]>([]);
   const [orders, setOrders] = useState<OrderRow[]>([]);
+  const [decisions, setDecisions] = useState<DecisionRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [runningAll, setRunningAll] = useState(false);
+  const [runningId, setRunningId] = useState<string | null>(null);
 
   async function load(silent = false) {
     if (!silent) setRefreshing(true);
-    const [a, n, o] = await Promise.all([
+    const [a, n, o, d] = await Promise.all([
       fetch("/api/agents").then((r) => r.json()),
       fetch("/api/negotiations").then((r) => r.json()),
       fetch("/api/orders").then((r) => r.json()),
+      fetch("/api/decisions?limit=40").then((r) => r.json()).catch(() => []),
     ]);
     setAgents(Array.isArray(a) ? a : []);
     setNegotiations(Array.isArray(n) ? n : []);
     setOrders(Array.isArray(o) ? o : []);
+    setDecisions(Array.isArray(d) ? d : d?.data && Array.isArray(d.data) ? d.data : []);
     setLoading(false);
     setRefreshing(false);
   }
@@ -90,6 +108,34 @@ export default function DashboardPage() {
     load(true);
   }
 
+  async function runAgent(id: string) {
+    setRunningId(id);
+    try {
+      await fetch("/api/agents/run", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ agent_id: id, max_negotiations: 1, auto_complete: true }),
+      });
+      await load(true);
+    } finally {
+      setRunningId(null);
+    }
+  }
+
+  async function runAllAgents() {
+    setRunningAll(true);
+    try {
+      await fetch("/api/agents/run", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ all: true, max_negotiations: 1, auto_complete: true }),
+      });
+      await load(true);
+    } finally {
+      setRunningAll(false);
+    }
+  }
+
   const live = negotiations.filter((n) => n.status === "open" || n.status === "countered");
   const closed = negotiations.filter(
     (n) => n.status === "accepted" || n.status === "rejected" || n.status === "escalated"
@@ -104,23 +150,37 @@ export default function DashboardPage() {
       <AppHeader active="/dashboard" />
       <div className="max-w-6xl mx-auto w-full px-4 sm:px-6 py-10 space-y-10">
 
-        {/* Header */}
-        <div className="flex items-start justify-between animate-fade-up">
+        <div className="flex items-start justify-between animate-fade-up gap-4 flex-wrap">
           <div>
             <h1 className="text-3xl font-bold tracking-tight">Human Dashboard</h1>
             <p className="text-zinc-500 mt-1 text-sm">
-              Monitor agents, watch live deals, and fulfil orders. Refreshes every 5s.
+              Monitor agents, run autonomy loops, and fulfil orders. Refreshes every 5s.
             </p>
           </div>
-          <button
-            onClick={() => load()}
-            disabled={refreshing}
-            className="btn-ghost text-sm"
-            id="btn-refresh-dashboard"
-          >
-            <RefreshCw size={14} className={refreshing ? "animate-spin-slow" : ""} />
-            {refreshing ? "Refreshing…" : "Refresh"}
-          </button>
+          <div className="flex gap-2">
+            <button
+              onClick={runAllAgents}
+              disabled={runningAll || activeAgents === 0}
+              className="btn-primary text-sm"
+              id="btn-run-all-agents"
+            >
+              {runningAll ? (
+                <Loader2 size={14} className="animate-spin" />
+              ) : (
+                <Play size={14} />
+              )}
+              {runningAll ? "Running all…" : "Run all agents"}
+            </button>
+            <button
+              onClick={() => load()}
+              disabled={refreshing}
+              className="btn-ghost text-sm"
+              id="btn-refresh-dashboard"
+            >
+              <RefreshCw size={14} className={refreshing ? "animate-spin-slow" : ""} />
+              {refreshing ? "Refreshing…" : "Refresh"}
+            </button>
+          </div>
         </div>
 
         {loading ? (
@@ -131,7 +191,6 @@ export default function DashboardPage() {
           </div>
         ) : (
           <>
-            {/* Stats overview */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 animate-fade-up delay-100">
               <div className="stat-card">
                 <div className="stat-value gradient-text">{agents.length}</div>
@@ -154,7 +213,6 @@ export default function DashboardPage() {
               </div>
             </div>
 
-            {/* Agents section */}
             <section className="animate-fade-up delay-150">
               <p className="section-label">
                 Agents
@@ -192,17 +250,30 @@ export default function DashboardPage() {
                       <div className="min-w-0">
                         <div className="font-semibold text-sm flex items-center gap-2">
                           {agent.name}
-                          <span
-                            className={`status-dot ${agent.status}`}
-                            title={agent.status}
-                          />
+                          <span className={`status-dot ${agent.status}`} title={agent.status} />
                         </div>
                         <div className="text-xs text-zinc-500 truncate">
-                          {gbp(agent.budget)} budget · spent {gbp(agent.spent)}
+                          Rep {agent.reputation ?? 50} · {agent.trades_completed ?? 0} won ·{" "}
+                          {agent.trades_failed ?? 0} lost · {gbp(agent.spent)}/{gbp(agent.budget)}
                         </div>
                       </div>
                     </div>
-                    <div className="flex gap-1.5 shrink-0">
+                    <div className="flex gap-1.5 shrink-0 flex-wrap justify-end">
+                      {agent.status === "active" && (
+                        <button
+                          onClick={() => runAgent(agent.id)}
+                          disabled={runningId === agent.id}
+                          className="text-xs px-2.5 py-1.5 rounded-lg bg-emerald-500/15 text-emerald-400 hover:bg-emerald-500/25 flex items-center gap-1 transition disabled:opacity-50"
+                          id={`btn-dash-run-${agent.id}`}
+                        >
+                          {runningId === agent.id ? (
+                            <Loader2 size={11} className="animate-spin" />
+                          ) : (
+                            <Play size={11} />
+                          )}
+                          Run
+                        </button>
+                      )}
                       {agent.status !== "active" && (
                         <button
                           onClick={() => setAgentStatus(agent.id, "active")}
@@ -234,7 +305,59 @@ export default function DashboardPage() {
               </div>
             </section>
 
-            {/* Live negotiations */}
+            <section className="animate-fade-up delay-200">
+              <p className="section-label">
+                <Activity size={12} className="inline mr-1.5 opacity-60" />
+                Decision log
+                {decisions.length > 0 && (
+                  <span className="ml-2 badge badge-zinc">{decisions.length} recent</span>
+                )}
+              </p>
+              {decisions.length === 0 ? (
+                <div className="card p-6 text-center text-zinc-600 text-sm">
+                  No decisions logged yet. Run an agent or complete a negotiation.
+                  <br />
+                  <span className="text-xs text-zinc-700 mt-1 block">
+                    (Requires agent_decisions table from supabase/schema.sql)
+                  </span>
+                </div>
+              ) : (
+                <div className="card overflow-hidden">
+                  <div className="max-h-72 overflow-y-auto divide-y divide-white/[0.04]">
+                    {decisions.map((d) => (
+                      <div
+                        key={d.id}
+                        className="px-4 py-2.5 flex items-start gap-3 text-xs hover:bg-white/[0.02]"
+                      >
+                        <span className="text-zinc-600 font-mono shrink-0 w-16">
+                          {new Date(d.created_at).toLocaleTimeString([], {
+                            hour: "2-digit",
+                            minute: "2-digit",
+                            second: "2-digit",
+                          })}
+                        </span>
+                        <span className="text-indigo-400 font-medium shrink-0 min-w-[80px]">
+                          {d.agent?.name || d.agent_id?.slice(0, 8)}
+                        </span>
+                        <span className="badge badge-zinc text-[10px] shrink-0">
+                          {d.action_type || "—"}
+                        </span>
+                        <span className="text-zinc-500 truncate flex-1">
+                          {d.role ? `${d.role} · ` : ""}
+                          {typeof d.payload?.message === "string"
+                            ? d.payload.message
+                            : d.payload?.match_count != null
+                            ? `matched ${d.payload.match_count} listings`
+                            : d.source}
+                        </span>
+                        <span className="text-zinc-700 shrink-0">{d.source}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </section>
+
             <section className="animate-fade-up delay-200">
               <p className="section-label">
                 Active negotiations
@@ -247,7 +370,7 @@ export default function DashboardPage() {
               </p>
               {live.length === 0 ? (
                 <div className="card p-8 text-center text-zinc-600 text-sm">
-                  No active negotiations. Start one from the{" "}
+                  No active negotiations. Use <strong className="text-zinc-400">Run agent</strong> or the{" "}
                   <a href="/negotiate" className="text-emerald-400 hover:underline">Negotiate</a> page.
                 </div>
               ) : (
@@ -264,7 +387,6 @@ export default function DashboardPage() {
                         </span>
                         <NegStatusBadge status={n.status} />
                       </div>
-                      {/* Last few messages preview */}
                       <div className="space-y-1.5">
                         {(n.messages || []).slice(-3).map((m, i) => (
                           <div key={i} className="flex items-start gap-2 text-xs">
@@ -288,7 +410,6 @@ export default function DashboardPage() {
               )}
             </section>
 
-            {/* Closed negotiations */}
             {closed.length > 0 && (
               <section className="animate-fade-up delay-250">
                 <p className="section-label">Closed deals</p>
@@ -315,7 +436,6 @@ export default function DashboardPage() {
               </section>
             )}
 
-            {/* Orders */}
             <section className="animate-fade-up delay-300">
               <p className="section-label">Orders / Fulfilment</p>
               {orders.length === 0 ? (
