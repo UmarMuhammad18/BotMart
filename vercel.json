@@ -1,0 +1,12 @@
+{
+  "crons": [
+    {
+      "path": "/api/cron/run-agents",
+      "schedule": "0 * * * *"
+    },
+    {
+      "path": "/api/cron/seller-adjust",
+      "schedule": "30 * * * *"
+    }
+  ]
+}
