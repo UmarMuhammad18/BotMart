@@ -1,10 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { Agent } from "@/lib/types";
 import {
   Plus, Bot, Wallet, Zap, ChevronUp, TrendingUp,
-  Shield, Play, CheckCircle2, XCircle, Loader2,
+  Shield, Play, CheckCircle2, XCircle, Loader2, UserPlus,
 } from "lucide-react";
 import { AppHeader } from "@/components/AppHeader";
 import { gbp } from "@/lib/utils";
@@ -27,11 +28,13 @@ function AgentCard({
   onRun,
   running,
   lastResult,
+  signedIn,
 }: {
   agent: Agent;
   onRun: (id: string) => void;
   running: boolean;
   lastResult?: RunResult | null;
+  signedIn: boolean;
 }) {
   const spent = Number(agent.spent ?? 0);
   const budget = Number(agent.budget ?? 0);
@@ -39,6 +42,10 @@ function AgentCard({
   const rep = Number(agent.reputation ?? 50);
   const completed = Number(agent.trades_completed ?? 0);
   const failed = Number(agent.trades_failed ?? 0);
+  const isMine =
+    signedIn &&
+    agent.owner_id &&
+    agent.owner_id !== "hackathon-user";
 
   return (
     <div className="card card-interactive p-5 animate-fade-up group">
@@ -67,7 +74,12 @@ function AgentCard({
             />
           </div>
           <div>
-            <h3 className="font-semibold text-sm">{agent.name}</h3>
+            <h3 className="font-semibold text-sm flex items-center gap-2">
+              {agent.name}
+              {isMine && (
+                <span className="badge badge-blue text-[9px]">yours</span>
+              )}
+            </h3>
             <p className="text-xs text-zinc-500 line-clamp-1 mt-0.5">
               {agent.goal || agent.description || "No goal set"}
             </p>
@@ -223,9 +235,15 @@ export default function AgentsPage() {
   const [creating, setCreating] = useState(false);
   const [runningId, setRunningId] = useState<string | null>(null);
   const [runResults, setRunResults] = useState<Record<string, RunResult>>({});
+  const [signedIn, setSignedIn] = useState(false);
+  const [claiming, setClaiming] = useState(false);
 
   useEffect(() => {
     fetchAgents();
+    fetch("/api/auth/me")
+      .then((r) => r.json())
+      .then((d) => setSignedIn(!!d.user))
+      .catch(() => setSignedIn(false));
   }, []);
 
   async function fetchAgents() {
@@ -304,6 +322,28 @@ export default function AgentsPage() {
     }
   }
 
+  async function claimAll() {
+    setClaiming(true);
+    try {
+      const res = await fetch("/api/agents/claim", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ all: true }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        alert(`Claimed ${data.claimed} agent(s)`);
+        fetchAgents();
+      } else {
+        alert(data.error || "Claim failed — sign in first");
+      }
+    } catch {
+      alert("Claim failed");
+    } finally {
+      setClaiming(false);
+    }
+  }
+
   const active = agents.filter((a) => a.status === "active").length;
   const totalBudget = agents.reduce((s, a) => s + Number(a.budget ?? 0), 0);
 
@@ -311,21 +351,42 @@ export default function AgentsPage() {
     <div className="flex flex-col min-h-screen">
       <AppHeader active="/agents" />
       <div className="max-w-5xl mx-auto w-full px-4 sm:px-6 py-10">
-        <div className="flex items-start justify-between mb-10 animate-fade-up">
+        <div className="flex items-start justify-between mb-10 animate-fade-up gap-4 flex-wrap">
           <div>
             <h1 className="text-3xl font-bold tracking-tight">Agents</h1>
             <p className="text-zinc-500 mt-1 text-sm">
               Create agents, set goals, and let them shop autonomously
             </p>
           </div>
-          <button
-            onClick={() => setShowForm(!showForm)}
-            className="btn-secondary shrink-0 text-sm"
-            id="btn-new-agent"
-          >
-            {showForm ? <ChevronUp size={16} /> : <Plus size={16} />}
-            {showForm ? "Close" : "New Agent"}
-          </button>
+          <div className="flex gap-2">
+            {signedIn ? (
+              <button
+                onClick={claimAll}
+                disabled={claiming}
+                className="btn-ghost text-sm"
+                title="Claim unowned / demo agents as yours"
+              >
+                {claiming ? (
+                  <Loader2 size={14} className="animate-spin" />
+                ) : (
+                  <UserPlus size={14} />
+                )}
+                Claim seed agents
+              </button>
+            ) : (
+              <Link href="/login" className="btn-ghost text-sm">
+                Sign in to own agents
+              </Link>
+            )}
+            <button
+              onClick={() => setShowForm(!showForm)}
+              className="btn-secondary shrink-0 text-sm"
+              id="btn-new-agent"
+            >
+              {showForm ? <ChevronUp size={16} /> : <Plus size={16} />}
+              {showForm ? "Close" : "New Agent"}
+            </button>
+          </div>
         </div>
 
         {agents.length > 0 && (
@@ -351,6 +412,15 @@ export default function AgentsPage() {
             className="card glass p-6 mb-8 space-y-5 animate-fade-up"
           >
             <p className="section-label">New agent</p>
+            {!signedIn && (
+              <p className="text-xs text-amber-400/90 bg-amber-500/10 border border-amber-500/20 rounded-lg px-3 py-2">
+                Not signed in — agent will be created in demo mode.{" "}
+                <Link href="/login" className="underline">
+                  Sign in
+                </Link>{" "}
+                to own it permanently.
+              </p>
+            )}
             <div className="grid sm:grid-cols-2 gap-4">
               <div>
                 <label className="block text-xs text-zinc-400 mb-2 font-medium">Name</label>
@@ -470,6 +540,7 @@ export default function AgentsPage() {
                   onRun={runAgent}
                   running={runningId === agent.id}
                   lastResult={runResults[agent.id]}
+                  signedIn={signedIn}
                 />
               </div>
             ))}
