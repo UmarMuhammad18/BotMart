@@ -1,4 +1,4 @@
-import { Agent, ListingWithSeller } from "@/lib/types";
+import { Agent, AgentMemoryNote, ListingWithSeller } from "@/lib/types";
 
 export type SearchFilters = {
   keywords: string;
@@ -6,10 +6,29 @@ export type SearchFilters = {
   category?: string;
 };
 
+/**
+ * Rank listings for a buyer. Boosts high-reputation sellers and
+ * counterparties remembered positively in agent.memory.
+ */
 export function rankListings(listings: ListingWithSeller[], buyer: Agent) {
   const remaining = Number(buyer.budget) - Number(buyer.spent);
   const cats = (buyer.policy?.categories || []).map((c) => c.toLowerCase());
   const maxPrice = buyer.policy?.max_price;
+  const memory: AgentMemoryNote[] = Array.isArray(buyer.memory)
+    ? buyer.memory
+    : [];
+
+  // Extract seller names the buyer has closed deals with
+  const preferredSellers = new Set<
+    string
+  >();
+  for (const note of memory) {
+    const m = note.text?.match(/Closed deal on .+ with (.+)$/i);
+    if (m) preferredSellers.add(m[1].toLowerCase());
+    if (note.text?.toLowerCase().includes("closed deal")) {
+      // soft signal — memory exists for successful trading
+    }
+  }
 
   return listings
     .map((listing) => {
@@ -28,6 +47,14 @@ export function rankListings(listings: ListingWithSeller[], buyer: Agent) {
 
       const reputation = listing.seller?.reputation ?? 50;
       score += Math.min(Number(reputation), 100) / 5;
+
+      // Prefer high-rep sellers more aggressively
+      if (reputation >= 70) score += 8;
+      if (reputation < 30) score -= 10;
+
+      // Memory: prefer sellers we've dealt with before
+      const sellerName = (listing.seller?.name || "").toLowerCase();
+      if (sellerName && preferredSellers.has(sellerName)) score += 12;
 
       if (remaining > 0) {
         const ratio = price / remaining;
@@ -49,9 +76,13 @@ export function keywordMatches(listing: ListingWithSeller, keywords: string) {
     .some((word) => hay.includes(word));
 }
 
-export function applyFilters(listings: ListingWithSeller[], filters: SearchFilters) {
+export function applyFilters(
+  listings: ListingWithSeller[],
+  filters: SearchFilters
+) {
   return listings.filter((listing) => {
-    if (filters.maxPrice && Number(listing.price) > filters.maxPrice) return false;
+    if (filters.maxPrice && Number(listing.price) > filters.maxPrice)
+      return false;
     if (
       filters.category &&
       (listing.category || "").toLowerCase() !== filters.category.toLowerCase()
