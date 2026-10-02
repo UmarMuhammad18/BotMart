@@ -24,7 +24,7 @@ export async function POST(request: Request) {
   try {
     const supabase = createAdminClient();
     const body = await request.json();
-    const { name, description, budget, policy } = body;
+    const { name, description, budget, policy, goal } = body;
 
     if (!name) {
       return NextResponse.json({ error: "Name is required" }, { status: 400 });
@@ -35,6 +35,7 @@ export async function POST(request: Request) {
       .insert({
         name,
         description: description || null,
+        goal: goal || description || null,
         budget: budget || 1000,
         policy: policy || {},
         owner_id: "hackathon-user",
