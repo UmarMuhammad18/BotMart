@@ -2,14 +2,43 @@
 
 import { useEffect, useState } from "react";
 import { Agent } from "@/lib/types";
-import { Plus, Bot, Wallet, Zap, ChevronDown, ChevronUp, TrendingUp, Shield } from "lucide-react";
+import {
+  Plus, Bot, Wallet, Zap, ChevronUp, TrendingUp,
+  Shield, Play, CheckCircle2, XCircle, Loader2,
+} from "lucide-react";
 import { AppHeader } from "@/components/AppHeader";
 import { gbp } from "@/lib/utils";
 
-function AgentCard({ agent }: { agent: Agent }) {
+type RunResult = {
+  agent: { id: string; name: string; goal: string | null };
+  matches: { id: string; title: string; price: number; score: number }[];
+  negotiations_started: string[];
+  negotiations_completed: {
+    id: string;
+    status: string;
+    final_price?: number;
+    listing?: string;
+  }[];
+  skipped_reason?: string;
+};
+
+function AgentCard({
+  agent,
+  onRun,
+  running,
+  lastResult,
+}: {
+  agent: Agent;
+  onRun: (id: string) => void;
+  running: boolean;
+  lastResult?: RunResult | null;
+}) {
   const spent = Number(agent.spent ?? 0);
   const budget = Number(agent.budget ?? 0);
   const usedPct = budget > 0 ? Math.min(100, (spent / budget) * 100) : 0;
+  const rep = Number(agent.reputation ?? 50);
+  const completed = Number(agent.trades_completed ?? 0);
+  const failed = Number(agent.trades_failed ?? 0);
 
   return (
     <div className="card card-interactive p-5 animate-fade-up group">
@@ -40,7 +69,7 @@ function AgentCard({ agent }: { agent: Agent }) {
           <div>
             <h3 className="font-semibold text-sm">{agent.name}</h3>
             <p className="text-xs text-zinc-500 line-clamp-1 mt-0.5">
-              {agent.description || "No description"}
+              {agent.goal || agent.description || "No goal set"}
             </p>
           </div>
         </div>
@@ -61,7 +90,6 @@ function AgentCard({ agent }: { agent: Agent }) {
         </span>
       </div>
 
-      {/* Budget bar */}
       <div className="space-y-2 mb-4">
         <div className="flex justify-between text-xs text-zinc-500">
           <span className="flex items-center gap-1">
@@ -76,16 +104,17 @@ function AgentCard({ agent }: { agent: Agent }) {
         <div className="progress-bar">
           <div
             className="progress-bar-fill"
-            style={{ width: `${usedPct}%`,
-              background: usedPct > 80
-                ? "linear-gradient(90deg, #f59e0b, #ef4444)"
-                : "linear-gradient(90deg, #10b981, #06b6d4)",
+            style={{
+              width: `${usedPct}%`,
+              background:
+                usedPct > 80
+                  ? "linear-gradient(90deg, #f59e0b, #ef4444)"
+                  : "linear-gradient(90deg, #10b981, #06b6d4)",
             }}
           />
         </div>
       </div>
 
-      {/* Policy tags */}
       {agent.policy?.categories?.length ? (
         <div className="flex flex-wrap gap-1.5 mb-3">
           {agent.policy.categories.map((c) => (
@@ -106,17 +135,76 @@ function AgentCard({ agent }: { agent: Agent }) {
         </div>
       ) : null}
 
-      {/* Stats row */}
-      <div className="flex items-center gap-4 text-xs text-zinc-500 pt-3 border-t border-white/[0.06]">
-        <span className="flex items-center gap-1">
+      <div className="flex items-center flex-wrap gap-3 text-xs text-zinc-500 pt-3 border-t border-white/[0.06] mb-3">
+        <span className="flex items-center gap-1" title="Reputation 0–100">
           <TrendingUp size={11} />
-          Rep: <span className="text-zinc-300 font-medium ml-0.5">{agent.reputation ?? 50}</span>
+          Rep <span className="text-zinc-300 font-medium ml-0.5">{rep}</span>
         </span>
-        <span className="flex items-center gap-1">
+        <span className="flex items-center gap-1" title="Completed trades">
+          <CheckCircle2 size={11} className="text-emerald-500/70" />
+          <span className="text-zinc-300 font-medium">{completed}</span> won
+        </span>
+        <span className="flex items-center gap-1" title="Failed / rejected">
+          <XCircle size={11} className="text-red-500/70" />
+          <span className="text-zinc-300 font-medium">{failed}</span> lost
+        </span>
+        <span className="flex items-center gap-1 ml-auto">
           <Shield size={11} />
-          {gbp(budget - spent)} remaining
+          {gbp(budget - spent)} left
         </span>
       </div>
+
+      <button
+        onClick={() => onRun(agent.id)}
+        disabled={running || agent.status !== "active"}
+        className="w-full btn-primary text-xs py-2 rounded-lg disabled:opacity-40"
+        id={`btn-run-${agent.id}`}
+      >
+        {running ? (
+          <>
+            <Loader2 size={13} className="animate-spin" />
+            Running…
+          </>
+        ) : (
+          <>
+            <Play size={13} />
+            Run agent (auto-shop)
+          </>
+        )}
+      </button>
+
+      {lastResult && lastResult.agent.id === agent.id && (
+        <div className="mt-3 p-3 rounded-lg bg-zinc-900/80 border border-zinc-800 text-xs space-y-1.5">
+          {lastResult.skipped_reason ? (
+            <p className="text-amber-400">{lastResult.skipped_reason}</p>
+          ) : (
+            <>
+              <p className="text-zinc-400">
+                Matched {lastResult.matches.length} listing
+                {lastResult.matches.length !== 1 ? "s" : ""} · started{" "}
+                {lastResult.negotiations_started.length}
+              </p>
+              {lastResult.negotiations_completed.map((n) => (
+                <div key={n.id} className="flex justify-between text-zinc-300">
+                  <span className="truncate">{n.listing || n.id.slice(0, 8)}</span>
+                  <span
+                    className={
+                      n.status === "accepted"
+                        ? "text-emerald-400"
+                        : n.status === "rejected"
+                        ? "text-red-400"
+                        : "text-zinc-500"
+                    }
+                  >
+                    {n.status}
+                    {n.final_price != null ? ` · ${gbp(n.final_price)}` : ""}
+                  </span>
+                </div>
+              ))}
+            </>
+          )}
+        </div>
+      )}
     </div>
   );
 }
@@ -127,21 +215,29 @@ export default function AgentsPage() {
   const [showForm, setShowForm] = useState(false);
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
+  const [goal, setGoal] = useState("");
   const [budget, setBudget] = useState(1000);
   const [maxPrice, setMaxPrice] = useState(100);
   const [categories, setCategories] = useState("electronics");
   const [style, setStyle] = useState("thrifty");
   const [creating, setCreating] = useState(false);
+  const [runningId, setRunningId] = useState<string | null>(null);
+  const [runResults, setRunResults] = useState<Record<string, RunResult>>({});
 
-  useEffect(() => { fetchAgents(); }, []);
+  useEffect(() => {
+    fetchAgents();
+  }, []);
 
   async function fetchAgents() {
     try {
       const res = await fetch("/api/agents");
       const data = await res.json();
       setAgents(Array.isArray(data) ? data : []);
-    } catch (err) { console.error(err); }
-    finally { setLoading(false); }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
   }
 
   async function createAgent(e: React.FormEvent) {
@@ -152,20 +248,60 @@ export default function AgentsPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          name, description, budget,
+          name,
+          description,
+          goal: goal || description || null,
+          budget,
           policy: {
             max_price: maxPrice,
-            categories: categories.split(",").map((c) => c.trim()).filter(Boolean),
+            categories: categories
+              .split(",")
+              .map((c) => c.trim())
+              .filter(Boolean),
             style,
           },
         }),
       });
       if (res.ok) {
-        setName(""); setDescription(""); setBudget(1000); setShowForm(false);
+        setName("");
+        setDescription("");
+        setGoal("");
+        setBudget(1000);
+        setShowForm(false);
         fetchAgents();
       }
-    } catch (err) { console.error(err); }
-    finally { setCreating(false); }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setCreating(false);
+    }
+  }
+
+  async function runAgent(id: string) {
+    setRunningId(id);
+    try {
+      const res = await fetch("/api/agents/run", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          agent_id: id,
+          max_negotiations: 2,
+          auto_complete: true,
+        }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setRunResults((prev) => ({ ...prev, [id]: data }));
+        fetchAgents();
+      } else {
+        alert(data.error || "Failed to run agent");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Failed to run agent");
+    } finally {
+      setRunningId(null);
+    }
   }
 
   const active = agents.filter((a) => a.status === "active").length;
@@ -175,12 +311,12 @@ export default function AgentsPage() {
     <div className="flex flex-col min-h-screen">
       <AppHeader active="/agents" />
       <div className="max-w-5xl mx-auto w-full px-4 sm:px-6 py-10">
-
-        {/* Page header */}
         <div className="flex items-start justify-between mb-10 animate-fade-up">
           <div>
             <h1 className="text-3xl font-bold tracking-tight">Agents</h1>
-            <p className="text-zinc-500 mt-1 text-sm">Create and manage autonomous commerce agents</p>
+            <p className="text-zinc-500 mt-1 text-sm">
+              Create agents, set goals, and let them shop autonomously
+            </p>
           </div>
           <button
             onClick={() => setShowForm(!showForm)}
@@ -192,7 +328,6 @@ export default function AgentsPage() {
           </button>
         </div>
 
-        {/* Stats row */}
         {agents.length > 0 && (
           <div className="grid grid-cols-3 gap-4 mb-8 animate-fade-up delay-100">
             <div className="stat-card">
@@ -210,7 +345,6 @@ export default function AgentsPage() {
           </div>
         )}
 
-        {/* Create form */}
         {showForm && (
           <form
             onSubmit={createAgent}
@@ -220,36 +354,81 @@ export default function AgentsPage() {
             <div className="grid sm:grid-cols-2 gap-4">
               <div>
                 <label className="block text-xs text-zinc-400 mb-2 font-medium">Name</label>
-                <input id="input-agent-name" value={name} onChange={(e) => setName(e.target.value)}
-                  required placeholder="e.g. BargainBot" className="input" />
+                <input
+                  id="input-agent-name"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  required
+                  placeholder="e.g. BargainBot"
+                  className="input"
+                />
               </div>
               <div>
                 <label className="block text-xs text-zinc-400 mb-2 font-medium">Description</label>
-                <input id="input-agent-desc" value={description} onChange={(e) => setDescription(e.target.value)}
-                  placeholder="What is this agent's goal?" className="input" />
+                <input
+                  id="input-agent-desc"
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  placeholder="Short personality blurb"
+                  className="input"
+                />
               </div>
+            </div>
+            <div>
+              <label className="block text-xs text-zinc-400 mb-2 font-medium">
+                Goal (what should this agent buy?)
+              </label>
+              <input
+                id="input-agent-goal"
+                value={goal}
+                onChange={(e) => setGoal(e.target.value)}
+                placeholder="e.g. Find cheap electronics under £90"
+                className="input"
+              />
             </div>
             <div className="grid sm:grid-cols-3 gap-4">
               <div>
                 <label className="block text-xs text-zinc-400 mb-2 font-medium">Budget (£)</label>
-                <input id="input-agent-budget" type="number" value={budget}
-                  onChange={(e) => setBudget(Number(e.target.value))} className="input" />
+                <input
+                  id="input-agent-budget"
+                  type="number"
+                  value={budget}
+                  onChange={(e) => setBudget(Number(e.target.value))}
+                  className="input"
+                />
               </div>
               <div>
                 <label className="block text-xs text-zinc-400 mb-2 font-medium">Max price (£)</label>
-                <input id="input-agent-maxprice" type="number" value={maxPrice}
-                  onChange={(e) => setMaxPrice(Number(e.target.value))} className="input" />
+                <input
+                  id="input-agent-maxprice"
+                  type="number"
+                  value={maxPrice}
+                  onChange={(e) => setMaxPrice(Number(e.target.value))}
+                  className="input"
+                />
               </div>
               <div>
                 <label className="block text-xs text-zinc-400 mb-2 font-medium">Style</label>
-                <input id="input-agent-style" value={style} onChange={(e) => setStyle(e.target.value)}
-                  placeholder="thrifty" className="input" />
+                <input
+                  id="input-agent-style"
+                  value={style}
+                  onChange={(e) => setStyle(e.target.value)}
+                  placeholder="thrifty"
+                  className="input"
+                />
               </div>
             </div>
             <div>
-              <label className="block text-xs text-zinc-400 mb-2 font-medium">Categories (comma separated)</label>
-              <input id="input-agent-categories" value={categories} onChange={(e) => setCategories(e.target.value)}
-                placeholder="electronics, software" className="input" />
+              <label className="block text-xs text-zinc-400 mb-2 font-medium">
+                Categories (comma separated)
+              </label>
+              <input
+                id="input-agent-categories"
+                value={categories}
+                onChange={(e) => setCategories(e.target.value)}
+                placeholder="electronics, software"
+                className="input"
+              />
             </div>
             <div className="flex gap-3 pt-1">
               <button id="btn-create-agent" type="submit" disabled={creating} className="btn-primary text-sm">
@@ -263,7 +442,6 @@ export default function AgentsPage() {
           </form>
         )}
 
-        {/* Agent grid */}
         {loading ? (
           <div className="grid gap-4 sm:grid-cols-2">
             {[...Array(4)].map((_, i) => (
@@ -287,7 +465,12 @@ export default function AgentsPage() {
           <div className="grid gap-4 sm:grid-cols-2">
             {agents.map((agent, i) => (
               <div key={agent.id} style={{ animationDelay: `${i * 0.07}s` }}>
-                <AgentCard agent={agent} />
+                <AgentCard
+                  agent={agent}
+                  onRun={runAgent}
+                  running={runningId === agent.id}
+                  lastResult={runResults[agent.id]}
+                />
               </div>
             ))}
           </div>
