@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { runBuyerAgent, runAllActiveBuyers } from "@/lib/agents/runner";
+import { assertCanControlAgent, getSessionUser } from "@/lib/auth";
 
 /**
  * POST /api/agents/run
@@ -12,8 +13,29 @@ export async function POST(request: Request) {
   try {
     const supabase = createAdminClient();
     const body = await request.json();
+    const user = await getSessionUser();
 
     if (body.all === true) {
+      // Logged-in users only run their own active agents
+      if (user) {
+        const { data: mine } = await supabase
+          .from("agents")
+          .select("id")
+          .eq("owner_id", user.id)
+          .eq("status", "active");
+
+        const results = [];
+        for (const a of mine || []) {
+          results.push(
+            await runBuyerAgent(supabase, a.id, {
+              maxNegotiations: body.max_negotiations ?? 1,
+              autoComplete: body.auto_complete !== false,
+            })
+          );
+        }
+        return NextResponse.json({ results });
+      }
+
       const results = await runAllActiveBuyers(supabase, {
         maxNegotiationsPerAgent: body.max_negotiations ?? 1,
         autoComplete: body.auto_complete !== false,
@@ -26,6 +48,11 @@ export async function POST(request: Request) {
         { error: "agent_id is required (or pass all: true)" },
         { status: 400 }
       );
+    }
+
+    const access = await assertCanControlAgent(body.agent_id);
+    if (!access.ok) {
+      return NextResponse.json({ error: access.error }, { status: access.status });
     }
 
     const result = await runBuyerAgent(supabase, body.agent_id, {
