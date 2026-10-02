@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { assertCanControlAgent } from "@/lib/auth";
 
 export async function PATCH(
   request: Request,
@@ -8,19 +9,40 @@ export async function PATCH(
   try {
     const { id } = await params;
     const body = await request.json();
-    const status = body.status as string | undefined;
 
-    if (!status || !["active", "paused", "blocked"].includes(status)) {
-      return NextResponse.json(
-        { error: "status must be active, paused, or blocked" },
-        { status: 400 }
-      );
+    const access = await assertCanControlAgent(id);
+    if (!access.ok) {
+      return NextResponse.json({ error: access.error }, { status: access.status });
+    }
+
+    const status = body.status as string | undefined;
+    const goal = body.goal as string | undefined;
+    const updates: Record<string, unknown> = {
+      updated_at: new Date().toISOString(),
+    };
+
+    if (status) {
+      if (!["active", "paused", "blocked"].includes(status)) {
+        return NextResponse.json(
+          { error: "status must be active, paused, or blocked" },
+          { status: 400 }
+        );
+      }
+      updates.status = status;
+    }
+
+    if (goal !== undefined) {
+      updates.goal = goal;
+    }
+
+    if (Object.keys(updates).length <= 1) {
+      return NextResponse.json({ error: "Nothing to update" }, { status: 400 });
     }
 
     const supabase = createAdminClient();
     const { data, error } = await supabase
       .from("agents")
-      .update({ status })
+      .update(updates)
       .eq("id", id)
       .select()
       .single();
