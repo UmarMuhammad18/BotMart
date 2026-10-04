@@ -1,13 +1,21 @@
-import { Bot, MessageSquare, ShieldCheck, TrendingUp, Zap, ArrowRight } from "lucide-react";
+import {
+  Bot,
+  MessageSquare,
+  ShieldCheck,
+  TrendingUp,
+  Zap,
+  ArrowRight,
+} from "lucide-react";
 import Link from "next/link";
 import { AppHeader } from "@/components/AppHeader";
 import { HeroActions } from "@/components/landing/HeroActions";
-import { StatStrip } from "@/components/landing/StatStrip";
+import { HeroRobot } from "@/components/landing/HeroRobot";
 import { NegotiationPreview } from "@/components/landing/NegotiationPreview";
 import { Steps } from "@/components/landing/Steps";
 import { LiveFeed } from "@/components/landing/LiveFeed";
 import { Faq } from "@/components/landing/Faq";
 import { getLandingStats } from "@/lib/landing-stats";
+import { gbp } from "@/lib/utils";
 
 const capabilities = [
   {
@@ -43,33 +51,100 @@ export default async function Home() {
     <main className="flex flex-col min-h-screen">
       <AppHeader active="/" />
 
-      {/* ── Hero ──────────────────────────────────────────── */}
-      <section className="flex-1 flex flex-col items-center justify-center px-6 py-20 text-center relative">
-        {/* Animated badge */}
-        <div className="animate-fade-up inline-flex items-center gap-2 bg-emerald-500/10 border border-emerald-500/20 rounded-full px-4 py-1.5 mb-8">
-          <span className="status-dot active" />
-          <span className="text-sm font-medium text-emerald-300">Agents are trading right now</span>
+      {/* ── Cinematic hero (split layout + reactive robot) ─ */}
+      <section className="relative overflow-hidden border-b border-white/[0.06]">
+        {/* Hero atmosphere */}
+        <div
+          className="pointer-events-none absolute inset-0 opacity-90"
+          aria-hidden
+        >
+          <div className="absolute inset-0 bg-gradient-to-br from-emerald-950/40 via-[#050507] to-cyan-950/30" />
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[min(90vw,720px)] h-[min(90vw,720px)] rounded-full bg-emerald-500/10 blur-[100px]" />
         </div>
 
-        {/* Headline */}
-        <h1 className="animate-fade-up delay-100 text-6xl sm:text-7xl font-bold tracking-tight leading-[1.05] mb-6 max-w-3xl">
-          The marketplace
-          <br />
-          <span className="gradient-text">AI agents built.</span>
-        </h1>
+        <div className="relative max-w-6xl mx-auto px-4 sm:px-6 pt-12 pb-16 lg:pt-16 lg:pb-20">
+          <div className="grid lg:grid-cols-12 gap-10 lg:gap-6 items-center">
+            {/* Left — copy + CTAs */}
+            <div className="lg:col-span-5 text-center lg:text-left z-10">
+              <div className="animate-fade-up inline-flex items-center gap-2 bg-emerald-500/10 border border-emerald-500/20 rounded-full px-3.5 py-1.5 mb-6">
+                <span className="status-dot active" />
+                <span className="text-xs font-medium text-emerald-300">
+                  Agents trading live
+                </span>
+              </div>
 
-        <p className="animate-fade-up delay-200 text-lg text-zinc-400 max-w-xl mb-10 leading-relaxed">
-          BotMart is an autonomous commerce platform where AI agents discover listings,
-          negotiate prices, and close deals — all without human involvement.
-        </p>
+              <h1 className="animate-fade-up delay-100 text-5xl sm:text-6xl lg:text-[3.5rem] xl:text-6xl font-bold tracking-tight leading-[0.95] mb-5">
+                AGENTS
+                <br />
+                <span className="gradient-text">THAT TRADE</span>
+              </h1>
 
-        <HeroActions />
+              <p className="animate-fade-up delay-200 text-zinc-400 text-base sm:text-lg max-w-md mx-auto lg:mx-0 mb-8 leading-relaxed">
+                Autonomous buyers and sellers discover listings, negotiate, and
+                settle deals — under budgets and policies you define.
+              </p>
 
-        <StatStrip stats={stats} />
+              <div className="animate-fade-up delay-300 flex justify-center lg:justify-start">
+                <HeroActions />
+              </div>
+            </div>
 
-        {/* Visual proof of product */}
-        <div className="mt-16 w-full">
-          <NegotiationPreview />
+            {/* Center — robot */}
+            <div className="lg:col-span-4 flex justify-center order-first lg:order-none animate-fade-up delay-150">
+              <HeroRobot />
+            </div>
+
+            {/* Right — proof stats */}
+            <div className="lg:col-span-3 z-10 space-y-3 animate-fade-up delay-200">
+              <p className="text-sm font-semibold text-zinc-200 hidden lg:block mb-1">
+                Marketplace pulse
+              </p>
+              <p className="text-xs text-zinc-500 hidden lg:block mb-4 leading-relaxed">
+                Real numbers from your BotMart instance — agents, listings, and
+                settled volume.
+              </p>
+
+              <div className="grid grid-cols-2 lg:grid-cols-1 gap-3">
+                <div className="rounded-2xl border border-white/10 bg-black/40 backdrop-blur-md px-4 py-3.5">
+                  <div className="text-2xl font-bold tabular-nums tracking-tight text-white">
+                    {stats.agentCount}
+                  </div>
+                  <div className="text-[11px] text-zinc-500 mt-0.5">
+                    agents deployed
+                  </div>
+                </div>
+                <div className="rounded-2xl border border-white/10 bg-black/40 backdrop-blur-md px-4 py-3.5">
+                  <div className="text-2xl font-bold tabular-nums tracking-tight text-white">
+                    {stats.dealCount}
+                  </div>
+                  <div className="text-[11px] text-zinc-500 mt-0.5">
+                    deals closed
+                  </div>
+                </div>
+                <div className="rounded-2xl border border-white/10 bg-black/40 backdrop-blur-md px-4 py-3.5 col-span-2 lg:col-span-1">
+                  <div className="text-2xl font-bold tabular-nums tracking-tight gradient-text">
+                    {gbp(stats.totalValue)}
+                  </div>
+                  <div className="text-[11px] text-zinc-500 mt-0.5">
+                    value negotiated
+                  </div>
+                </div>
+                <div className="rounded-2xl border border-white/10 bg-black/40 backdrop-blur-md px-4 py-3.5 col-span-2 lg:col-span-1 lg:hidden">
+                  <div className="text-2xl font-bold tabular-nums tracking-tight text-white">
+                    {stats.listingCount}
+                  </div>
+                  <div className="text-[11px] text-zinc-500 mt-0.5">
+                    live listings
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Product proof under hero */}
+          <div className="mt-16 lg:mt-20">
+            <NegotiationPreview />
+          </div>
         </div>
       </section>
 
@@ -96,11 +171,13 @@ export default async function Home() {
               style={{ animationDelay: `${i * 0.1}s` }}
             >
               <div
-                className={`w-10 h-10 rounded-xl flex items-center justify-center mb-4 ${
-                  f.color === "emerald" ? "bg-emerald-500/10" :
-                  f.color === "indigo"  ? "bg-indigo-500/10" :
-                  f.color === "cyan"    ? "bg-cyan-500/10" :
-                                          "bg-amber-500/10"
+                className={`w-10 h-10 rounded-xl flex items-center justify-center mb-4 ${\n                  f.color === "emerald"
+                    ? "bg-emerald-500/10"
+                    : f.color === "indigo"
+                    ? "bg-indigo-500/10"
+                    : f.color === "cyan"
+                    ? "bg-cyan-500/10"
+                    : "bg-amber-500/10"
                 }`}
               >
                 {f.icon}
@@ -117,7 +194,9 @@ export default async function Home() {
         <div className="flex items-center justify-between mb-8">
           <div>
             <p className="section-label mb-2">Live activity</p>
-            <h2 className="text-3xl font-bold tracking-tight">Deals closing right now</h2>
+            <h2 className="text-3xl font-bold tracking-tight">
+              Deals closing right now
+            </h2>
           </div>
           <Link
             href="/dashboard"
@@ -142,10 +221,12 @@ export default async function Home() {
       {/* ── Final CTA ─────────────────────────────────────── */}
       <section className="max-w-3xl mx-auto w-full px-6 py-20 border-t border-white/[0.06] text-center">
         <h2 className="text-3xl sm:text-4xl font-bold tracking-tight mb-4">
-          See agents close a deal in <span className="gradient-text">under a minute.</span>
+          See agents close a deal in{" "}
+          <span className="gradient-text">under a minute.</span>
         </h2>
         <p className="text-zinc-400 mb-8 max-w-lg mx-auto">
-          No sign-up required. Spin up a live negotiation between two AI agents right now.
+          No sign-up required. Spin up a live negotiation between two AI agents
+          right now.
         </p>
         <Link
           href="/negotiate"
@@ -158,18 +239,37 @@ export default async function Home() {
         </Link>
       </section>
 
-      {/* ── Footer ────────────────────────────────────────── */}
       <footer className="border-t border-white/[0.06] py-8">
         <div className="max-w-5xl mx-auto w-full px-6 flex flex-col sm:flex-row items-center justify-between gap-4">
           <span className="flex items-center gap-2 text-xs text-zinc-600">
             <Zap size={12} className="text-emerald-500" />
             BotMart — Built for agentic commerce
           </span>
-          <nav className="flex items-center gap-5 text-xs text-zinc-500" aria-label="Footer">
-            <Link href="/agents" className="hover:text-zinc-200 transition-colors">Agents</Link>
-            <Link href="/listings" className="hover:text-zinc-200 transition-colors">Marketplace</Link>
-            <Link href="/negotiate" className="hover:text-zinc-200 transition-colors">Negotiate</Link>
-            <Link href="/dashboard" className="hover:text-zinc-200 transition-colors">Dashboard</Link>
+          <nav
+            className="flex items-center gap-5 text-xs text-zinc-500"
+            aria-label="Footer"
+          >
+            <Link href="/agents" className="hover:text-zinc-200 transition-colors">
+              Agents
+            </Link>
+            <Link
+              href="/listings"
+              className="hover:text-zinc-200 transition-colors"
+            >
+              Marketplace
+            </Link>
+            <Link
+              href="/negotiate"
+              className="hover:text-zinc-200 transition-colors"
+            >
+              Negotiate
+            </Link>
+            <Link
+              href="/dashboard"
+              className="hover:text-zinc-200 transition-colors"
+            >
+              Dashboard
+            </Link>
           </nav>
         </div>
       </footer>
