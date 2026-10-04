@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
-import { Bot, Zap, LogIn, LogOut, User } from "lucide-react";
+import { Bot, Zap, LogIn, LogOut, User, Menu, X } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 
 const links = [
@@ -20,6 +20,7 @@ export function AppHeader({ active }: { active?: string }) {
   const currentPath = active ?? pathname;
   const [user, setUser] = useState<SessionUser>(null);
   const [loading, setLoading] = useState(true);
+  const [open, setOpen] = useState(false);
 
   useEffect(() => {
     let mounted = true;
@@ -56,6 +57,10 @@ export function AppHeader({ active }: { active?: string }) {
     };
   }, []);
 
+  useEffect(() => {
+    setOpen(false);
+  }, [pathname]);
+
   async function signOut() {
     const supabase = createClient();
     await supabase.auth.signOut();
@@ -65,8 +70,8 @@ export function AppHeader({ active }: { active?: string }) {
 
   return (
     <header className="sticky top-0 z-50 border-b border-white/[0.07] bg-[#050507]/80 backdrop-blur-xl">
-      <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between gap-6">
-        <Link href="/" className="flex items-center gap-2.5 group shrink-0">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 h-14 sm:h-16 flex items-center justify-between gap-3">
+        <Link href="/" className="flex items-center gap-2 group shrink-0">
           <div className="agent-avatar w-8 h-8 rounded-[10px] bg-gradient-to-br from-emerald-500 to-cyan-500 flex items-center justify-center shadow-lg shadow-emerald-500/25">
             <Bot size={16} className="text-white" />
           </div>
@@ -79,14 +84,18 @@ export function AppHeader({ active }: { active?: string }) {
           </span>
         </Link>
 
-        <nav className="flex items-center gap-1" aria-label="Main navigation">
+        {/* Desktop nav */}
+        <nav
+          className="hidden md:flex items-center gap-1"
+          aria-label="Main navigation"
+        >
           {links.map((link) => {
             const isActive = currentPath === link.href;
             return (
               <Link
                 key={link.href}
                 href={link.href}
-                className={`relative px-3.5 py-1.5 rounded-lg text-sm font-medium transition-all duration-200 ${
+                className={`relative px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-200 ${
                   isActive
                     ? "text-white"
                     : "text-zinc-500 hover:text-zinc-200"
@@ -109,7 +118,7 @@ export function AppHeader({ active }: { active?: string }) {
             <span className="text-xs text-zinc-600 px-2">…</span>
           ) : user ? (
             <>
-              <span className="hidden md:inline-flex items-center gap-1.5 text-xs text-zinc-400 max-w-[160px] truncate">
+              <span className="hidden lg:inline-flex items-center gap-1.5 text-xs text-zinc-400 max-w-[140px] truncate">
                 <User size={12} />
                 {user.email}
               </span>
@@ -123,13 +132,57 @@ export function AppHeader({ active }: { active?: string }) {
               </button>
             </>
           ) : (
-            <Link href="/login" className="btn-secondary text-xs px-3 py-1.5">
+            <Link
+              href="/login"
+              className="btn-secondary text-xs px-3 py-1.5 hidden sm:inline-flex"
+            >
               <LogIn size={13} />
               Sign in
             </Link>
           )}
+
+          <button
+            type="button"
+            className="md:hidden btn-ghost p-2"
+            aria-label={open ? "Close menu" : "Open menu"}
+            aria-expanded={open}
+            onClick={() => setOpen((v) => !v)}
+          >
+            {open ? <X size={18} /> : <Menu size={18} />}
+          </button>
         </div>
       </div>
+
+      {/* Mobile menu */}
+      {open && (
+        <div className="md:hidden border-t border-white/[0.06] bg-[#050507]/95 backdrop-blur-xl px-4 py-3 space-y-1">
+          {links.map((link) => {
+            const isActive = currentPath === link.href;
+            return (
+              <Link
+                key={link.href}
+                href={link.href}
+                className={`block px-3 py-2.5 rounded-lg text-sm font-medium ${
+                  isActive
+                    ? "bg-white/[0.08] text-white"
+                    : "text-zinc-400 hover:text-white hover:bg-white/[0.04]"
+                }`}
+              >
+                {link.label}
+              </Link>
+            );
+          })}
+          {!user && (
+            <Link
+              href="/login"
+              className="flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm text-emerald-400"
+            >
+              <LogIn size={14} />
+              Sign in
+            </Link>
+          )}
+        </div>
+      )}
     </header>
   );
 }
