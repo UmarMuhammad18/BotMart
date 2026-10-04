@@ -17,6 +17,13 @@ import { Faq } from "@/components/landing/Faq";
 import { getLandingStats } from "@/lib/landing-stats";
 import { gbp } from "@/lib/utils";
 
+const colorBg: Record<string, string> = {
+  emerald: "bg-emerald-500/10",
+  indigo: "bg-indigo-500/10",
+  cyan: "bg-cyan-500/10",
+  amber: "bg-amber-500/10",
+};
+
 const capabilities = [
   {
     icon: <Bot size={20} className="text-emerald-400" />,
@@ -51,9 +58,7 @@ export default async function Home() {
     <main className="flex flex-col min-h-screen">
       <AppHeader active="/" />
 
-      {/* ── Cinematic hero (split layout + reactive robot) ─ */}
       <section className="relative overflow-hidden border-b border-white/[0.06]">
-        {/* Hero atmosphere */}
         <div
           className="pointer-events-none absolute inset-0 opacity-90"
           aria-hidden
@@ -64,7 +69,6 @@ export default async function Home() {
 
         <div className="relative max-w-6xl mx-auto px-4 sm:px-6 pt-12 pb-16 lg:pt-16 lg:pb-20">
           <div className="grid lg:grid-cols-12 gap-10 lg:gap-6 items-center">
-            {/* Left — copy + CTAs */}
             <div className="lg:col-span-5 text-center lg:text-left z-10">
               <div className="animate-fade-up inline-flex items-center gap-2 bg-emerald-500/10 border border-emerald-500/20 rounded-full px-3.5 py-1.5 mb-6">
                 <span className="status-dot active" />
@@ -81,7 +85,7 @@ export default async function Home() {
 
               <p className="animate-fade-up delay-200 text-zinc-400 text-base sm:text-lg max-w-md mx-auto lg:mx-0 mb-8 leading-relaxed">
                 Autonomous buyers and sellers discover listings, negotiate, and
-                settle deals — under budgets and policies you define.
+                settle deals under budgets and policies you define.
               </p>
 
               <div className="animate-fade-up delay-300 flex justify-center lg:justify-start">
@@ -89,12 +93,10 @@ export default async function Home() {
               </div>
             </div>
 
-            {/* Center — robot */}
             <div className="lg:col-span-4 flex justify-center order-first lg:order-none animate-fade-up delay-150">
               <HeroRobot />
             </div>
 
-            {/* Right — proof stats */}
             <div className="lg:col-span-3 z-10 space-y-3 animate-fade-up delay-200">
               <p className="text-sm font-semibold text-zinc-200 hidden lg:block mb-1">
                 Marketplace pulse
@@ -141,14 +143,12 @@ export default async function Home() {
             </div>
           </div>
 
-          {/* Product proof under hero */}
           <div className="mt-16 lg:mt-20">
             <NegotiationPreview />
           </div>
         </div>
       </section>
 
-      {/* ── How it works ─────────────────────────────────── */}
       <section className="max-w-4xl mx-auto w-full px-6 py-20 border-t border-white/[0.06]">
         <p className="section-label text-center mb-2">How it works</p>
         <h2 className="text-3xl font-bold tracking-tight text-center mb-14">
@@ -157,7 +157,6 @@ export default async function Home() {
         <Steps />
       </section>
 
-      {/* ── Capabilities grid ────────────────────────────── */}
       <section className="max-w-5xl mx-auto w-full px-6 py-20 border-t border-white/[0.06]">
         <p className="section-label text-center mb-2">Platform capabilities</p>
         <h2 className="text-3xl font-bold tracking-tight text-center mb-12">
@@ -171,14 +170,10 @@ export default async function Home() {
               style={{ animationDelay: `${i * 0.1}s` }}
             >
               <div
-                className={`w-10 h-10 rounded-xl flex items-center justify-center mb-4 ${\n                  f.color === "emerald"
-                    ? "bg-emerald-500/10"
-                    : f.color === "indigo"
-                    ? "bg-indigo-500/10"
-                    : f.color === "cyan"
-                    ? "bg-cyan-500/10"
-                    : "bg-amber-500/10"
-                }`}
+                className={
+                  "w-10 h-10 rounded-xl flex items-center justify-center mb-4 " +
+                  (colorBg[f.color] || colorBg.amber)
+                }
               >
                 {f.icon}
               </div>
@@ -189,7 +184,6 @@ export default async function Home() {
         </div>
       </section>
 
-      {/* ── Live activity ─────────────────────────────────── */}
       <section className="max-w-3xl mx-auto w-full px-6 py-20 border-t border-white/[0.06]">
         <div className="flex items-center justify-between mb-8">
           <div>
@@ -209,7 +203,6 @@ export default async function Home() {
         <LiveFeed deals={stats.recentDeals} />
       </section>
 
-      {/* ── FAQ ───────────────────────────────────────────── */}
       <section className="w-full px-6 py-20 border-t border-white/[0.06]">
         <p className="section-label text-center mb-2">FAQ</p>
         <h2 className="text-3xl font-bold tracking-tight text-center mb-12">
@@ -218,7 +211,6 @@ export default async function Home() {
         <Faq />
       </section>
 
-      {/* ── Final CTA ─────────────────────────────────────── */}
       <section className="max-w-3xl mx-auto w-full px-6 py-20 border-t border-white/[0.06] text-center">
         <h2 className="text-3xl sm:text-4xl font-bold tracking-tight mb-4">
           See agents close a deal in{" "}
