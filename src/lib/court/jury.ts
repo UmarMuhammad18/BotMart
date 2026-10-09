@@ -1,5 +1,5 @@
 import { JURY_ROLES, ROLE_BY_ID, rolePromptBias } from "@/lib/agents/roles";
-import { callGrokJson } from "@/lib/grok";
+import { grokJson } from "@/lib/grok";
 import type {
   AgentRole,
   CourtSession,
@@ -29,7 +29,6 @@ function clamp(n: number, lo: number, hi: number) {
   return Math.max(lo, Math.min(hi, n));
 }
 
-/** Deterministic secret ballot when Grok is unavailable. */
 function ruleBallot(role: AgentRole, input: CourtInput): JurorBallot {
   const offer = input.current_offer ?? input.listing_price;
   const remaining = input.buyer_budget - input.buyer_spent;
@@ -112,7 +111,7 @@ function ruleBallot(role: AgentRole, input: CourtInput): JurorBallot {
       break;
     }
     case "auditor":
-default: {
+    default: {
       if (offer >= min && offer <= max && offer <= remaining) {
         vote = "accept";
         reason = "Within both parties' policy bands and budget.";
@@ -139,7 +138,7 @@ default: {
   };
 }
 
-async function grokBallot(
+async function aiBallot(
   role: AgentRole,
   input: CourtInput
 ): Promise<JurorBallot | null> {
@@ -149,38 +148,32 @@ async function grokBallot(
     .map((m) => `${m.from}: ${m.type} ${m.price ?? ""} — ${m.message}`)
     .join("\n");
 
-  try {
-    const result = await callGrokJson<{
-      vote: JuryVote;
-      confidence: number;
-      reason: string;
-      suggested_price?: number;
-    }>({
-      system: `You are a secret-ballot juror (${meta.label}) in BotMart court. ${rolePromptBias(role)}
+  const result = await grokJson<{
+    vote: JuryVote;
+    confidence: number;
+    reason: string;
+    suggested_price?: number;
+  }>(
+    `You are a secret-ballot juror (${meta.label}) in BotMart court. ${rolePromptBias(role)}
 Reply JSON only: {"vote":"accept"|"reject"|"counter","confidence":0-1,"reason":"...","suggested_price":number?}`,
-      user: `Listing: ${input.listing_title} @ £${input.listing_price} (${input.category || "general"})
+    `Listing: ${input.listing_title} @ £${input.listing_price} (${input.category || "general"})
 Current offer: ${input.current_offer ?? "none"}
 Buyer ${input.buyer_name}: budget £${input.buyer_budget}, spent £${input.buyer_spent}, max ${input.buyer_max ?? "n/a"}, rep ${input.buyer_reputation}
 Seller ${input.seller_name}: min ${input.seller_min ?? "n/a"}, rep ${input.seller_reputation}
 Recent turns:
-${transcript || "(none)"}`,
-    });
+${transcript || "(none)"}`
+  );
 
-    if (!result || !result.vote) return null;
-    return {
-      role,
-      name: meta.label,
-      vote: result.vote,
-      confidence: clamp(Number(result.confidence) || 0.5, 0, 1),
-      reason: String(result.reason || "No reason provided").slice(0, 280),
-      suggested_price:
-        result.suggested_price != null
-          ? Number(result.suggested_price)
-          : undefined,
-    };
-  } catch {
-    return null;
-  }
+  if (!result || !result.vote) return null;
+  return {
+    role,
+    name: meta.label,
+    vote: result.vote,
+    confidence: clamp(Number(result.confidence) || 0.5, 0, 1),
+    reason: String(result.reason || "No reason provided").slice(0, 280),
+    suggested_price:
+      result.suggested_price != null ? Number(result.suggested_price) : undefined,
+  };
 }
 
 function judgeFromBallots(
@@ -216,12 +209,11 @@ function judgeFromBallots(
   return { judge_verdict, judge_reason, recommended_price };
 }
 
-/** Convene a multi-agent court over a live negotiation. */
 export async function conveneCourt(input: CourtInput): Promise<CourtSession> {
   const ballots: JurorBallot[] = [];
 
   for (const role of JURY_ROLES) {
-    const ai = await grokBallot(role, input);
+    const ai = await aiBallot(role, input);
     ballots.push(ai ?? ruleBallot(role, input));
   }
 
