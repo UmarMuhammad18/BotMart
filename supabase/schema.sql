@@ -18,6 +18,9 @@ create table if not exists agents (
   memory jsonb default '[]',
   trades_completed integer default 0,
   trades_failed integer default 0,
+  world_x numeric,
+  world_z numeric,
+  world_activity text,
   created_at timestamptz default now(),
   updated_at timestamptz default now()
 );
@@ -27,6 +30,9 @@ alter table agents add column if not exists memory jsonb default '[]';
 alter table agents add column if not exists trades_completed integer default 0;
 alter table agents add column if not exists trades_failed integer default 0;
 alter table agents add column if not exists updated_at timestamptz default now();
+alter table agents add column if not exists world_x numeric;
+alter table agents add column if not exists world_z numeric;
+alter table agents add column if not exists world_activity text;
 
 -- ─── Listings ─────────────────────────────────────────────
 create table if not exists listings (
@@ -39,8 +45,13 @@ create table if not exists listings (
   stock integer default 1,
   terms jsonb default '{}',
   status text default 'active',
+  world_x numeric,
+  world_z numeric,
   created_at timestamptz default now()
 );
+
+alter table listings add column if not exists world_x numeric;
+alter table listings add column if not exists world_z numeric;
 
 -- ─── Negotiations ─────────────────────────────────────────
 create table if not exists negotiations (

@@ -4,6 +4,7 @@ export const SEED_AGENTS = [
     description: "Aggressive buyer. Opens low, walks if the deal is not cheap.",
     budget: 500,
     policy: {
+      role: "buyer",
       max_price: 90,
       categories: ["electronics", "software"],
       style: "thrifty",
@@ -14,6 +15,7 @@ export const SEED_AGENTS = [
     description: "High-budget buyer that values speed and quality over price.",
     budget: 2500,
     policy: {
+      role: "buyer",
       max_price: 800,
       categories: ["electronics", "data", "compute"],
       style: "impatient",
@@ -23,13 +25,45 @@ export const SEED_AGENTS = [
     name: "GadgetSeller",
     description: "Sells electronics. Flexible on price if reputation can grow.",
     budget: 1000,
-    policy: { min_price: 40, categories: ["electronics"], style: "friendly" },
+    policy: {
+      role: "seller",
+      min_price: 40,
+      categories: ["electronics"],
+      style: "friendly",
+    },
   },
   {
     name: "ThriftMerchant",
     description: "Tight seller. Protects margin and rarely goes below 90%.",
     budget: 800,
-    policy: { min_price: 70, categories: ["software", "data"], style: "firm" },
+    policy: {
+      role: "seller",
+      min_price: 70,
+      categories: ["software", "data"],
+      style: "firm",
+    },
+  },
+  {
+    name: "ScoutNova",
+    description: "Scout agent that hunts undervalued listings.",
+    budget: 200,
+    policy: {
+      role: "scout",
+      categories: ["electronics", "software", "data", "compute"],
+      style: "curious",
+    },
+  },
+  {
+    name: "TreasurerPrime",
+    description: "Hard budget guard for the swarm.",
+    budget: 50,
+    policy: { role: "treasurer", max_price: 100, style: "strict" },
+  },
+  {
+    name: "AuditorLex",
+    description: "Fairness and policy compliance reviewer.",
+    budget: 100,
+    policy: { role: "auditor", style: "precise" },
   },
 ];
 
