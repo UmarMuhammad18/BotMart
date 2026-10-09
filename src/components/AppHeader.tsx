@@ -10,6 +10,8 @@ const links = [
   { href: "/agents", label: "Agents" },
   { href: "/listings", label: "Marketplace" },
   { href: "/negotiate", label: "Negotiate" },
+  { href: "/world", label: "World" },
+  { href: "/court", label: "Court" },
   { href: "/dashboard", label: "Dashboard" },
 ];
 
@@ -84,9 +86,8 @@ export function AppHeader({ active }: { active?: string }) {
           </span>
         </Link>
 
-        {/* Desktop nav */}
         <nav
-          className="hidden md:flex items-center gap-1"
+          className="hidden md:flex items-center gap-0.5 lg:gap-1"
           aria-label="Main navigation"
         >
           {links.map((link) => {
@@ -95,7 +96,7 @@ export function AppHeader({ active }: { active?: string }) {
               <Link
                 key={link.href}
                 href={link.href}
-                className={`relative px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-200 ${
+                className={`relative px-2 lg:px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-200 ${
                   isActive
                     ? "text-white"
                     : "text-zinc-500 hover:text-zinc-200"
@@ -153,7 +154,6 @@ export function AppHeader({ active }: { active?: string }) {
         </div>
       </div>
 
-      {/* Mobile menu */}
       {open && (
         <div className="md:hidden border-t border-white/[0.06] bg-[#050507]/95 backdrop-blur-xl px-4 py-3 space-y-1">
           {links.map((link) => {
