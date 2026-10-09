@@ -12,9 +12,16 @@ function remaining(ctx: AgentContext) {
   return Number(ctx.budget) - Number(ctx.spent);
 }
 
-export async function decideAgentTurn(ctx: AgentContext): Promise<NegotiationMessage> {
-  const grokMove = await grokJson<GrokMove>(
-    `You are a ${ctx.role} commerce agent on BotMart. Reply with STRICT JSON only:
+/**
+ * Prefer AI move; on any failure (bad key, timeout, bad JSON) use rule engine.
+ * Never throws.
+ */
+export async function decideAgentTurn(
+  ctx: AgentContext
+): Promise<NegotiationMessage> {
+  try {
+    const grokMove = await grokJson<GrokMove>(
+      `You are a ${ctx.role} commerce agent on BotMart. Reply with STRICT JSON only:
 {"type":"offer"|"counter"|"accept"|"reject"|"message","price":number|null,"message":string}
 Rules:
 - Stay in character. Be concise.
@@ -24,7 +31,7 @@ Rules:
 - Use accept only when the last price is genuinely good.
 - Use reject to walk away.
 - Prefer counter over endless chat.`,
-    `Agent: ${ctx.name}
+      `Agent: ${ctx.name}
 Role: ${ctx.role}
 Budget: ${ctx.budget}
 Spent: ${ctx.spent}
@@ -35,38 +42,49 @@ Asking price: ${ctx.listingPrice}
 Current offer: ${ctx.currentOffer}
 History: ${JSON.stringify(ctx.messages)}
 Decide the next action.`
-  );
+    );
 
-  if (grokMove?.type && grokMove.message) {
-    const type = ["offer", "counter", "accept", "reject", "message"].includes(
-      String(grokMove.type)
-    )
-      ? (grokMove.type as NegotiationMessage["type"])
-      : "message";
+    if (grokMove?.type && grokMove.message) {
+      const type = [
+        "offer",
+        "counter",
+        "accept",
+        "reject",
+        "message",
+      ].includes(String(grokMove.type))
+        ? (grokMove.type as NegotiationMessage["type"])
+        : "message";
 
-    let price =
-      grokMove.price === null || grokMove.price === undefined
-        ? undefined
-        : Number(grokMove.price);
+      let price =
+        grokMove.price === null || grokMove.price === undefined
+          ? undefined
+          : Number(grokMove.price);
 
-    if (ctx.role === "buyer" && price !== undefined) {
-      price = Math.min(price, remaining(ctx));
-      if (ctx.policy?.max_price) price = Math.min(price, ctx.policy.max_price);
-    }
+      if (ctx.role === "buyer" && price !== undefined) {
+        price = Math.min(price, remaining(ctx));
+        if (ctx.policy?.max_price) price = Math.min(price, Number(ctx.policy.max_price));
+      }
 
-    if (ctx.role === "seller" && type === "accept" && ctx.policy?.min_price && price) {
-      if (price < ctx.policy.min_price) {
+      if (
+        ctx.role === "seller" &&
+        type === "accept" &&
+        ctx.policy?.min_price &&
+        price != null &&
+        price < Number(ctx.policy.min_price)
+      ) {
         return decideNextAction(ctx);
       }
-    }
 
-    return {
-      from: ctx.role,
-      type,
-      price,
-      message: String(grokMove.message),
-      timestamp: new Date().toISOString(),
-    };
+      return {
+        from: ctx.role,
+        type,
+        price,
+        message: String(grokMove.message),
+        timestamp: new Date().toISOString(),
+      };
+    }
+  } catch (err) {
+    console.error("[brain] AI path failed, using rules", err);
   }
 
   return decideNextAction(ctx);

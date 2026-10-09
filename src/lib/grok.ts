@@ -2,50 +2,59 @@
  * AI wrapper — tries providers in priority order:
  *  1. xAI Grok    (XAI_API_KEY)
  *  2. OpenAI      (OPENAI_API_KEY)
- *  3. Rule-based  (always available, no key needed)
+ *  3. OpenRouter  (OPENROUTER_API_KEY)
+ *  4. Rule-based  (always available — callers handle null)
+ *
+ * Invalid keys (401) or network errors never throw; we just try the next provider.
  */
 
-/* ── Provider configs ─────────────────────────────────────── */
 type Provider = {
   name: string;
   url: string;
   key: string;
   model: string;
+  extraHeaders?: Record<string, string>;
 };
 
-function getProvider(): Provider | null {
+function listProviders(): Provider[] {
+  const out: Provider[] = [];
+
   if (process.env.XAI_API_KEY) {
-    return {
+    out.push({
       name: "xAI Grok",
       url: "https://api.x.ai/v1/chat/completions",
       key: process.env.XAI_API_KEY,
       model: process.env.GROK_MODEL || "grok-3",
-    };
+    });
   }
   if (process.env.OPENAI_API_KEY) {
-    return {
+    out.push({
       name: "OpenAI",
       url: "https://api.openai.com/v1/chat/completions",
       key: process.env.OPENAI_API_KEY,
       model: process.env.OPENAI_MODEL || "gpt-4o-mini",
-    };
+    });
   }
   if (process.env.OPENROUTER_API_KEY) {
-    return {
+    out.push({
       name: "OpenRouter",
       url: "https://openrouter.ai/api/v1/chat/completions",
       key: process.env.OPENROUTER_API_KEY,
       model: process.env.OPENROUTER_MODEL || "mistralai/mistral-7b-instruct:free",
-    };
+      extraHeaders: {
+        "HTTP-Referer": "https://bot-mart.vercel.app",
+        "X-Title": "BotMart",
+      },
+    });
   }
-  return null;
+
+  return out;
 }
 
 export function aiConfigured() {
-  return getProvider() !== null;
+  return listProviders().length > 0;
 }
 
-/* ── JSON extraction ──────────────────────────────────────── */
 function extractJson(text: string): unknown | null {
   const trimmed = text.trim();
   const fenced = trimmed.match(/```(?:json)?\s*([\s\S]*?)```/i);
@@ -60,27 +69,18 @@ function extractJson(text: string): unknown | null {
   }
 }
 
-/* ── Main call ────────────────────────────────────────────── */
-export async function grokJson<T>(
+async function callProvider(
+  provider: Provider,
   system: string,
   user: string
-): Promise<T | null> {
-  const provider = getProvider();
-  if (!provider) return null;
-
+): Promise<unknown | null> {
   try {
     const res = await fetch(provider.url, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${provider.key}`,
-        // OpenRouter requires these headers
-        ...(process.env.OPENROUTER_API_KEY
-          ? {
-              "HTTP-Referer": "https://botmart.app",
-              "X-Title": "BotMart",
-            }
-          : {}),
+        ...(provider.extraHeaders || {}),
       },
       body: JSON.stringify({
         model: provider.model,
@@ -94,8 +94,12 @@ export async function grokJson<T>(
     });
 
     if (!res.ok) {
-      const err = await res.text();
-      console.error(`[${provider.name}] error`, res.status, err);
+      const err = await res.text().catch(() => "");
+      // 401 = bad key — log once, caller will try next / fall back to rules
+      console.error(
+        `[${provider.name}] error ${res.status}`,
+        err.slice(0, 200)
+      );
       return null;
     }
 
@@ -103,9 +107,25 @@ export async function grokJson<T>(
     const content: string = data.choices?.[0]?.message?.content || "";
     const parsed = extractJson(content);
     if (!parsed || typeof parsed !== "object") return null;
-    return parsed as T;
+    return parsed;
   } catch (err) {
     console.error(`[${provider.name}] request failed`, err);
     return null;
   }
+}
+
+/** Returns parsed JSON from the first working provider, or null. Never throws. */
+export async function grokJson<T>(
+  system: string,
+  user: string
+): Promise<T | null> {
+  const providers = listProviders();
+  if (providers.length === 0) return null;
+
+  for (const provider of providers) {
+    const parsed = await callProvider(provider, system, user);
+    if (parsed) return parsed as T;
+  }
+
+  return null;
 }
