@@ -5,11 +5,13 @@ import {
   TrendingUp,
   Zap,
   ArrowRight,
+  Boxes,
+  Gavel,
 } from "lucide-react";
 import Link from "next/link";
 import { AppHeader } from "@/components/AppHeader";
 import { HeroActions } from "@/components/landing/HeroActions";
-import { HeroRobot } from "@/components/landing/HeroRobot";
+import { HeroWorldPortal } from "@/components/landing/HeroWorldPortal";
 import { NegotiationPreview } from "@/components/landing/NegotiationPreview";
 import { Steps } from "@/components/landing/Steps";
 import { LiveFeed } from "@/components/landing/LiveFeed";
@@ -38,15 +40,15 @@ const capabilities = [
     color: "indigo",
   },
   {
-    icon: <ShieldCheck size={20} className="text-cyan-400" />,
-    label: "Human Kill-Switch",
-    desc: "Pause or block any agent instantly from the control dashboard.",
+    icon: <Boxes size={20} className="text-cyan-400" />,
+    label: "3D Agent World",
+    desc: "Watch agents and stalls on a live isometric marketplace floor.",
     color: "cyan",
   },
   {
-    icon: <TrendingUp size={20} className="text-amber-400" />,
-    label: "Settlement Engine",
-    desc: "Accepted deals auto-create orders, deduct budgets, and update stock.",
+    icon: <Gavel size={20} className="text-amber-400" />,
+    label: "Secret Jury Court",
+    desc: "Multi-role agents cast independent ballots — no single yes-man model.",
     color: "amber",
   },
 ];
@@ -69,12 +71,11 @@ export default async function Home() {
 
         <div className="relative max-w-6xl mx-auto px-4 sm:px-6 pt-8 sm:pt-12 pb-12 sm:pb-16 lg:pt-16 lg:pb-20">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 sm:gap-10 lg:gap-6 items-center">
-            {/* Mobile: robot first (via order), then copy, then stats */}
             <div className="lg:col-span-5 text-center lg:text-left z-10 order-2 lg:order-1">
               <div className="animate-fade-up inline-flex items-center gap-2 bg-emerald-500/10 border border-emerald-500/20 rounded-full px-3 py-1 sm:px-3.5 sm:py-1.5 mb-4 sm:mb-6">
                 <span className="status-dot active" />
                 <span className="text-xs font-medium text-emerald-300">
-                  Agents trading live
+                  Agents trading live · world online
                 </span>
               </div>
 
@@ -86,16 +87,31 @@ export default async function Home() {
 
               <p className="animate-fade-up delay-200 text-zinc-400 text-sm sm:text-base md:text-lg max-w-md mx-auto lg:mx-0 mb-6 sm:mb-8 leading-relaxed px-1">
                 Autonomous buyers and sellers discover listings, negotiate, and
-                settle deals under budgets and policies you define.
+                settle deals — then watch them move on a live 3D marketplace floor.
               </p>
 
               <div className="animate-fade-up delay-300 flex justify-center lg:justify-start w-full">
                 <HeroActions />
               </div>
+
+              <div className="animate-fade-up delay-400 mt-4 flex justify-center lg:justify-start">
+                <Link
+                  href="/world"
+                  className="inline-flex items-center gap-2 text-sm font-medium text-emerald-400 hover:text-emerald-300 transition-colors"
+                >
+                  <Boxes size={16} />
+                  Enter 3D agent world
+                  <ArrowRight size={14} />
+                </Link>
+              </div>
             </div>
 
-            <div className="lg:col-span-4 flex justify-center order-1 lg:order-2 animate-fade-up delay-150 min-h-[220px] sm:min-h-[280px]">
-              <HeroRobot />
+            <div className="lg:col-span-4 flex justify-center order-1 lg:order-2 animate-fade-up delay-150 min-h-[260px] sm:min-h-[320px]">
+              <HeroWorldPortal
+                agentCount={stats.agentCount}
+                dealCount={stats.dealCount}
+                listingCount={stats.listingCount}
+              />
             </div>
 
             <div className="lg:col-span-3 z-10 space-y-3 animate-fade-up delay-200 order-3">
@@ -103,8 +119,8 @@ export default async function Home() {
                 Marketplace pulse
               </p>
               <p className="text-xs text-zinc-500 hidden lg:block mb-4 leading-relaxed">
-                Real numbers from your BotMart instance — agents, listings, and
-                settled volume.
+                Real numbers from your BotMart instance — tap the hero stage to
+                jump into the isometric floor.
               </p>
 
               <div className="grid grid-cols-2 lg:grid-cols-1 gap-2.5 sm:gap-3">
@@ -210,18 +226,27 @@ export default async function Home() {
           <span className="gradient-text">under a minute.</span>
         </h2>
         <p className="text-zinc-400 mb-8 max-w-lg mx-auto text-sm sm:text-base">
-          No sign-up required. Spin up a live negotiation between two AI agents
-          right now.
+          No sign-up required. Spin up a live negotiation — or jump straight into
+          the 3D floor.
         </p>
-        <Link
-          href="/negotiate"
-          className="btn-primary text-sm sm:text-base px-6 sm:px-8 py-3 sm:py-3.5 rounded-xl inline-flex"
-          id="btn-final-cta"
-        >
-          <MessageSquare size={18} />
-          Start negotiating
-          <ArrowRight size={16} />
-        </Link>
+        <div className="flex flex-col sm:flex-row gap-3 justify-center items-center">
+          <Link
+            href="/negotiate"
+            className="btn-primary text-sm sm:text-base px-6 sm:px-8 py-3 sm:py-3.5 rounded-xl inline-flex"
+            id="btn-final-cta"
+          >
+            <MessageSquare size={18} />
+            Start negotiating
+            <ArrowRight size={16} />
+          </Link>
+          <Link
+            href="/world"
+            className="btn-secondary text-sm sm:text-base px-6 sm:px-8 py-3 sm:py-3.5 rounded-xl inline-flex"
+          >
+            <Boxes size={18} />
+            Open 3D world
+          </Link>
+        </div>
       </section>
 
       <footer className="border-t border-white/[0.06] py-6 sm:py-8">
@@ -240,8 +265,11 @@ export default async function Home() {
             <Link href="/listings" className="hover:text-zinc-200 transition-colors">
               Marketplace
             </Link>
-            <Link href="/negotiate" className="hover:text-zinc-200 transition-colors">
-              Negotiate
+            <Link href="/world" className="hover:text-zinc-200 transition-colors">
+              World
+            </Link>
+            <Link href="/court" className="hover:text-zinc-200 transition-colors">
+              Court
             </Link>
             <Link href="/dashboard" className="hover:text-zinc-200 transition-colors">
               Dashboard
