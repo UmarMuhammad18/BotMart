@@ -1,0 +1,2 @@
+2026-10-09-force-redeploy-v2
+Includes: /world, /court, HeroWorldPortal, AI cascade, schema-safe negotiations
