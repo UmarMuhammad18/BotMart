@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { conveneCourt } from "@/lib/court/jury";
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { logDecision } from "@/lib/agents/reputation";
 
 export async function POST(req: NextRequest) {
@@ -14,7 +14,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const supabase = await createClient();
+    const supabase = createAdminClient();
     const { data: neg, error } = await supabase
       .from("negotiations")
       .select(
@@ -50,7 +50,6 @@ export async function POST(req: NextRequest) {
       messages: neg.messages || [],
     });
 
-    // Log court outcome for observability / world feed
     if (neg.buyer?.id) {
       await logDecision(supabase, {
         agentId: neg.buyer.id,

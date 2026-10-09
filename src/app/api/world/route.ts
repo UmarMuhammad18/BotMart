@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
 import { buildWorldSnapshot } from "@/lib/world/layout";
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 export async function GET() {
   try {
-    const supabase = await createClient();
+    const supabase = createAdminClient();
 
     const [agentsRes, listingsRes, negRes, decisionsRes] = await Promise.all([
       supabase.from("agents").select("*").order("created_at", { ascending: true }),
