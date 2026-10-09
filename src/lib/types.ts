@@ -8,11 +8,35 @@ export type NegotiationStatus =
   | "escalated";
 export type OrderStatus = "pending" | "paid" | "fulfilled" | "cancelled";
 
+/** Specialized roles beyond basic buyer/seller commerce. */
+export type AgentRole =
+  | "buyer"
+  | "seller"
+  | "scout"
+  | "negotiator"
+  | "auditor"
+  | "treasurer"
+  | "juror_budget"
+  | "juror_quality"
+  | "juror_market"
+  | "juror_risk"
+  | "judge";
+
+export type WorldActivity =
+  | "idle"
+  | "scouting"
+  | "negotiating"
+  | "settling"
+  | "jury"
+  | "blocked";
+
 export type AgentPolicy = {
   max_price?: number;
   min_price?: number;
   categories?: string[];
   style?: string;
+  /** Primary behavioral role in the marketplace. */
+  role?: AgentRole;
 };
 
 export type AgentMemoryNote = {
@@ -35,6 +59,10 @@ export type Agent = {
   memory: AgentMemoryNote[];
   trades_completed: number;
   trades_failed: number;
+  /** Optional world-map coordinates (isometric floor). */
+  world_x?: number | null;
+  world_z?: number | null;
+  world_activity?: WorldActivity | null;
   created_at: string;
   updated_at?: string;
 };
@@ -49,6 +77,8 @@ export type Listing = {
   stock: number;
   terms: Record<string, unknown>;
   status: ListingStatus;
+  world_x?: number | null;
+  world_z?: number | null;
   created_at: string;
 };
 
@@ -98,4 +128,71 @@ export type AgentDecision = {
   payload: Record<string, unknown>;
   source: "rules" | "grok";
   created_at: string;
+};
+
+/** Court / jury types */
+export type JuryVote = "accept" | "reject" | "counter";
+
+export type JurorBallot = {
+  role: AgentRole;
+  name: string;
+  vote: JuryVote;
+  confidence: number;
+  reason: string;
+  suggested_price?: number;
+};
+
+export type CourtSession = {
+  negotiation_id: string;
+  listing_title: string;
+  listing_price: number;
+  current_offer: number | null;
+  ballots: JurorBallot[];
+  accept_count: number;
+  reject_count: number;
+  counter_count: number;
+  judge_verdict: JuryVote;
+  judge_reason: string;
+  recommended_price: number | null;
+  created_at: string;
+};
+
+/** Snapshot for the 3D world page */
+export type WorldAgent = {
+  id: string;
+  name: string;
+  role: AgentRole;
+  status: AgentStatus;
+  activity: WorldActivity;
+  x: number;
+  z: number;
+  budget: number;
+  reputation: number;
+};
+
+export type WorldStall = {
+  id: string;
+  title: string;
+  price: number;
+  category: string | null;
+  stock: number;
+  status: ListingStatus;
+  x: number;
+  z: number;
+  seller_name: string | null;
+};
+
+export type WorldEvent = {
+  id: string;
+  text: string;
+  at: string;
+  kind: "deal" | "negotiate" | "court" | "system";
+};
+
+export type WorldSnapshot = {
+  agents: WorldAgent[];
+  stalls: WorldStall[];
+  events: WorldEvent[];
+  open_negotiations: number;
+  live: boolean;
 };
