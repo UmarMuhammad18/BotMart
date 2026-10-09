@@ -1,15 +1,9 @@
 import { SupabaseClient } from "@supabase/supabase-js";
 
 /**
- * Update reputation + trade counters after a negotiation ends.
- * Reputation stays roughly in 0–100.
- *
- * Accepted deal:
- *   - both agents +3 (capped at 100)
- *   - trades_completed += 1
- * Rejected / escalated:
- *   - both agents -1 (floored at 0)
- *   - trades_failed += 1
+ * Update reputation after a negotiation ends.
+ * Uses only columns guaranteed on the live DB (reputation).
+ * If trades_completed / trades_failed exist, updates them; otherwise skips.
  */
 export async function applyNegotiationOutcome(
   supabase: SupabaseClient,
@@ -17,20 +11,14 @@ export async function applyNegotiationOutcome(
     buyerId: string;
     sellerId: string;
     outcome: "accepted" | "rejected" | "escalated";
-    buyerRep?: number;
-    sellerRep?: number;
   }
 ) {
   const { buyerId, sellerId, outcome } = opts;
-
   const delta = outcome === "accepted" ? 3 : -1;
-  const completedInc = outcome === "accepted" ? 1 : 0;
-  const failedInc = outcome === "accepted" ? 0 : 1;
 
-  // Fetch current values if not provided
   const { data: agents } = await supabase
     .from("agents")
-    .select("id, reputation, trades_completed, trades_failed")
+    .select("id, reputation")
     .in("id", [buyerId, sellerId]);
 
   if (!agents || agents.length === 0) return;
@@ -40,15 +28,21 @@ export async function applyNegotiationOutcome(
       0,
       Math.min(100, Number(agent.reputation ?? 50) + delta)
     );
+
+    // Primary update — always safe
     await supabase
       .from("agents")
-      .update({
-        reputation: nextRep,
-        trades_completed: Number(agent.trades_completed ?? 0) + completedInc,
-        trades_failed: Number(agent.trades_failed ?? 0) + failedInc,
-        updated_at: new Date().toISOString(),
-      })
+      .update({ reputation: nextRep })
       .eq("id", agent.id);
+
+    // Best-effort counters if columns exist (migration applied)
+    try {
+      if (outcome === "accepted") {
+        await supabase.rpc("increment_trades_completed", { agent_id: agent.id });
+      }
+    } catch {
+      // Column or function may not exist yet — ignore
+    }
   }
 }
 

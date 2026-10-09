@@ -4,10 +4,15 @@ import { createTestPaymentIntent } from "@/lib/stripe";
 import { NegotiationMessage } from "@/lib/types";
 import { SupabaseClient } from "@supabase/supabase-js";
 
+/**
+ * Only select columns that exist on the live Supabase project.
+ * Optional columns (trades_*, memory, goal, world_*) are applied via SQL migration
+ * and must not break negotiations if missing.
+ */
 const NEG_SELECT = `
   *,
-  buyer:agents!buyer_agent_id (id, name, budget, spent, policy, status, reputation, trades_completed, trades_failed, memory, goal),
-  seller:agents!seller_agent_id (id, name, budget, spent, policy, status, reputation, trades_completed, trades_failed, memory, goal),
+  buyer:agents!buyer_agent_id (id, name, budget, spent, policy, status, reputation),
+  seller:agents!seller_agent_id (id, name, budget, spent, policy, status, reputation),
   listing:listings (id, title, price, stock, seller_agent_id, category)
 `;
 
@@ -43,7 +48,7 @@ export async function startNegotiation(
 ) {
   const { data: listing, error: listingError } = await supabase
     .from("listings")
-    .select("*, seller:agents!seller_agent_id (*)")
+    .select("*, seller:agents!seller_agent_id (id, name, budget, spent, policy, status, reputation)")
     .eq("id", listing_id)
     .single();
 
@@ -53,7 +58,7 @@ export async function startNegotiation(
 
   const { data: buyer, error: buyerError } = await supabase
     .from("agents")
-    .select("*")
+    .select("id, name, budget, spent, policy, status, reputation")
     .eq("id", buyer_agent_id)
     .single();
 
@@ -217,7 +222,6 @@ export async function runNextTurn(
       .from("agents")
       .update({
         spent: (Number(neg.buyer.spent) || 0) + nextMessage.price,
-        updated_at: new Date().toISOString(),
       })
       .eq("id", neg.buyer_agent_id);
 
@@ -229,23 +233,6 @@ export async function runNextTurn(
         status: nextStock === 0 ? "sold" : "active",
       })
       .eq("id", neg.listing_id);
-
-    // Append a short memory note to both agents
-    const note = {
-      text: `Closed deal on "${neg.listing.title}" at £${nextMessage.price}`,
-      at: new Date().toISOString(),
-      negotiation_id: negotiation_id,
-    };
-    for (const a of [neg.buyer, neg.seller]) {
-      const mem = Array.isArray(a.memory) ? a.memory : [];
-      await supabase
-        .from("agents")
-        .update({
-          memory: [...mem.slice(-19), note],
-          updated_at: new Date().toISOString(),
-        })
-        .eq("id", a.id);
-    }
   }
 
   if (
