@@ -7,9 +7,10 @@ export type AgentRole =
   | "negotiator"
   | "auditor"
   | "treasurer"
-  | "juror_a"
-  | "juror_b"
-  | "juror_c"
+  | "juror_budget"
+  | "juror_quality"
+  | "juror_market"
+  | "juror_risk"
   | "judge";
 
 export type WorldActivity =
