@@ -1,7 +1,9 @@
 "use client";
 
 import dynamic from "next/dynamic";
+import { useMemo } from "react";
 import type { WorldSnapshot } from "@/lib/types";
+import { enrichBusySnapshot } from "@/components/world/busyMotion";
 
 export type CameraMode = "overview" | "follow" | "court";
 
@@ -15,8 +17,11 @@ const IsoScene = dynamic(
   {
     ssr: false,
     loading: () => (
-      <div className="w-full min-h-[480px] rounded-2xl border border-white/10 bg-zinc-950 flex items-center justify-center text-sm text-zinc-500">
-        Loading 3D marketplace…
+      <div
+        className="w-full rounded-2xl border border-white/10 bg-zinc-950 flex items-center justify-center text-sm text-zinc-500"
+        style={{ height: "min(70vh, 640px)", minHeight: 520 }}
+      >
+        Loading busy marketplace…
       </div>
     ),
   }
@@ -35,9 +40,12 @@ export function WorldCanvas({
   cameraMode: CameraMode;
   followAgentId: string | null;
 }) {
+  // Keep the floor visually alive even when few real negotiations are open
+  const busy = useMemo(() => enrichBusySnapshot(snapshot), [snapshot]);
+
   return (
     <IsoScene
-      snapshot={snapshot}
+      snapshot={busy}
       selection={selection}
       onSelect={onSelect}
       cameraMode={cameraMode}

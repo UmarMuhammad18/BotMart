@@ -14,6 +14,8 @@ import * as THREE from "three";
 import { ROLE_BY_ID } from "@/lib/agents/roles";
 import type { WorldAgent, WorldStall, WorldSnapshot } from "@/lib/types";
 import type { CameraMode, WorldSelection } from "@/components/world/WorldCanvas";
+import { ProductMesh } from "@/components/world/ProductMesh";
+import { wanderTarget, pulsePhase } from "@/components/world/busyMotion";
 
 function contentCenter(snapshot: WorldSnapshot) {
   const pts = [
@@ -31,10 +33,11 @@ function contentCenter(snapshot: WorldSnapshot) {
     minZ = Math.min(minZ, z);
     maxZ = Math.max(maxZ, z);
   }
-  const x = (minX + maxX) / 2;
-  const z = (minZ + maxZ) / 2;
-  const radius = Math.max(maxX - minX, maxZ - minZ, 8) * 0.55 + 4;
-  return { x, z, radius };
+  return {
+    x: (minX + maxX) / 2,
+    z: (minZ + maxZ) / 2,
+    radius: Math.max(maxX - minX, maxZ - minZ, 8) * 0.55 + 4,
+  };
 }
 
 function Floor() {
@@ -75,68 +78,70 @@ function StallMesh({
         onSelect();
       }}
     >
-      <mesh position={[0, 0.3, 0]} castShadow>
-        <boxGeometry args={[1.8, 0.6, 1.4]} />
+      {/* counter */}
+      <mesh position={[0, 0.28, 0]} castShadow>
+        <boxGeometry args={[1.9, 0.55, 1.45]} />
         <meshStandardMaterial
-          color={sold ? "#3f3f46" : "#0f3d2e"}
+          color={sold ? "#3f3f46" : "#0c2e24"}
           metalness={0.35}
           roughness={0.45}
           emissive={selected ? "#10b981" : "#000000"}
-          emissiveIntensity={selected ? 0.35 : 0}
+          emissiveIntensity={selected ? 0.3 : 0}
         />
       </mesh>
-      <mesh position={[0, 0.65, 0]} castShadow>
-        <boxGeometry args={[2, 0.1, 1.55]} />
-        <meshStandardMaterial
-          color={sold ? "#52525b" : "#134e3a"}
-          metalness={0.4}
-        />
+      <mesh position={[0, 0.58, 0]} castShadow>
+        <boxGeometry args={[2.05, 0.08, 1.55]} />
+        <meshStandardMaterial color={sold ? "#52525b" : "#115e45"} metalness={0.4} />
       </mesh>
       {!sold && (
-        <mesh position={[0, 1.15, 0.15]} castShadow>
-          <boxGeometry args={[2.1, 0.08, 1.7]} />
+        <mesh position={[0, 1.2, 0.1]} castShadow>
+          <boxGeometry args={[2.15, 0.07, 1.65]} />
           <meshStandardMaterial
             color="#10b981"
             emissive="#059669"
-            emissiveIntensity={0.4}
+            emissiveIntensity={0.45}
           />
         </mesh>
       )}
       {sold && (
-        <mesh position={[0, 0.9, 0.72]}>
-          <boxGeometry args={[1.7, 1.1, 0.06]} />
+        <mesh position={[0, 0.95, 0.75]}>
+          <boxGeometry args={[1.8, 1.15, 0.05]} />
           <meshStandardMaterial color="#27272a" metalness={0.6} />
         </mesh>
       )}
-      <mesh position={[-0.7, 0.12, 0.75]}>
-        <boxGeometry args={[0.5, 0.08, 0.06]} />
+      {/* Actual product on the counter */}
+      {!sold && (
+        <ProductMesh category={stall.category} title={stall.title} sold={false} />
+      )}
+      <mesh position={[-0.75, 0.1, 0.78]}>
+        <boxGeometry args={[0.5, 0.07, 0.05]} />
         <meshBasicMaterial color="#27272a" />
       </mesh>
       <mesh
-        position={[-0.7 - 0.25 * (1 - stockPct), 0.12, 0.76]}
+        position={[-0.75 - 0.25 * (1 - stockPct), 0.1, 0.79]}
         scale={[stockPct || 0.05, 1, 1]}
       >
-        <boxGeometry args={[0.5, 0.06, 0.04]} />
+        <boxGeometry args={[0.5, 0.05, 0.04]} />
         <meshBasicMaterial color={stockPct > 0.3 ? "#34d399" : "#f59e0b"} />
       </mesh>
-      <Billboard position={[0, 2.0, 0]}>
+      <Billboard position={[0, 2.15, 0]}>
         <Text
-          fontSize={0.26}
+          fontSize={0.24}
           color="#fafafa"
           anchorX="center"
           anchorY="bottom"
-          outlineWidth={0.02}
+          outlineWidth={0.018}
           outlineColor="#000"
         >
           {label}
         </Text>
         <Text
-          position={[0, -0.28, 0]}
-          fontSize={0.22}
+          position={[0, -0.26, 0]}
+          fontSize={0.2}
           color={sold ? "#a1a1aa" : "#6ee7b7"}
           anchorX="center"
           anchorY="top"
-          outlineWidth={0.015}
+          outlineWidth={0.014}
           outlineColor="#000"
         >
           {sold ? "SOLD" : `£${stall.price}`}
@@ -148,38 +153,46 @@ function StallMesh({
 
 function AgentMesh({
   agent,
+  stalls,
   selected,
   onSelect,
 }: {
   agent: WorldAgent;
+  stalls: WorldStall[];
   selected: boolean;
   onSelect: () => void;
 }) {
   const group = useRef<THREE.Group>(null);
   const pos = useRef(new THREE.Vector3(agent.x, 0, agent.z));
-  const targetRef = useRef(new THREE.Vector3(agent.x, 0, agent.z));
   const color = ROLE_BY_ID[agent.role]?.hex || "#94a3b8";
   const bob = useMemo(() => Math.random() * Math.PI * 2, []);
 
-  useEffect(() => {
-    targetRef.current.set(agent.x, 0, agent.z);
-  }, [agent.x, agent.z]);
-
   useFrame(({ clock }, dt) => {
     if (!group.current) return;
-    pos.current.lerp(targetRef.current, Math.min(1, dt * 1.6));
     const t = clock.getElapsedTime();
-    const y = 0.55 + Math.sin(t * 2.4 + bob) * 0.04;
+    const target = wanderTarget(agent, t, stalls);
+    const targetV = new THREE.Vector3(target.x, 0, target.z);
+    pos.current.lerp(targetV, Math.min(1, dt * 1.8));
+    const y = 0.55 + Math.sin(t * 2.6 + bob) * 0.05;
     group.current.position.set(pos.current.x, y, pos.current.z);
-    const dir = targetRef.current.clone().sub(pos.current);
-    if (dir.lengthSq() > 0.02) {
+    const dir = targetV.clone().sub(pos.current);
+    if (dir.lengthSq() > 0.01) {
       group.current.rotation.y = THREE.MathUtils.lerp(
         group.current.rotation.y,
         Math.atan2(dir.x, dir.z),
-        0.12
+        0.14
       );
     } else if (agent.activity === "negotiating") {
-      group.current.rotation.y = t * 0.5;
+      // Face the stall
+      const st = stalls.find((s) => s.id === agent.target_stall_id);
+      if (st) {
+        const ang = Math.atan2(st.x - pos.current.x, st.z - pos.current.z);
+        group.current.rotation.y = THREE.MathUtils.lerp(
+          group.current.rotation.y,
+          ang,
+          0.1
+        );
+      }
     }
   });
 
@@ -245,27 +258,34 @@ function AgentMesh({
           emissiveIntensity={0.9}
         />
       </mesh>
-      <Billboard position={[0, 1.15, 0]}>
+      {/* activity chip */}
+      <Billboard position={[0, 1.2, 0]}>
         <Text
-          fontSize={0.2}
+          fontSize={0.18}
           color="#f4f4f5"
           anchorX="center"
           anchorY="bottom"
-          outlineWidth={0.014}
+          outlineWidth={0.012}
           outlineColor="#000"
         >
           {short}
         </Text>
         <Text
-          position={[0, -0.22, 0]}
-          fontSize={0.14}
-          color="#a1a1aa"
+          position={[0, -0.2, 0]}
+          fontSize={0.13}
+          color={ringColor}
           anchorX="center"
           anchorY="top"
           outlineWidth={0.01}
           outlineColor="#000"
         >
-          {agent.activity}
+          {agent.activity === "negotiating"
+            ? "deal…"
+            : agent.activity === "scouting"
+              ? "browsing"
+              : agent.activity === "jury"
+                ? "in court"
+                : agent.activity}
         </Text>
       </Billboard>
     </group>
@@ -288,22 +308,73 @@ function NegotiateLinks({ snapshot }: { snapshot: WorldSnapshot }) {
         const a = agentMap.get(link.agent_id);
         const s = stallMap.get(link.stall_id);
         if (!a || !s) return null;
+        const mid = new THREE.Vector3(
+          (a.x + s.x) / 2,
+          1.9,
+          (a.z + s.z) / 2
+        );
         return (
-          <Line
-            key={`${link.agent_id}-${link.stall_id}`}
-            points={[
-              new THREE.Vector3(a.x, 0.9, a.z),
-              new THREE.Vector3((a.x + s.x) / 2, 1.8, (a.z + s.z) / 2),
-              new THREE.Vector3(s.x, 1.2, s.z),
-            ]}
-            color="#fbbf24"
-            lineWidth={2}
-            transparent
-            opacity={0.75}
-          />
+          <group key={`${link.agent_id}-${link.stall_id}`}>
+            <Line
+              points={[
+                new THREE.Vector3(a.x, 0.9, a.z),
+                mid,
+                new THREE.Vector3(s.x, 1.15, s.z),
+              ]}
+              color="#fbbf24"
+              lineWidth={2.5}
+              transparent
+              opacity={0.85}
+            />
+            <Billboard position={[mid.x, mid.y + 0.35, mid.z]}>
+              <Text
+                fontSize={0.28}
+                color="#fde68a"
+                anchorX="center"
+                outlineWidth={0.02}
+                outlineColor="#422006"
+              >
+                {`£${s.price}`}
+              </Text>
+            </Billboard>
+            {/* spark dots along the arc */}
+            <Sparkle id={link.agent_id} a={a} s={s} />
+          </group>
         );
       })}
     </>
+  );
+}
+
+function Sparkle({
+  id,
+  a,
+  s,
+}: {
+  id: string;
+  a: WorldAgent;
+  s: WorldStall;
+}) {
+  const ref = useRef<THREE.Mesh>(null);
+  useFrame(({ clock }) => {
+    if (!ref.current) return;
+    const t = clock.getElapsedTime();
+    const u = (Math.sin(pulsePhase(id, t)) + 1) / 2;
+    ref.current.position.set(
+      a.x + (s.x - a.x) * u,
+      1.0 + Math.sin(u * Math.PI) * 1.2,
+      a.z + (s.z - a.z) * u
+    );
+  });
+  return (
+    <mesh ref={ref}>
+      <sphereGeometry args={[0.08, 8, 8]} />
+      <meshStandardMaterial
+        color="#fbbf24"
+        emissive="#f59e0b"
+        emissiveIntensity={2}
+      />
+    </mesh>
   );
 }
 
@@ -311,12 +382,12 @@ function DealPopups({ snapshot }: { snapshot: WorldSnapshot }) {
   return (
     <>
       {(snapshot.deal_popups || []).map((p, i) => (
-        <Billboard key={p.id} position={[p.x, 2.6 + (i % 3) * 0.12, p.z]}>
+        <Billboard key={p.id} position={[p.x, 2.7 + (i % 3) * 0.12, p.z]}>
           <Text
-            fontSize={0.32}
+            fontSize={0.3}
             color="#6ee7b7"
             anchorX="center"
-            outlineWidth={0.025}
+            outlineWidth={0.022}
             outlineColor="#052e16"
           >
             {p.label}
@@ -331,26 +402,26 @@ function CourtDais() {
   return (
     <group position={[0, 0, 11]}>
       <mesh position={[0, 0.15, 0]} receiveShadow>
-        <cylinderGeometry args={[2.2, 2.4, 0.3, 32]} />
+        <cylinderGeometry args={[2.4, 2.6, 0.3, 32]} />
         <meshStandardMaterial color="#1e1b4b" metalness={0.4} roughness={0.5} />
       </mesh>
       <mesh position={[0, 0.35, 0]}>
-        <cylinderGeometry args={[1.6, 1.6, 0.12, 32]} />
+        <cylinderGeometry args={[1.7, 1.7, 0.12, 32]} />
         <meshStandardMaterial
           color="#4c1d95"
           emissive="#7c3aed"
-          emissiveIntensity={0.3}
+          emissiveIntensity={0.35}
         />
       </mesh>
-      <Billboard position={[0, 1.2, 0]}>
+      <Billboard position={[0, 1.3, 0]}>
         <Text
-          fontSize={0.3}
+          fontSize={0.32}
           color="#c4b5fd"
           anchorX="center"
           outlineWidth={0.02}
           outlineColor="#000"
         >
-          COURT
+          COURT IN SESSION
         </Text>
       </Billboard>
     </group>
@@ -369,12 +440,11 @@ function Lights() {
       />
       <pointLight position={[-10, 6, -6]} intensity={0.45} color="#34d399" />
       <pointLight position={[10, 5, 6]} intensity={0.4} color="#22d3ee" />
-      <pointLight position={[0, 5, 11]} intensity={0.5} color="#a78bfa" />
+      <pointLight position={[0, 5, 11]} intensity={0.55} color="#a78bfa" />
     </>
   );
 }
 
-/** Frames orthographic camera so the market fills the whole canvas */
 function FrameCamera({ snapshot }: { snapshot: WorldSnapshot }) {
   const { camera, size } = useThree();
   const framed = useRef(false);
@@ -387,17 +457,18 @@ function FrameCamera({ snapshot }: { snapshot: WorldSnapshot }) {
     if (framed.current) return;
     const c = contentCenter(snapshot);
     const cam = camera as THREE.OrthographicCamera;
-    // True isometric offset from content center
     const dist = 22;
     cam.position.set(c.x + dist, dist * 0.95, c.z + dist);
     cam.lookAt(c.x, 0, c.z);
     cam.near = -80;
     cam.far = 200;
-    // Zoom so content radius fits both axes
     const aspect = size.width / Math.max(size.height, 1);
     const fit = c.radius * 1.15;
-    cam.zoom = Math.min(size.height, size.width / aspect) / (fit * 2.8);
-    cam.zoom = THREE.MathUtils.clamp(cam.zoom, 12, 42);
+    cam.zoom = THREE.MathUtils.clamp(
+      Math.min(size.height, size.width / aspect) / (fit * 2.8),
+      12,
+      42
+    );
     cam.updateProjectionMatrix();
     framed.current = true;
   }, [camera, snapshot, size.height, size.width]);
@@ -481,6 +552,7 @@ function SceneContent({
         <AgentMesh
           key={a.id}
           agent={a}
+          stalls={snapshot.stalls}
           selected={selection?.kind === "agent" && selection.id === a.id}
           onSelect={() => onSelect({ kind: "agent", id: a.id })}
         />
@@ -533,7 +605,11 @@ export function IsoScene({
         style={{ width: "100%", height: "100%" }}
         shadows
         dpr={[1, 1.5]}
-        gl={{ antialias: true, alpha: false, powerPreference: "high-performance" }}
+        gl={{
+          antialias: true,
+          alpha: false,
+          powerPreference: "high-performance",
+        }}
         onPointerMissed={() => onSelect(null)}
       >
         <color attach="background" args={["#0a0c12"]} />
