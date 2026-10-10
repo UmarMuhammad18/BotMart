@@ -8,7 +8,15 @@ import {
   Billboard,
   OrthographicCamera,
   Line,
+  Environment,
+  Float,
 } from "@react-three/drei";
+import {
+  EffectComposer,
+  Bloom,
+  Vignette,
+  SMAA,
+} from "@react-three/postprocessing";
 import { useEffect, useMemo, useRef } from "react";
 import * as THREE from "three";
 import { ROLE_BY_ID } from "@/lib/agents/roles";
@@ -16,6 +24,7 @@ import type { WorldAgent, WorldStall, WorldSnapshot } from "@/lib/types";
 import type { CameraMode, WorldSelection } from "@/components/world/WorldCanvas";
 import { ProductMesh } from "@/components/world/ProductMesh";
 import { wanderTarget, pulsePhase } from "@/components/world/busyMotion";
+import { SceneDressing } from "@/components/world/SceneDressing";
 
 function contentCenter(snapshot: WorldSnapshot) {
   const pts = [
@@ -44,13 +53,18 @@ function Floor() {
   return (
     <group>
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.01, 0]} receiveShadow>
-        <planeGeometry args={[64, 64]} />
-        <meshStandardMaterial color="#0a0c12" metalness={0.2} roughness={0.92} />
+        <planeGeometry args={[72, 72]} />
+        <meshStandardMaterial
+          color="#080b12"
+          metalness={0.35}
+          roughness={0.75}
+          envMapIntensity={0.4}
+        />
       </mesh>
-      <gridHelper args={[64, 32, "#1e293b", "#111827"]} position={[0, 0.02, 0]} />
+      <gridHelper args={[64, 32, "#1e293b", "#0f172a"]} position={[0, 0.025, 0]} />
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.03, 0]}>
-        <ringGeometry args={[20, 20.2, 64]} />
-        <meshBasicMaterial color="#10b981" transparent opacity={0.22} />
+        <ringGeometry args={[19.5, 19.75, 64]} />
+        <meshBasicMaterial color="#10b981" transparent opacity={0.28} toneMapped={false} />
       </mesh>
     </group>
   );
@@ -78,40 +92,47 @@ function StallMesh({
         onSelect();
       }}
     >
-      {/* counter */}
       <mesh position={[0, 0.28, 0]} castShadow>
         <boxGeometry args={[1.9, 0.55, 1.45]} />
-        <meshStandardMaterial
+        <meshPhysicalMaterial
           color={sold ? "#3f3f46" : "#0c2e24"}
-          metalness={0.35}
-          roughness={0.45}
+          metalness={0.45}
+          roughness={0.35}
+          clearcoat={0.3}
           emissive={selected ? "#10b981" : "#000000"}
-          emissiveIntensity={selected ? 0.3 : 0}
+          emissiveIntensity={selected ? 0.35 : 0}
         />
       </mesh>
       <mesh position={[0, 0.58, 0]} castShadow>
         <boxGeometry args={[2.05, 0.08, 1.55]} />
-        <meshStandardMaterial color={sold ? "#52525b" : "#115e45"} metalness={0.4} />
+        <meshPhysicalMaterial
+          color={sold ? "#52525b" : "#115e45"}
+          metalness={0.55}
+          roughness={0.3}
+          clearcoat={0.4}
+        />
       </mesh>
       {!sold && (
         <mesh position={[0, 1.2, 0.1]} castShadow>
           <boxGeometry args={[2.15, 0.07, 1.65]} />
           <meshStandardMaterial
             color="#10b981"
-            emissive="#059669"
-            emissiveIntensity={0.45}
+            emissive="#10b981"
+            emissiveIntensity={1.4}
+            toneMapped={false}
           />
         </mesh>
       )}
       {sold && (
         <mesh position={[0, 0.95, 0.75]}>
           <boxGeometry args={[1.8, 1.15, 0.05]} />
-          <meshStandardMaterial color="#27272a" metalness={0.6} />
+          <meshStandardMaterial color="#27272a" metalness={0.7} roughness={0.25} />
         </mesh>
       )}
-      {/* Actual product on the counter */}
       {!sold && (
-        <ProductMesh category={stall.category} title={stall.title} sold={false} />
+        <Float speed={1.2} rotationIntensity={0.15} floatIntensity={0.25}>
+          <ProductMesh category={stall.category} title={stall.title} sold={false} />
+        </Float>
       )}
       <mesh position={[-0.75, 0.1, 0.78]}>
         <boxGeometry args={[0.5, 0.07, 0.05]} />
@@ -122,9 +143,12 @@ function StallMesh({
         scale={[stockPct || 0.05, 1, 1]}
       >
         <boxGeometry args={[0.5, 0.05, 0.04]} />
-        <meshBasicMaterial color={stockPct > 0.3 ? "#34d399" : "#f59e0b"} />
+        <meshBasicMaterial
+          color={stockPct > 0.3 ? "#34d399" : "#f59e0b"}
+          toneMapped={false}
+        />
       </mesh>
-      <Billboard position={[0, 2.15, 0]}>
+      <Billboard position={[0, 2.2, 0]}>
         <Text
           fontSize={0.24}
           color="#fafafa"
@@ -183,7 +207,6 @@ function AgentMesh({
         0.14
       );
     } else if (agent.activity === "negotiating") {
-      // Face the stall
       const st = stalls.find((s) => s.id === agent.target_stall_id);
       if (st) {
         const ang = Math.atan2(st.x - pos.current.x, st.z - pos.current.z);
@@ -217,49 +240,60 @@ function AgentMesh({
       }}
     >
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.52, 0]}>
-        <ringGeometry args={[0.42, 0.5, 24]} />
+        <ringGeometry args={[0.42, 0.52, 28]} />
         <meshBasicMaterial
           color={ringColor}
           transparent
-          opacity={selected ? 0.95 : 0.55}
+          opacity={selected ? 0.95 : 0.6}
+          toneMapped={false}
         />
       </mesh>
       <mesh castShadow>
-        <capsuleGeometry args={[0.26, 0.4, 4, 10]} />
-        <meshStandardMaterial
+        <capsuleGeometry args={[0.26, 0.4, 4, 12]} />
+        <meshPhysicalMaterial
           color={color}
-          metalness={0.65}
-          roughness={0.28}
+          metalness={0.75}
+          roughness={0.2}
+          clearcoat={0.6}
+          clearcoatRoughness={0.2}
           emissive={selected ? color : "#000000"}
-          emissiveIntensity={selected ? 0.25 : 0}
+          emissiveIntensity={selected ? 0.3 : 0}
+          envMapIntensity={1.2}
         />
       </mesh>
       <mesh position={[0, 0.52, 0]} castShadow>
         <boxGeometry args={[0.38, 0.32, 0.34]} />
-        <meshStandardMaterial color={color} metalness={0.7} roughness={0.22} />
+        <meshPhysicalMaterial
+          color={color}
+          metalness={0.8}
+          roughness={0.15}
+          clearcoat={0.7}
+          envMapIntensity={1.3}
+        />
       </mesh>
       <mesh position={[0, 0.54, 0.16]}>
         <boxGeometry args={[0.3, 0.1, 0.06]} />
         <meshStandardMaterial
           color="#67e8f9"
           emissive="#22d3ee"
-          emissiveIntensity={1.2}
+          emissiveIntensity={2.5}
+          toneMapped={false}
         />
       </mesh>
       <mesh position={[0.12, 0.78, 0]}>
         <cylinderGeometry args={[0.02, 0.02, 0.22, 6]} />
-        <meshStandardMaterial color="#a1a1aa" />
+        <meshStandardMaterial color="#cbd5e1" metalness={0.9} roughness={0.15} />
       </mesh>
       <mesh position={[0.12, 0.92, 0]}>
-        <sphereGeometry args={[0.045, 8, 8]} />
+        <sphereGeometry args={[0.05, 10, 10]} />
         <meshStandardMaterial
           color={ringColor}
           emissive={ringColor}
-          emissiveIntensity={0.9}
+          emissiveIntensity={2}
+          toneMapped={false}
         />
       </mesh>
-      {/* activity chip */}
-      <Billboard position={[0, 1.2, 0]}>
+      <Billboard position={[0, 1.22, 0]}>
         <Text
           fontSize={0.18}
           color="#f4f4f5"
@@ -308,11 +342,7 @@ function NegotiateLinks({ snapshot }: { snapshot: WorldSnapshot }) {
         const a = agentMap.get(link.agent_id);
         const s = stallMap.get(link.stall_id);
         if (!a || !s) return null;
-        const mid = new THREE.Vector3(
-          (a.x + s.x) / 2,
-          1.9,
-          (a.z + s.z) / 2
-        );
+        const mid = new THREE.Vector3((a.x + s.x) / 2, 1.9, (a.z + s.z) / 2);
         return (
           <group key={`${link.agent_id}-${link.stall_id}`}>
             <Line
@@ -324,7 +354,7 @@ function NegotiateLinks({ snapshot }: { snapshot: WorldSnapshot }) {
               color="#fbbf24"
               lineWidth={2.5}
               transparent
-              opacity={0.85}
+              opacity={0.9}
             />
             <Billboard position={[mid.x, mid.y + 0.35, mid.z]}>
               <Text
@@ -337,7 +367,6 @@ function NegotiateLinks({ snapshot }: { snapshot: WorldSnapshot }) {
                 {`£${s.price}`}
               </Text>
             </Billboard>
-            {/* spark dots along the arc */}
             <Sparkle id={link.agent_id} a={a} s={s} />
           </group>
         );
@@ -368,11 +397,12 @@ function Sparkle({
   });
   return (
     <mesh ref={ref}>
-      <sphereGeometry args={[0.08, 8, 8]} />
+      <sphereGeometry args={[0.09, 10, 10]} />
       <meshStandardMaterial
         color="#fbbf24"
         emissive="#f59e0b"
-        emissiveIntensity={2}
+        emissiveIntensity={3}
+        toneMapped={false}
       />
     </mesh>
   );
@@ -402,21 +432,27 @@ function CourtDais() {
   return (
     <group position={[0, 0, 11]}>
       <mesh position={[0, 0.15, 0]} receiveShadow>
-        <cylinderGeometry args={[2.4, 2.6, 0.3, 32]} />
-        <meshStandardMaterial color="#1e1b4b" metalness={0.4} roughness={0.5} />
-      </mesh>
-      <mesh position={[0, 0.35, 0]}>
-        <cylinderGeometry args={[1.7, 1.7, 0.12, 32]} />
-        <meshStandardMaterial
-          color="#4c1d95"
-          emissive="#7c3aed"
-          emissiveIntensity={0.35}
+        <cylinderGeometry args={[2.5, 2.7, 0.32, 32]} />
+        <meshPhysicalMaterial
+          color="#1e1b4b"
+          metalness={0.5}
+          roughness={0.4}
+          clearcoat={0.3}
         />
       </mesh>
-      <Billboard position={[0, 1.3, 0]}>
+      <mesh position={[0, 0.38, 0]}>
+        <cylinderGeometry args={[1.75, 1.75, 0.14, 32]} />
+        <meshStandardMaterial
+          color="#6d28d9"
+          emissive="#7c3aed"
+          emissiveIntensity={1.2}
+          toneMapped={false}
+        />
+      </mesh>
+      <Billboard position={[0, 1.35, 0]}>
         <Text
           fontSize={0.32}
-          color="#c4b5fd"
+          color="#e9d5ff"
           anchorX="center"
           outlineWidth={0.02}
           outlineColor="#000"
@@ -431,16 +467,23 @@ function CourtDais() {
 function Lights() {
   return (
     <>
-      <ambientLight intensity={0.55} />
+      <ambientLight intensity={0.35} />
+      <hemisphereLight args={["#1e293b", "#020617", 0.45]} />
       <directionalLight
-        position={[12, 22, 10]}
-        intensity={1.15}
+        position={[14, 24, 12]}
+        intensity={1.35}
         castShadow
-        shadow-mapSize={[1024, 1024]}
+        shadow-mapSize={[2048, 2048]}
+        shadow-camera-far={60}
+        shadow-camera-left={-25}
+        shadow-camera-right={25}
+        shadow-camera-top={25}
+        shadow-camera-bottom={-25}
+        color="#e2e8f0"
       />
-      <pointLight position={[-10, 6, -6]} intensity={0.45} color="#34d399" />
-      <pointLight position={[10, 5, 6]} intensity={0.4} color="#22d3ee" />
-      <pointLight position={[0, 5, 11]} intensity={0.55} color="#a78bfa" />
+      <pointLight position={[-10, 6, -6]} intensity={1.2} color="#34d399" distance={28} />
+      <pointLight position={[10, 5, 6]} intensity={1.0} color="#22d3ee" distance={28} />
+      <pointLight position={[0, 6, 11]} intensity={1.4} color="#a78bfa" distance={22} />
     </>
   );
 }
@@ -536,7 +579,10 @@ function SceneContent({
       <OrthographicCamera makeDefault near={-80} far={200} />
       <FrameCamera snapshot={snapshot} />
       <Lights />
+      {/* Night city HDR — reflections on metal agents/stalls */}
+      <Environment preset="night" environmentIntensity={0.55} />
       <Floor />
+      <SceneDressing />
       <CourtDais />
       <NegotiateLinks snapshot={snapshot} />
       <DealPopups snapshot={snapshot} />
@@ -558,11 +604,12 @@ function SceneContent({
         />
       ))}
       <ContactShadows
-        position={[0, 0, 0]}
-        opacity={0.45}
-        scale={50}
-        blur={2.2}
-        far={14}
+        position={[0, 0.01, 0]}
+        opacity={0.55}
+        scale={55}
+        blur={2.8}
+        far={16}
+        color="#000000"
       />
       <OrbitControls
         makeDefault
@@ -578,6 +625,17 @@ function SceneContent({
         followAgentId={followAgentId}
         snapshot={snapshot}
       />
+      {/* Cinematic post stack */}
+      <EffectComposer multisampling={0}>
+        <SMAA />
+        <Bloom
+          intensity={0.85}
+          luminanceThreshold={0.35}
+          luminanceSmoothing={0.7}
+          mipmapBlur
+        />
+        <Vignette eskil={false} offset={0.15} darkness={0.55} />
+      </EffectComposer>
     </>
   );
 }
@@ -604,16 +662,18 @@ export function IsoScene({
         className="!w-full !h-full"
         style={{ width: "100%", height: "100%" }}
         shadows
-        dpr={[1, 1.5]}
+        dpr={[1, 1.75]}
         gl={{
           antialias: true,
           alpha: false,
           powerPreference: "high-performance",
+          toneMapping: THREE.ACESFilmicToneMapping,
+          toneMappingExposure: 1.05,
         }}
         onPointerMissed={() => onSelect(null)}
       >
-        <color attach="background" args={["#0a0c12"]} />
-        <fog attach="fog" args={["#0a0c12", 45, 90]} />
+        <color attach="background" args={["#06080f"]} />
+        <fog attach="fog" args={["#06080f", 40, 85]} />
         <SceneContent
           snapshot={snapshot}
           selection={selection}
