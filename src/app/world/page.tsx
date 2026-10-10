@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { AppHeader } from "@/components/AppHeader";
 import {
@@ -19,6 +19,7 @@ import {
   Eye,
   Gavel,
   X,
+  Laptop,
 } from "lucide-react";
 import { gbp } from "@/lib/utils";
 
@@ -38,7 +39,6 @@ export default function WorldPage() {
         setError(data.error || "Failed to load world");
         return;
       }
-      // Normalize older API payloads
       const normalized: WorldSnapshot = {
         agents: data.agents || [],
         stalls: data.stalls || [],
@@ -76,6 +76,23 @@ export default function WorldPage() {
       ? snapshot?.stalls.find((s) => s.id === selection.id)
       : null;
 
+  const agentListings = useMemo(() => {
+    if (!selectedAgent || !snapshot) return [];
+    return snapshot.stalls.filter(
+      (s) =>
+        s.seller_id === selectedAgent.id ||
+        (s.seller_name &&
+          s.seller_name.toLowerCase() === selectedAgent.name.toLowerCase())
+    );
+  }, [selectedAgent, snapshot]);
+
+  const agentDeals = useMemo(() => {
+    if (!selectedAgent || !snapshot) return [];
+    return (snapshot.links || []).filter(
+      (l) => l.agent_id === selectedAgent.id
+    );
+  }, [selectedAgent, snapshot]);
+
   const followId =
     cameraMode === "follow"
       ? selectedAgent?.id ?? snapshot?.agents[0]?.id ?? null
@@ -87,6 +104,11 @@ export default function WorldPage() {
       setSelection({ kind: "agent", id: snapshot.agents[0].id });
     }
   }
+
+  const remaining =
+    selectedAgent != null
+      ? selectedAgent.budget - selectedAgent.spent
+      : 0;
 
   return (
     <main className="min-h-screen flex flex-col">
@@ -101,8 +123,8 @@ export default function WorldPage() {
               3D Agent World
             </h1>
             <p className="text-sm text-zinc-500 mt-1 max-w-xl">
-              Click agents or stalls to inspect. Use camera presets or follow a
-              bot. Amber lines = live negotiations.
+              Click any agent or stall for full details. Each bot has a laptop
+              station showing what they sell.
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
@@ -151,7 +173,7 @@ export default function WorldPage() {
           </div>
         )}
 
-        <div className="grid lg:grid-cols-[1fr_300px] gap-4 items-start">
+        <div className="grid lg:grid-cols-[1fr_320px] gap-4 items-start">
           <div className="min-h-[480px] relative">
             {snapshot ? (
               <WorldCanvas
@@ -171,8 +193,7 @@ export default function WorldPage() {
           </div>
 
           <aside className="space-y-4">
-            {/* Inspector */}
-            <div className="card p-4 min-h-[140px]">
+            <div className="card p-4 min-h-[180px]">
               <div className="flex items-center justify-between mb-2">
                 <h2 className="text-sm font-semibold">Inspector</h2>
                 {selection && (
@@ -188,51 +209,125 @@ export default function WorldPage() {
 
               {!selection && (
                 <p className="text-xs text-zinc-500">
-                  Click an agent or stall on the floor (or mini-map).
+                  Click an agent or stall on the floor (or list / mini-map).
                 </p>
               )}
 
               {selectedAgent && (
-                <div className="space-y-2 text-sm">
+                <div className="space-y-3 text-sm">
                   <div className="flex items-center gap-2">
                     <span
-                      className="w-3 h-3 rounded-full"
+                      className="w-3.5 h-3.5 rounded-full shrink-0"
                       style={{
                         background:
                           ROLE_BY_ID[selectedAgent.role]?.hex || "#888",
                       }}
                     />
-                    <span className="font-semibold">{selectedAgent.name}</span>
+                    <span className="font-semibold text-base">
+                      {selectedAgent.name}
+                    </span>
                   </div>
-                  <p className="text-xs text-zinc-400">
-                    {ROLE_BY_ID[selectedAgent.role]?.label || selectedAgent.role}{" "}
-                    · {selectedAgent.activity} · rep {selectedAgent.reputation}
-                  </p>
-                  {selectedAgent.goal && (
-                    <p className="text-xs text-zinc-300 leading-relaxed">
-                      {selectedAgent.goal}
+
+                  <div className="flex flex-wrap gap-1.5 text-[10px] uppercase tracking-wide">
+                    <span className="px-2 py-0.5 rounded-full bg-white/5 border border-white/10 text-zinc-300">
+                      {ROLE_BY_ID[selectedAgent.role]?.label ||
+                        selectedAgent.role}
+                    </span>
+                    <span className="px-2 py-0.5 rounded-full bg-white/5 border border-white/10 text-zinc-300">
+                      {selectedAgent.activity}
+                    </span>
+                    <span className="px-2 py-0.5 rounded-full bg-white/5 border border-white/10 text-zinc-300">
+                      {selectedAgent.status}
+                    </span>
+                  </div>
+
+                  {ROLE_BY_ID[selectedAgent.role]?.blurb && (
+                    <p className="text-[11px] text-zinc-500 leading-relaxed">
+                      {ROLE_BY_ID[selectedAgent.role].blurb}
                     </p>
                   )}
-                  <div className="grid grid-cols-2 gap-2 text-xs pt-1">
+
+                  {selectedAgent.goal && (
+                    <div className="rounded-lg bg-black/30 border border-white/5 px-3 py-2">
+                      <div className="text-[10px] uppercase text-zinc-500 mb-0.5">
+                        Goal
+                      </div>
+                      <p className="text-xs text-zinc-200 leading-relaxed">
+                        {selectedAgent.goal}
+                      </p>
+                    </div>
+                  )}
+
+                  <div className="grid grid-cols-3 gap-1.5 text-xs">
                     <div className="rounded-lg bg-black/30 border border-white/5 px-2 py-1.5">
-                      <div className="text-zinc-500">Budget</div>
+                      <div className="text-zinc-500 text-[10px]">Budget</div>
                       <div className="font-mono font-semibold">
                         {gbp(selectedAgent.budget)}
                       </div>
                     </div>
                     <div className="rounded-lg bg-black/30 border border-white/5 px-2 py-1.5">
-                      <div className="text-zinc-500">Spent</div>
+                      <div className="text-zinc-500 text-[10px]">Spent</div>
                       <div className="font-mono font-semibold">
                         {gbp(selectedAgent.spent)}
                       </div>
                     </div>
+                    <div className="rounded-lg bg-black/30 border border-white/5 px-2 py-1.5">
+                      <div className="text-zinc-500 text-[10px]">Left</div>
+                      <div className="font-mono font-semibold text-emerald-300">
+                        {gbp(remaining)}
+                      </div>
+                    </div>
                   </div>
-                  <div className="flex gap-2 pt-1">
+
+                  <div className="text-xs text-zinc-400">
+                    Reputation{" "}
+                    <span className="text-zinc-200 font-semibold">
+                      {selectedAgent.reputation}
+                    </span>
+                  </div>
+
+                  {agentListings.length > 0 && (
+                    <div>
+                      <div className="text-[10px] uppercase text-zinc-500 mb-1 flex items-center gap-1">
+                        <Laptop size={11} /> Selling
+                      </div>
+                      <ul className="space-y-1">
+                        {agentListings.map((l) => (
+                          <li key={l.id}>
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setSelection({ kind: "stall", id: l.id })
+                              }
+                              className="w-full text-left text-xs rounded-lg px-2 py-1.5 bg-emerald-500/5 border border-emerald-500/20 hover:bg-emerald-500/10 transition"
+                            >
+                              <span className="text-zinc-200">{l.title}</span>
+                              <span className="float-right font-mono text-emerald-300">
+                                {gbp(l.price)}
+                              </span>
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  {agentDeals.length > 0 && (
+                    <p className="text-[11px] text-amber-300/90">
+                      In {agentDeals.length} open negotiation
+                      {agentDeals.length > 1 ? "s" : ""} on the floor
+                    </p>
+                  )}
+
+                  <div className="flex gap-2 pt-0.5">
                     <button
                       type="button"
                       className="btn-secondary text-xs flex-1"
                       onClick={() => {
-                        setSelection({ kind: "agent", id: selectedAgent.id });
+                        setSelection({
+                          kind: "agent",
+                          id: selectedAgent.id,
+                        });
                         setCameraMode("follow");
                       }}
                     >
