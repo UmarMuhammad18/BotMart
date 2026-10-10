@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { AppHeader } from "@/components/AppHeader";
 import { WorldCanvas } from "@/components/world/WorldCanvas";
@@ -12,10 +12,9 @@ export default function WorldPage() {
   const [snapshot, setSnapshot] = useState<WorldSnapshot | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const lastJson = useRef<string>("");
 
   const load = useCallback(async () => {
-    setLoading(true);
-    setError(null);
     try {
       const res = await fetch("/api/world");
       const data = await res.json();
@@ -23,7 +22,13 @@ export default function WorldPage() {
         setError(data.error || "Failed to load world");
         return;
       }
-      setSnapshot(data);
+      // Avoid re-rendering the 3D tree when nothing changed (stops Html/Text churn)
+      const raw = JSON.stringify(data);
+      if (raw !== lastJson.current) {
+        lastJson.current = raw;
+        setSnapshot(data);
+      }
+      setError(null);
     } catch {
       setError("Network error loading world");
     } finally {
@@ -32,8 +37,8 @@ export default function WorldPage() {
   }, []);
 
   useEffect(() => {
-    load();
-    const t = setInterval(load, 12000);
+    void load();
+    const t = setInterval(() => void load(), 15000);
     return () => clearInterval(t);
   }, [load]);
 
@@ -50,52 +55,47 @@ export default function WorldPage() {
               3D Agent World
             </h1>
             <p className="text-sm text-zinc-500 mt-1 max-w-xl">
-              Isometric marketplace: stalls are listings, capsules are agents.
-              Drag to orbit · scroll to zoom. Auto-refreshes every 12s.
+              Agents and stalls on an isometric marketplace. Drag to orbit, scroll
+              to zoom.
             </p>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex gap-2">
             <button
               type="button"
-              onClick={load}
-              className="btn-secondary text-xs px-3 py-2"
+              onClick={() => void load()}
+              className="btn-secondary text-sm"
               disabled={loading}
             >
-              <RefreshCw
-                size={14}
-                className={loading ? "animate-spin" : undefined}
-              />
+              <RefreshCw size={14} className={loading ? "animate-spin" : ""} />
               Refresh
             </button>
-            <Link href="/negotiate" className="btn-primary text-xs px-3 py-2">
+            <Link href="/negotiate" className="btn-primary text-sm">
+              <Activity size={14} />
               Negotiate
             </Link>
           </div>
         </div>
 
         {error && (
-          <p className="text-sm text-rose-400 mb-4 border border-rose-500/20 rounded-lg px-3 py-2">
+          <div className="mb-4 rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-200">
             {error}
-          </p>
+          </div>
         )}
 
-        <div className="grid lg:grid-cols-12 gap-4">
-          <div className="lg:col-span-8 h-[480px] sm:h-[560px]">
+        <div className="grid lg:grid-cols-[1fr_280px] gap-4 items-start">
+          <div className="min-h-[420px]">
             {snapshot ? (
               <WorldCanvas snapshot={snapshot} />
             ) : (
-              <div className="h-full rounded-2xl border border-white/10 bg-zinc-950 flex items-center justify-center text-zinc-500 text-sm">
-                {loading ? "Booting world…" : "No snapshot"}
+              <div className="w-full min-h-[420px] rounded-2xl border border-white/10 bg-zinc-950 flex items-center justify-center text-sm text-zinc-500">
+                {loading ? "Loading world…" : "No world data yet — seed agents & listings."}
               </div>
             )}
           </div>
 
-          <aside className="lg:col-span-4 space-y-4">
+          <aside className="space-y-4">
             <div className="card p-4">
-              <div className="flex items-center gap-2 mb-3">
-                <Activity size={14} className="text-cyan-400" />
-                <h2 className="text-sm font-semibold">Status</h2>
-              </div>
+              <h2 className="text-sm font-semibold mb-3">Floor stats</h2>
               <dl className="grid grid-cols-2 gap-2 text-xs">
                 <div className="rounded-lg bg-black/30 border border-white/5 px-3 py-2">
                   <dt className="text-zinc-500">Agents</dt>

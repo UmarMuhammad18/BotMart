@@ -2,10 +2,10 @@
 
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import {
-  Html,
   OrbitControls,
   ContactShadows,
   Text,
+  Billboard,
   OrthographicCamera,
 } from "@react-three/drei";
 import { useEffect, useMemo, useRef } from "react";
@@ -27,6 +27,8 @@ function Floor() {
 
 function StallMesh({ stall }: { stall: WorldStall }) {
   const sold = stall.status !== "active" || stall.stock <= 0;
+  const label = `${stall.title.slice(0, 18)}${stall.title.length > 18 ? "…" : ""}`;
+
   return (
     <group position={[stall.x, 0, stall.z]}>
       <mesh position={[0, 0.35, 0]} castShadow>
@@ -45,12 +47,31 @@ function StallMesh({ stall }: { stall: WorldStall }) {
         <cylinderGeometry args={[0.05, 0.05, 0.5, 8]} />
         <meshStandardMaterial color="#a1a1aa" />
       </mesh>
-      <Html position={[0, 1.85, 0]} center distanceFactor={18}>
-        <div className="px-2 py-1 rounded-md bg-black/70 border border-white/10 text-[10px] text-white whitespace-nowrap pointer-events-none">
-          <div className="font-semibold max-w-[120px] truncate">{stall.title}</div>
-          <div className="text-emerald-300">£{stall.price}</div>
-        </div>
-      </Html>
+      {/* 3D text — no DOM portal, avoids React unmount race with Html */}
+      <Billboard position={[0, 2.05, 0]} follow lockX={false} lockY={false} lockZ={false}>
+        <Text
+          fontSize={0.28}
+          color="#f4f4f5"
+          anchorX="center"
+          anchorY="bottom"
+          maxWidth={3}
+          outlineWidth={0.02}
+          outlineColor="#000000"
+        >
+          {label}
+        </Text>
+        <Text
+          position={[0, -0.32, 0]}
+          fontSize={0.24}
+          color="#6ee7b7"
+          anchorX="center"
+          anchorY="top"
+          outlineWidth={0.015}
+          outlineColor="#000000"
+        >
+          {`£${stall.price}`}
+        </Text>
+      </Billboard>
     </group>
   );
 }
@@ -64,36 +85,39 @@ function AgentMesh({
 }) {
   const group = useRef<THREE.Group>(null);
   const pos = useRef(new THREE.Vector3(agent.x, 0.55, agent.z));
+  const targetRef = useRef(new THREE.Vector3(agent.x, 0.55, agent.z));
   const color = ROLE_BY_ID[agent.role]?.hex || "#94a3b8";
   const bob = useMemo(() => Math.random() * Math.PI * 2, []);
 
-  const target = useMemo(() => {
+  useEffect(() => {
+    let tx = agent.x;
+    let tz = agent.z;
     if (agent.activity === "negotiating" && stalls.length > 0) {
-      // Walk toward a stall derived from agent id
       let h = 0;
       for (let i = 0; i < agent.id.length; i++) h = (h + agent.id.charCodeAt(i)) | 0;
       const stall = stalls[Math.abs(h) % stalls.length];
-      return new THREE.Vector3(stall.x + 1.2, 0.55, stall.z + 0.8);
+      tx = stall.x + 1.2;
+      tz = stall.z + 0.8;
+    } else if (agent.activity === "scouting") {
+      tx = agent.x + 2.5;
+      tz = agent.z - 1.5;
+    } else if (agent.activity === "jury") {
+      tx = 0;
+      tz = 8;
     }
-    if (agent.activity === "scouting") {
-      return new THREE.Vector3(agent.x + 2.5, 0.55, agent.z - 1.5);
-    }
-    if (agent.activity === "jury") {
-      return new THREE.Vector3(0, 0.55, 8);
-    }
-    return new THREE.Vector3(agent.x, 0.55, agent.z);
-  }, [agent, stalls]);
+    targetRef.current.set(tx, 0.55, tz);
+  }, [agent.x, agent.z, agent.activity, agent.id, stalls]);
 
   useFrame(({ clock }, dt) => {
     if (!group.current) return;
-    pos.current.lerp(target, Math.min(1, dt * 1.4));
+    pos.current.lerp(targetRef.current, Math.min(1, dt * 1.4));
     const t = clock.getElapsedTime();
     group.current.position.set(
       pos.current.x,
       0.55 + Math.sin(t * 2.2 + bob) * 0.05,
       pos.current.z
     );
-    const dir = target.clone().sub(pos.current);
+    const dir = targetRef.current.clone().sub(pos.current);
     if (dir.lengthSq() > 0.01) {
       const ang = Math.atan2(dir.x, dir.z);
       group.current.rotation.y = THREE.MathUtils.lerp(
@@ -105,6 +129,9 @@ function AgentMesh({
       group.current.rotation.y = t * 0.6;
     }
   });
+
+  const shortName =
+    agent.name.length > 12 ? agent.name.slice(0, 11) + "…" : agent.name;
 
   return (
     <group ref={group} position={[agent.x, 0.55, agent.z]}>
@@ -124,12 +151,29 @@ function AgentMesh({
           emissiveIntensity={0.8}
         />
       </mesh>
-      <Html position={[0, 1.15, 0]} center distanceFactor={16}>
-        <div className="px-1.5 py-0.5 rounded bg-black/75 border border-white/10 text-[9px] text-zinc-100 whitespace-nowrap pointer-events-none">
-          <span className="font-medium">{agent.name}</span>
-          <span className="text-zinc-500"> · {agent.activity}</span>
-        </div>
-      </Html>
+      <Billboard position={[0, 1.2, 0]}>
+        <Text
+          fontSize={0.22}
+          color="#e4e4e7"
+          anchorX="center"
+          anchorY="bottom"
+          outlineWidth={0.015}
+          outlineColor="#000000"
+        >
+          {shortName}
+        </Text>
+        <Text
+          position={[0, -0.26, 0]}
+          fontSize={0.16}
+          color="#a1a1aa"
+          anchorX="center"
+          anchorY="top"
+          outlineWidth={0.01}
+          outlineColor="#000000"
+        >
+          {agent.activity}
+        </Text>
+      </Billboard>
     </group>
   );
 }
@@ -142,8 +186,7 @@ function Lights() {
         position={[12, 18, 8]}
         intensity={1.15}
         castShadow
-        shadow-mapSize-width={1024}
-        shadow-mapSize-height={1024}
+        shadow-mapSize={[1024, 1024]}
       />
       <pointLight position={[-8, 6, -6]} intensity={0.4} color="#34d399" />
       <pointLight position={[8, 5, 6]} intensity={0.35} color="#22d3ee" />
@@ -164,7 +207,13 @@ function IsoCameraRig() {
 function SceneContent({ snapshot }: { snapshot: WorldSnapshot }) {
   return (
     <>
-      <OrthographicCamera makeDefault zoom={28} position={[18, 18, 18]} near={-80} far={200} />
+      <OrthographicCamera
+        makeDefault
+        zoom={28}
+        position={[18, 18, 18]}
+        near={-80}
+        far={200}
+      />
       <IsoCameraRig />
       <Lights />
       <Floor />
@@ -174,7 +223,13 @@ function SceneContent({ snapshot }: { snapshot: WorldSnapshot }) {
       {snapshot.agents.map((a) => (
         <AgentMesh key={a.id} agent={a} stalls={snapshot.stalls} />
       ))}
-      <ContactShadows position={[0, 0, 0]} opacity={0.45} scale={40} blur={2.5} far={12} />
+      <ContactShadows
+        position={[0, 0, 0]}
+        opacity={0.45}
+        scale={40}
+        blur={2.5}
+        far={12}
+      />
       <Text
         position={[0, 0.02, 14]}
         rotation={[-Math.PI / 2, 0, 0]}
@@ -201,7 +256,13 @@ function SceneContent({ snapshot }: { snapshot: WorldSnapshot }) {
 export function IsoScene({ snapshot }: { snapshot: WorldSnapshot }) {
   return (
     <div className="w-full h-full min-h-[420px] rounded-2xl overflow-hidden border border-white/10 bg-[#050507]">
-      <Canvas shadows dpr={[1, 1.75]} gl={{ antialias: true, alpha: true }}>
+      <Canvas
+        shadows
+        dpr={[1, 1.5]}
+        gl={{ antialias: true, alpha: true, powerPreference: "high-performance" }}
+        // Keep one WebGL context; parent re-renders should not tear down the root
+        frameloop="always"
+      >
         <color attach="background" args={["#050507"]} />
         <fog attach="fog" args={["#050507", 30, 70]} />
         <SceneContent snapshot={snapshot} />
