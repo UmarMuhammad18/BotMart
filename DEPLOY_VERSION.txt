@@ -1,2 +1,4 @@
-2026-10-09-force-redeploy-v2
-Includes: /world, /court, HeroWorldPortal, AI cascade, schema-safe negotiations
+2026-10-10-deploy-trigger-v3
+GitHub has /world and /court.
+If Vercel still 404s those routes, Production is not on this commit.
+Deploy this SHA from Vercel → Deployments → Create Deployment → main.
