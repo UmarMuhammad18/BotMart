@@ -30,11 +30,7 @@ export function activityForAgent(
   if (agent.status === "blocked" || agent.status === "paused") return "blocked";
   if (negotiatingIds.has(agent.id)) return "negotiating";
   const role = resolveRole(agent.policy);
-  if (
-    role.startsWith("juror") ||
-    role === "judge" ||
-    role === "auditor"
-  )
+  if (role.startsWith("juror") || role === "judge" || role === "auditor")
     return "jury";
   if (role === "scout") return "scouting";
   return "idle";
@@ -70,15 +66,16 @@ export function buildWorldSnapshot(opts: {
     if (n.listing_id) buyerToListing.set(n.buyer_agent_id, n.listing_id);
   }
 
-  // Stalls in a tight market grid centered near origin (was pushed to z=-6)
+  // Wider market grid
   const stalls: WorldStall[] = opts.listings.map((l, i) => {
-    const cols = 4;
+    const cols = 5;
+    const spacing = 5.5;
     const slot =
       l.world_x != null && l.world_z != null
         ? { x: Number(l.world_x), z: Number(l.world_z) }
         : {
-            x: ((i % cols) - (cols - 1) / 2) * 4.2,
-            z: (Math.floor(i / cols) - 1) * 4.2,
+            x: ((i % cols) - (cols - 1) / 2) * spacing,
+            z: (Math.floor(i / cols) - 1) * spacing,
           };
     return {
       id: l.id,
@@ -104,13 +101,13 @@ export function buildWorldSnapshot(opts: {
     let slot =
       a.world_x != null && a.world_z != null
         ? { x: Number(a.world_x), z: Number(a.world_z) }
-        : slotFromId(a.id, 5, 3.4);
+        : slotFromId(a.id, 6, 4.2);
 
     if (activity === "negotiating" && targetStallId && stallById.has(targetStallId)) {
       const st = stallById.get(targetStallId)!;
-      slot = { x: st.x + 1.4, z: st.z + 1.1 };
+      slot = { x: st.x + 1.6, z: st.z + 1.3 };
     } else if (activity === "jury") {
-      slot = { x: ((a.id.charCodeAt(0) % 5) - 2) * 1.2, z: 9 };
+      slot = { x: ((a.id.charCodeAt(0) % 5) - 2) * 1.4, z: 14 };
     }
 
     return {
