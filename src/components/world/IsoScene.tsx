@@ -25,6 +25,11 @@ import { ProductMesh } from "@/components/world/ProductMesh";
 import { SceneDressing } from "@/components/world/SceneDressing";
 import { WorldAgentMesh } from "@/components/world/WorldAgent";
 import {
+  BubbleLayer,
+  BubbleProjector,
+  type BubbleRegistry,
+} from "@/components/world/SpeechBubbles";
+import {
   contentCenter,
   FrameCamera,
   CameraDirector,
@@ -190,6 +195,7 @@ function NegotiationTags({
             key={`${link.buyerId}-${link.stallId}`}
             stall={s}
             price={link.price}
+            bidders={link.bidders}
           />
         );
       })}
@@ -200,10 +206,13 @@ function NegotiationTags({
 function NegotiationTag({
   stall,
   price,
+  bidders,
 }: {
   stall: WorldStall;
   price: number | null;
+  bidders: number;
 }) {
+  const auction = bidders > 1;
   const ring = useRef<THREE.Mesh>(null);
   useFrame(({ clock }) => {
     if (!ring.current) return;
@@ -216,8 +225,26 @@ function NegotiationTag({
     <group position={[stall.x, 0, stall.z]}>
       <mesh ref={ring} rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.04, 0.6]}>
         <ringGeometry args={[1.7, 1.82, 48]} />
-        <meshBasicMaterial color="#fbbf24" transparent toneMapped={false} />
+        <meshBasicMaterial
+          color={auction ? "#f472b6" : "#fbbf24"}
+          transparent
+          toneMapped={false}
+        />
       </mesh>
+      {auction && (
+        <Billboard position={[0, 3.45, 0]}>
+          <Text
+            fontSize={0.3}
+            letterSpacing={0.08}
+            color="#f9a8d4"
+            anchorX="center"
+            outlineWidth={0.022}
+            outlineColor="#500724"
+          >
+            {`AUCTION · ${bidders} bidders`}
+          </Text>
+        </Billboard>
+      )}
       {price != null && (
         <Billboard position={[0, 2.95, 0]}>
           <Text
@@ -329,6 +356,59 @@ function DealBurst({
   );
 }
 
+/** Category districts: tinted floor plate, glowing edge, floating sign. */
+function DistrictPlates({ snapshot }: { snapshot: WorldSnapshot }) {
+  return (
+    <>
+      {(snapshot.districts || []).map((d) => (
+        <group key={d.id} position={[d.x, 0, d.z]}>
+          <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.02, 0]} receiveShadow>
+            <planeGeometry args={[d.w, d.d]} />
+            <meshStandardMaterial
+              color={d.color}
+              transparent
+              opacity={0.07}
+              metalness={0.2}
+              roughness={0.8}
+            />
+          </mesh>
+          {/* edge strips */}
+          {(
+            [
+              [0, -d.d / 2, d.w, 0.06],
+              [0, d.d / 2, d.w, 0.06],
+              [-d.w / 2, 0, 0.06, d.d],
+              [d.w / 2, 0, 0.06, d.d],
+            ] as const
+          ).map(([x, z, w, h], i) => (
+            <mesh key={i} rotation={[-Math.PI / 2, 0, 0]} position={[x, 0.035, z]}>
+              <planeGeometry args={[w, h]} />
+              <meshBasicMaterial
+                color={d.color}
+                transparent
+                opacity={0.55}
+                toneMapped={false}
+              />
+            </mesh>
+          ))}
+          <Billboard position={[0, 3.4, -d.d / 2]}>
+            <Text
+              fontSize={0.42}
+              letterSpacing={0.12}
+              color={d.color}
+              anchorX="center"
+              outlineWidth={0.02}
+              outlineColor="#000"
+            >
+              {d.label.toUpperCase()}
+            </Text>
+          </Billboard>
+        </group>
+      ))}
+    </>
+  );
+}
+
 function CourtDais() {
   return (
     <group position={[0, 0, 16]}>
@@ -396,6 +476,7 @@ function SceneContent({
   cameraMode,
   followAgentId,
   director,
+  bubbles,
 }: {
   snapshot: WorldSnapshot;
   selection: WorldSelection;
@@ -403,21 +484,26 @@ function SceneContent({
   cameraMode: CameraMode;
   followAgentId: string | null;
   director: WorldDirector;
+  bubbles: BubbleRegistry;
 }) {
   const center = contentCenter(snapshot);
 
   return (
     <>
-      <OrthographicCamera makeDefault near={-100} far={250} zoom={36} />
+      {/* zoom is set by FrameCamera; a zoom prop here would be re-applied on
+          every re-render and undo both the fit and the user's scroll zoom */}
+      <OrthographicCamera makeDefault near={-100} far={250} />
       <FrameCamera snapshot={snapshot} />
       <Lights />
       <Environment preset="night" environmentIntensity={0.55} />
       <Floor />
+      <DistrictPlates snapshot={snapshot} />
       <SceneDressing />
       <CourtDais />
       <DirectorClock director={director} />
       <NegotiationTags snapshot={snapshot} director={director} />
       <DealBursts director={director} />
+      <BubbleProjector director={director} registry={bubbles} />
       {snapshot.stalls.map((s) => (
         <StallMesh
           key={s.id}
@@ -488,6 +574,7 @@ export function IsoScene({
   followAgentId: string | null;
   director: WorldDirector;
 }) {
+  const bubbles = useRef(new Map<string, HTMLDivElement>());
   return (
     <div
       className="w-full rounded-2xl overflow-hidden border border-white/10 bg-[#050507] relative"
@@ -516,8 +603,10 @@ export function IsoScene({
           cameraMode={cameraMode}
           followAgentId={followAgentId}
           director={director}
+          bubbles={bubbles}
         />
       </Canvas>
+      <BubbleLayer director={director} registry={bubbles} />
     </div>
   );
 }

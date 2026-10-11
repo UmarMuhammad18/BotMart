@@ -1,8 +1,13 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { runListingAuction } from "@/lib/marketplace/auction";
+import { DEMO_OWNER_FILTER, getSessionUser } from "@/lib/auth";
 
-/** POST { listing_id, max_buyers? } — run multi-buyer auction on a listing */
+/**
+ * POST { listing_id, max_buyers? } — multi-buyer race on one listing.
+ * Bidders are demo/unowned agents plus the caller's own agents; nobody can
+ * spend another user's agent budget.
+ */
 export async function POST(request: Request) {
   try {
     const body = await request.json();
@@ -13,9 +18,15 @@ export async function POST(request: Request) {
       );
     }
 
+    const user = await getSessionUser();
+    const ownerFilter = user
+      ? `${DEMO_OWNER_FILTER},owner_id.eq.${user.id}`
+      : DEMO_OWNER_FILTER;
+
     const supabase = createAdminClient();
     const result = await runListingAuction(supabase, body.listing_id, {
-      maxBuyers: body.max_buyers ?? 3,
+      maxBuyers: Math.min(Number(body.max_buyers) || 3, 5),
+      ownerFilter,
     });
 
     return NextResponse.json(result);

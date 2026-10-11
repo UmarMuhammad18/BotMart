@@ -74,6 +74,10 @@ export async function startNegotiation(
     return { error: "Seller agent is paused or blocked", status: 400 as const };
   }
 
+  if (listing.status !== "active" || (listing.stock ?? 0) < 1) {
+    return { error: "Listing is sold out", status: 409 as const };
+  }
+
   if (buyer.id === listing.seller_agent_id) {
     return {
       error: "Buyer and seller must be different agents",
@@ -310,12 +314,23 @@ async function settleDeal(
   return { orderId: id, stripePaymentIntentId: payment?.id ?? null };
 }
 
-/** Pre-RPC behaviour; races under concurrency. Kept only until the SQL is applied. */
+/**
+ * Pre-RPC behaviour, kept only until the SQL is applied. Re-checks stock and
+ * budget, which covers sequential flows (auctions), but still races under
+ * true concurrency.
+ */
 async function legacySettle(
   supabase: SupabaseClient,
   neg: SettleNeg,
   price: number
 ): Promise<string | null> {
+  const [{ data: listing }, { data: buyer }] = await Promise.all([
+    supabase.from("listings").select("stock, status").eq("id", neg.listing_id).single(),
+    supabase.from("agents").select("spent, budget").eq("id", neg.buyer_agent_id).single(),
+  ]);
+  if (!listing || listing.status !== "active" || (listing.stock ?? 0) < 1) return null;
+  if (!buyer || Number(buyer.spent || 0) + price > Number(buyer.budget || 0)) return null;
+
   const { data: order } = await supabase
     .from("orders")
     .insert({
@@ -331,10 +346,10 @@ async function legacySettle(
 
   await supabase
     .from("agents")
-    .update({ spent: (Number(neg.buyer.spent) || 0) + price })
+    .update({ spent: Number(buyer.spent || 0) + price })
     .eq("id", neg.buyer_agent_id);
 
-  const nextStock = Math.max(0, (neg.listing.stock || 1) - 1);
+  const nextStock = Math.max(0, Number(listing.stock) - 1);
   await supabase
     .from("listings")
     .update({ stock: nextStock, status: nextStock === 0 ? "sold" : "active" })

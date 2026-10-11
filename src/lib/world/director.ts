@@ -37,6 +37,8 @@ export type StageLink = {
   buyerId: string;
   stallId: string;
   price: number | null;
+  /** Buyers on this stall right now (talking + queued); >1 is an auction. */
+  bidders: number;
 };
 
 export type FeedLine = {
@@ -400,7 +402,29 @@ export class WorldDirector {
       const z = stall.z + 1.6;
       return { x, z, faceX: stall.x - side * 0.95, faceZ: z };
     }
-    return null;
+    return this.queueSpot(agentId);
+  }
+
+  /**
+   * Bidders waiting on a stall that is already mid-negotiation (an auction)
+   * line up behind the buyer's spot instead of idling at home.
+   */
+  private queueSpot(agentId: string): Placement | null {
+    const scene = this.scenes.find((s) => s.phase === "pending" && s.buyerId === agentId);
+    if (!scene || this.isBusy(agentId)) return null;
+    const live = this.scenes.some((s) => s.stallId === scene.stallId && s.phase !== "pending");
+    if (!live) return null;
+    const stall = this.stage.stall(scene.stallId);
+    if (!stall) return null;
+    const queue = this.scenes.filter((s) => s.stallId === scene.stallId && s.phase === "pending");
+    const k = queue.indexOf(scene);
+    const x = stall.x + 0.95 + 0.25 * (k % 2);
+    const z = stall.z + 1.6 + 1.05 * (k + 1);
+    return { x, z, faceX: stall.x, faceZ: stall.z };
+  }
+
+  private biddersOn(stallId: string) {
+    return new Set(this.scenes.filter((s) => s.stallId === stallId).map((s) => s.buyerId)).size;
   }
 
   bubbleFor(agentId: string): Bubble | null {
@@ -410,6 +434,27 @@ export class WorldDirector {
     return this.ambient.get(agentId)?.bubble ?? null;
   }
 
+  /** Every visible bubble, at most one per agent (scene beats win). */
+  get bubbles(): Bubble[] {
+    const out: Bubble[] = [];
+    const seen = new Set<string>();
+    for (const s of this.scenes) {
+      if (s.phase === "pending" || !s.bubble || seen.has(s.bubble.agentId)) continue;
+      seen.add(s.bubble.agentId);
+      out.push(s.bubble);
+    }
+    for (const a of this.ambient.values()) {
+      if (seen.has(a.bubble.agentId)) continue;
+      seen.add(a.bubble.agentId);
+      out.push(a.bubble);
+    }
+    return out;
+  }
+
+  nameOf(agentId: string) {
+    return this.stage.agentName(agentId);
+  }
+
   get activeBursts(): readonly Burst[] {
     return this.bursts;
   }
@@ -417,7 +462,12 @@ export class WorldDirector {
   get links(): StageLink[] {
     return this.scenes
       .filter((s) => s.phase === "talk")
-      .map((s) => ({ buyerId: s.buyerId, stallId: s.stallId, price: s.price }));
+      .map((s) => ({
+        buyerId: s.buyerId,
+        stallId: s.stallId,
+        price: s.price,
+        bidders: this.biddersOn(s.stallId),
+      }));
   }
 
   get feed(): readonly FeedLine[] {

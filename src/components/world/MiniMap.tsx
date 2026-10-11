@@ -40,6 +40,26 @@ export function MiniMap({
             <line x1={0} y1={g} x2={w} y2={g} stroke="#1f2937" strokeWidth={0.5} />
           </g>
         ))}
+        {(snapshot.districts || []).map((d) => {
+          const { cx, cy } = toXY(d.x - d.w / 2, d.z - d.d / 2);
+          return (
+            <rect
+              key={d.id}
+              x={cx}
+              y={cy}
+              width={d.w * SCALE}
+              height={d.d * SCALE}
+              rx={2}
+              fill={d.color}
+              fillOpacity={0.08}
+              stroke={d.color}
+              strokeOpacity={0.45}
+              strokeWidth={0.6}
+            >
+              <title>{d.label}</title>
+            </rect>
+          );
+        })}
         {snapshot.stalls.map((s) => {
           const { cx, cy } = toXY(s.x, s.z);
           const active = selection?.kind === "stall" && selection.id === s.id;

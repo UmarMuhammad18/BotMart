@@ -34,6 +34,12 @@ export function wanderTarget(
     };
   }
 
+  // Scouts patrol the districts they shop in (all stalls if no preference)
+  const preferred = agent.categories?.length
+    ? stalls.filter((s) => s.district && agent.categories!.includes(s.district))
+    : [];
+  if (preferred.length > 0) stalls = preferred;
+
   if (agent.activity === "scouting" && stalls.length > 0) {
     // Patrol between stalls
     const idx =

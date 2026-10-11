@@ -1,4 +1,5 @@
 import { resolveRole } from "@/lib/agents/roles";
+import { layoutDistricts } from "@/lib/world/districts";
 import type {
   Agent,
   Listing,
@@ -10,18 +11,6 @@ import type {
   WorldLink,
   WorldDealPopup,
 } from "@/lib/types";
-
-export function slotFromId(id: string, cols: number, spacing: number) {
-  let hash = 0;
-  for (let i = 0; i < id.length; i++) hash = (hash * 31 + id.charCodeAt(i)) | 0;
-  const idx = Math.abs(hash) % (cols * cols);
-  const col = idx % cols;
-  const row = Math.floor(idx / cols);
-  return {
-    x: (col - (cols - 1) / 2) * spacing,
-    z: (row - (cols - 1) / 2) * spacing,
-  };
-}
 
 export function activityForAgent(
   agent: Agent,
@@ -66,22 +55,17 @@ export function buildWorldSnapshot(opts: {
     if (n.listing_id) buyerToListing.set(n.buyer_agent_id, n.listing_id);
   }
 
-  // Wider market grid
-  const stalls: WorldStall[] = opts.listings.map((l, i) => {
-    const cols = 5;
-    const spacing = 5.5;
-    const slot =
-      l.world_x != null && l.world_z != null
-        ? { x: Number(l.world_x), z: Number(l.world_z) }
-        : {
-            x: ((i % cols) - (cols - 1) / 2) * spacing,
-            z: (Math.floor(i / cols) - 1) * spacing,
-          };
+  // Category districts (see districts.ts)
+  const layout = layoutDistricts(opts.listings, opts.agents);
+
+  const stalls: WorldStall[] = opts.listings.map((l) => {
+    const slot = layout.stallPos.get(l.id)!;
     return {
       id: l.id,
       title: l.title,
       price: Number(l.price),
       category: l.category ?? null,
+      district: layout.districtOf(l.category),
       stock: l.stock,
       status: l.status,
       x: slot.x,
@@ -98,15 +82,9 @@ export function buildWorldSnapshot(opts: {
       (a.world_activity as WorldActivity) ||
       activityForAgent(a, negotiatingIds);
     const targetStallId = buyerToListing.get(a.id) ?? null;
-    let slot =
-      a.world_x != null && a.world_z != null
-        ? { x: Number(a.world_x), z: Number(a.world_z) }
-        : slotFromId(a.id, 6, 4.2);
-
-    if (activity === "negotiating" && targetStallId && stallById.has(targetStallId)) {
-      const st = stallById.get(targetStallId)!;
-      slot = { x: st.x + 1.6, z: st.z + 1.3 };
-    } else if (activity === "jury") {
+    // Home station; walking to stalls is staged by the world director
+    let slot = layout.homePos.get(a.id) ?? { x: 0, z: 10.5 };
+    if (activity === "jury") {
       slot = { x: ((a.id.charCodeAt(0) % 5) - 2) * 1.4, z: 14 };
     }
 
@@ -123,6 +101,7 @@ export function buildWorldSnapshot(opts: {
       reputation: Number(a.reputation ?? 50),
       goal: a.goal ?? a.description ?? null,
       target_stall_id: targetStallId,
+      categories: (a.policy?.categories || []).map((c) => layout.districtOf(c)),
     };
   });
 
@@ -163,6 +142,7 @@ export function buildWorldSnapshot(opts: {
   return {
     agents,
     stalls,
+    districts: layout.districts,
     events,
     links,
     deal_popups,

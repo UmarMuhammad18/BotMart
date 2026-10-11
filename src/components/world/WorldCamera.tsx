@@ -37,9 +37,12 @@ export function FrameCamera({ snapshot }: { snapshot: WorldSnapshot }) {
   const { camera, size } = useThree();
   const framed = useRef(false);
 
+  // Re-frame when the default camera changes too: the first effect can run
+  // against R3F's initial camera before <OrthographicCamera makeDefault>
+  // takes over, which left the real camera unplaced at the origin.
   useEffect(() => {
     framed.current = false;
-  }, [snapshot.agents.length, snapshot.stalls.length, size.width, size.height]);
+  }, [camera, snapshot.agents.length, snapshot.stalls.length, size.width, size.height]);
 
   useEffect(() => {
     if (framed.current) return;

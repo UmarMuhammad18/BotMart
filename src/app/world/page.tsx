@@ -10,6 +10,7 @@ import {
 } from "@/components/world/WorldCanvas";
 import { MiniMap } from "@/components/world/MiniMap";
 import { WorldOverlay } from "@/components/world/WorldOverlay";
+import { StallAuction } from "@/components/world/StallAuction";
 import { fetchBeats, useWorldDirector } from "@/hooks/useWorldDirector";
 import { ROLE_BY_ID } from "@/lib/agents/roles";
 import type { WorldSnapshot } from "@/lib/types";
@@ -44,6 +45,7 @@ export default function WorldPage() {
       const normalized: WorldSnapshot = {
         agents: data.agents || [],
         stalls: data.stalls || [],
+        districts: data.districts || [],
         events: data.events || [],
         links: data.links || [],
         deal_popups: data.deal_popups || [],
@@ -364,8 +366,9 @@ export default function WorldPage() {
                 <div className="space-y-2 text-sm">
                   <div className="font-semibold">{selectedStall.title}</div>
                   <p className="text-xs text-zinc-400">
-                    {selectedStall.category || "general"} · stock{" "}
-                    {selectedStall.stock} · {selectedStall.status}
+                    {snapshot?.districts?.find((d) => d.id === selectedStall.district)
+                      ?.label ?? selectedStall.category ?? "General"}{" "}
+                    district · stock {selectedStall.stock} · {selectedStall.status}
                   </p>
                   <p className="text-lg font-mono font-bold text-emerald-300">
                     {gbp(selectedStall.price)}
@@ -381,6 +384,12 @@ export default function WorldPage() {
                   >
                     Start negotiation
                   </Link>
+                  <StallAuction
+                    key={selectedStall.id}
+                    stall={selectedStall}
+                    director={director}
+                    onDone={() => void load()}
+                  />
                 </div>
               )}
             </div>

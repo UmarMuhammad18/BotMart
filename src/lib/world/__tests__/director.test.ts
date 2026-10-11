@@ -93,6 +93,32 @@ describe("WorldDirector", () => {
     expect(d.bubbleFor("B")?.price).toBe(50);
   });
 
+  it("queues auction bidders behind the active one and flags the auction", () => {
+    const d = new WorldDirector({
+      ...stage,
+      agentName: (id: string) => id,
+    });
+    const bid = (buyer: string, neg: string, type: string, price: number | null) => ({
+      ...beat("B", type, price),
+      agent_id: buyer,
+      buyer_id: buyer,
+      negotiation_id: neg,
+    });
+    d.pushLive([
+      bid("B", "N1", "offer", 80),
+      bid("C", "N2", "offer", 85),
+      bid("D", "N3", "offer", 90),
+    ]);
+    run(d, 3000);
+    // B is negotiating; C and D wait in line in front of the stall
+    expect(d.placementFor("B")).toMatchObject({ x: 4.95, z: 3.6 });
+    const c = d.placementFor("C")!;
+    const dd = d.placementFor("D")!;
+    expect(c.z).toBeGreaterThan(3.6);
+    expect(dd.z).toBeGreaterThan(c.z);
+    expect(d.links[0].bidders).toBe(3);
+  });
+
   it("does not stage self-trades", () => {
     const d = new WorldDirector(stage);
     d.pushLive([{ ...beat("B", "offer", 80), seller_id: "B" }]);

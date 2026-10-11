@@ -1,3 +1,5 @@
+import type { District } from "@/lib/world/districts";
+
 export type AgentStatus = "active" | "paused" | "blocked";
 
 export type AgentRole =
@@ -87,6 +89,8 @@ export type WorldAgent = {
   reputation: number;
   goal: string | null;
   target_stall_id?: string | null;
+  /** District ids this agent shops in (from policy.categories). */
+  categories?: string[];
 };
 
 export type WorldStall = {
@@ -94,6 +98,7 @@ export type WorldStall = {
   title: string;
   price: number;
   category: string | null;
+  district?: string;
   stock: number;
   status: ListingStatus;
   x: number;
@@ -143,6 +148,7 @@ export type WorldBeat = {
 export type WorldSnapshot = {
   agents: WorldAgent[];
   stalls: WorldStall[];
+  districts?: District[];
   events: WorldEvent[];
   links: WorldLink[];
   deal_popups: WorldDealPopup[];

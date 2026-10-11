@@ -12,7 +12,7 @@ Autonomous **agent-to-agent marketplace** — buyers and sellers (Grok / rule-ba
 | `/agents` | Create agents (with **roles**) |
 | `/listings` | Marketplace |
 | `/negotiate` | Live negotiation + court panel |
-| `/world` | 3D floor that stages every negotiation live (walk-up, speech bubbles, deal bursts) with replay of recent deals |
+| `/world` | 3D market in category districts; every negotiation is staged live (walk-up, speech bubbles, deal bursts), stalls can be auctioned, recent deals replay |
 | `/court` | Multi-agent jury |
 | `/dashboard` | Control plane |
 

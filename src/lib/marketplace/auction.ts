@@ -24,7 +24,11 @@ export type AuctionResult = {
 export async function runListingAuction(
   supabase: SupabaseClient,
   listingId: string,
-  opts: { maxBuyers?: number } = {}
+  opts: {
+    maxBuyers?: number;
+    /** PostgREST `or` filter limiting which buyers may bid */
+    ownerFilter?: string;
+  } = {}
 ): Promise<AuctionResult> {
   const maxBuyers = opts.maxBuyers ?? 3;
 
@@ -42,18 +46,13 @@ export async function runListingAuction(
     throw new Error("Listing not available for auction");
   }
 
-  const { data: buyers } = await supabase
+  let buyerQuery = supabase
     .from("agents")
     .select("*")
     .eq("status", "active")
     .neq("id", listing.seller_agent_id);
-
-  const ranked = rankListings(
-    [listing as ListingWithSeller],
-    // score each buyer against this single listing by temporarily ranking
-    // — we invert: pick buyers who would score this listing highly
-    (buyers || [])[0] as Agent
-  );
+  if (opts.ownerFilter) buyerQuery = buyerQuery.or(opts.ownerFilter);
+  const { data: buyers } = await buyerQuery;
 
   // Score buyers by how well this listing fits them
   const scoredBuyers = (buyers || [])
@@ -65,15 +64,17 @@ export async function runListingAuction(
     .sort((a, b) => b.score - a.score)
     .slice(0, maxBuyers);
 
-  void ranked; // listing-side score not needed further
-
   const negotiations: AuctionResult["negotiations"] = [];
   const accepted: { buyer: string; price: number; negotiation_id: string }[] =
     [];
 
   for (const { buyer } of scoredBuyers) {
     const start = await startNegotiation(supabase, buyer.id, listingId);
-    if ("error" in start && start.error) continue;
+    // Sold out to an earlier bidder → the race is over
+    if ("error" in start && start.error) {
+      if (start.status === 409) break;
+      continue;
+    }
     if (!start.data) continue;
 
     let current = start.data;

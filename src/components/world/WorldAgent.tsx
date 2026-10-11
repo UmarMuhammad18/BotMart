@@ -1,7 +1,7 @@
 "use client";
 
 import { useFrame } from "@react-three/fiber";
-import { Text, Billboard, Html } from "@react-three/drei";
+import { Text, Billboard } from "@react-three/drei";
 import { useMemo, useRef } from "react";
 import * as THREE from "three";
 import { ROLE_BY_ID } from "@/lib/agents/roles";
@@ -9,15 +9,7 @@ import type { WorldAgent, WorldStall } from "@/lib/types";
 import { wanderTarget } from "@/components/world/busyMotion";
 import { laptopTextForAgent } from "@/components/world/AgentLaptop";
 import { AgentStation } from "@/components/world/AgentStation";
-import type { BubbleTone, WorldDirector } from "@/lib/world/director";
-
-const BUBBLE_STYLE: Record<BubbleTone, string> = {
-  offer: "border-sky-400/60 bg-sky-950/90 text-sky-100",
-  counter: "border-amber-400/60 bg-amber-950/90 text-amber-100",
-  accept: "border-emerald-400/70 bg-emerald-950/90 text-emerald-100",
-  reject: "border-rose-400/60 bg-rose-950/90 text-rose-100",
-  info: "border-white/15 bg-zinc-900/90 text-zinc-200",
-};
+import type { WorldDirector } from "@/lib/world/director";
 
 const _goal = new THREE.Vector3();
 const _dir = new THREE.Vector3();
@@ -55,7 +47,6 @@ export function WorldAgentMesh({
         : agent,
     [agent]
   );
-  const bubble = director.bubbleFor(agent.id);
 
   useFrame(({ clock }, rawDt) => {
     if (!group.current) return;
@@ -314,29 +305,6 @@ export function WorldAgentMesh({
             {short}
           </Text>
         </Billboard>
-
-        {bubble && (
-          <Html
-            position={[0, 1.6, 0]}
-            center
-            zIndexRange={[20, 0]}
-            style={{ pointerEvents: "none" }}
-          >
-            <div
-              key={bubble.key}
-              className={`world-bubble max-w-[200px] w-max rounded-xl border px-2.5 py-1.5 text-[11px] leading-snug shadow-lg backdrop-blur ${BUBBLE_STYLE[bubble.tone]}`}
-            >
-              {bubble.price != null &&
-                bubble.tone !== "info" &&
-                !bubble.text.includes(`£${Math.round(bubble.price)}`) && (
-                <span className="font-mono font-semibold mr-1">
-                  £{Math.round(bubble.price)}
-                </span>
-              )}
-              {bubble.text}
-            </div>
-          </Html>
-        )}
       </group>
     </group>
   );
