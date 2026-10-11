@@ -4,7 +4,7 @@ import { isAuthorizedCron } from "@/lib/auth";
 import { runAllActiveBuyers } from "@/lib/agents/runner";
 
 /**
- * Hourly cron: run active buyer agents once each.
+ * Daily cron (Vercel Hobby limit): run active buyer agents once each.
  * Secure with CRON_SECRET (Vercel sends Authorization: Bearer <CRON_SECRET>).
  */
 export async function GET(request: Request) {

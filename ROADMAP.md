@@ -43,7 +43,7 @@ Goal: flagship **agentic commerce** portfolio project.
 |----------|---------|
 | `POST /api/agents/run` | Buyer shops now |
 | `POST /api/auctions` | Multi-buyer race on one listing |
-| `GET /api/cron/run-agents` | Hourly buyers |
-| `GET /api/cron/seller-adjust` | Hourly sellers |
+| `GET /api/cron/run-agents` | Daily buyers (Hobby cron limit) |
+| `GET /api/cron/seller-adjust` | Daily sellers (Hobby cron limit) |
 | `POST /api/agents/claim` | Own seed agents |
 | `POST /api/webhooks/stripe` | Order paid/cancelled |

@@ -32,8 +32,12 @@ Copy from `.env.local.example` into Vercel → Settings → Environment Variable
 
 `vercel.json` already schedules:
 
-- `/api/cron/run-agents` — hourly (buyers shop)
-- `/api/cron/seller-adjust` — :30 past hour (sellers reprice/relist)
+- `/api/cron/run-agents` — daily 09:00 UTC (buyers shop)
+- `/api/cron/seller-adjust` — daily 09:30 UTC (sellers reprice/relist)
+
+Vercel **Hobby** only allows cron jobs that run at most once a day — an
+hourly schedule makes every deployment fail before the build starts. On
+Pro you can go back to hourly (`0 * * * *` / `30 * * * *`).
 
 Set `CRON_SECRET` in Vercel; Vercel Cron sends `Authorization: Bearer <CRON_SECRET>`.
 
