@@ -65,7 +65,7 @@ export function HeroWorldPortal({
           />
 
           <Image
-            src="/hero-robot.png"
+            src="/hero-robot.jpg"
             alt="BotMart agent — click to enter 3D world"
             fill
             priority
