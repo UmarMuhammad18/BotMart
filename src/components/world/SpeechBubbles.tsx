@@ -31,7 +31,7 @@ const LEADER: Record<BubbleTone, string> = {
 };
 
 /** Height above the floor the bubble points at (just over the name tag). */
-const ANCHOR_Y = 2.1;
+const ANCHOR_Y = 2.45;
 /** Only draw a leader line once a bubble is pushed this far off its speaker. */
 const LEADER_MIN_PX = 10;
 

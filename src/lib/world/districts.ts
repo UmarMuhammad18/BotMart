@@ -27,23 +27,49 @@ type ListingLike = {
 
 type AgentLike = { id: string; world_x?: number | null; world_z?: number | null };
 
+/**
+ * Village geometry: the market (districts + stalls) sits in the middle; each
+ * agent's cottage stands on a ring around it, facing the square. The court
+ * hall closes the ring on the +z side.
+ */
+export const VILLAGE = {
+  cx: 0,
+  cz: -2.5,
+  ringRadius: 25,
+  /** Agent's idle spot: on the porch, this far in front of the cottage. */
+  porch: 3.4,
+  courtAngle: Math.PI / 2,
+  /** No cottages within this angle either side of the court. */
+  courtGap: 0.42,
+} as const;
+
+export const COURT_POS = {
+  x: VILLAGE.cx + Math.cos(VILLAGE.courtAngle) * VILLAGE.ringRadius,
+  z: VILLAGE.cz + Math.sin(VILLAGE.courtAngle) * VILLAGE.ringRadius,
+};
+
+export type Building = { x: number; z: number; rot: number };
+
 export type DistrictLayout = {
   districts: District[];
   stallPos: Map<string, { x: number; z: number }>;
-  /** Home station for each agent id. */
+  /** Each agent's idle spot (on its porch). */
   homePos: Map<string, { x: number; z: number }>;
+  /** Each agent's cottage: centre and y-rotation (front faces the square). */
+  buildings: Map<string, Building>;
   /** Category key → district id (for scouting routes). */
   districtOf: (category: string | null | undefined) => string;
 };
 
+/** Natural market-cloth tones, leaning green, that sit well in the village. */
 const KNOWN: Record<string, { label: string; color: string }> = {
-  electronics: { label: "Electronics", color: "#22d3ee" },
-  software: { label: "Software", color: "#a78bfa" },
-  compute: { label: "Compute", color: "#f59e0b" },
-  data: { label: "Data", color: "#42d886" },
-  general: { label: "General", color: "#94a3b8" },
+  electronics: { label: "Electronics", color: "#2f8f86" },
+  software: { label: "Software", color: "#3f9a5a" },
+  compute: { label: "Compute", color: "#c79a3a" },
+  data: { label: "Data", color: "#7f9a3c" },
+  general: { label: "General", color: "#8aa68e" },
 };
-const EXTRA_COLORS = ["#f472b6", "#60a5fa", "#facc15", "#fb7185"];
+const EXTRA_COLORS = ["#b8643f", "#7d5a7a", "#4f7fa0", "#a0864a"];
 
 /** Two rows of three district slots, clear of the side walls (x = ±16). */
 const SLOTS: [number, number][] = [
@@ -54,13 +80,10 @@ const SLOTS: [number, number][] = [
   [0, 2.5],
   [10, 2.5],
 ];
-const BACK_ROW_Z = -8;
 /** A plate must fit its slot: 10 wide, 10.5 deep (slot pitch). */
 const MAX_DEPTH = 10.3;
 const PAD_W = 1.4;
 const PAD_D = 1.2;
-/** Buyer-only agents live on the plaza between the market and the court. */
-const PLAZA_Z = 10.8;
 
 export function categoryKey(category: string | null | undefined) {
   const c = (category || "").trim().toLowerCase();
@@ -151,42 +174,69 @@ export function layoutDistricts(
   }
 
   const homePos = new Map<string, { x: number; z: number }>();
-  const perDistrict = new Map<string, string[]>();
-  const plaza: string[] = [];
+  const buildings = new Map<string, Building>();
+  const { cx, cz, ringRadius: R, porch, courtAngle, courtGap } = VILLAGE;
+
+  const place = (id: string, theta: number) => {
+    const bx = cx + Math.cos(theta) * R;
+    const bz = cz + Math.sin(theta) * R;
+    // rotation.y so the cottage's local +z (its front) points at the square
+    const rot = Math.atan2(cx - bx, cz - bz);
+    buildings.set(id, { x: bx, z: bz, rot });
+    homePos.set(id, {
+      x: cx + Math.cos(theta) * (R - porch),
+      z: cz + Math.sin(theta) * (R - porch),
+    });
+  };
+
+  const ringAgents: { id: string; pref: number | null }[] = [];
   for (const a of agents) {
     if (a.world_x != null && a.world_z != null) {
-      homePos.set(a.id, { x: Number(a.world_x), z: Number(a.world_z) });
+      // Explicit coordinates: that's the porch spot; the cottage stands behind it
+      const x = Number(a.world_x);
+      const z = Number(a.world_z);
+      const out = Math.atan2(z - cz, x - cx);
+      homePos.set(a.id, { x, z });
+      buildings.set(a.id, {
+        x: x + Math.cos(out) * porch,
+        z: z + Math.sin(out) * porch,
+        rot: Math.atan2(cx - x, cz - z),
+      });
       continue;
     }
     const d = sellerDistrict.get(a.id);
-    if (d) {
-      if (!perDistrict.has(d)) perDistrict.set(d, []);
-      perDistrict.get(d)!.push(a.id);
-    } else {
-      plaza.push(a.id);
+    const dist = d ? districts.find((x) => x.id === d) : undefined;
+    ringAgents.push({ id: a.id, pref: dist ? Math.atan2(dist.z - cz, dist.x - cx) : null });
+  }
+
+  // Evenly spaced slots around the ring, leaving a gap for the court
+  const n = ringAgents.length;
+  const span = Math.PI * 2 - courtGap * 2;
+  const slots = Array.from({ length: n }, (_, i) =>
+    courtAngle + courtGap + (n === 1 ? span / 2 : (i + 0.5) * (span / n))
+  );
+  const free = new Set(slots.map((_, i) => i));
+  const angDist = (a: number, b: number) => Math.abs(Math.atan2(Math.sin(a - b), Math.cos(a - b)));
+
+  // Sellers take the free slot nearest their district; everyone else fills in
+  const sellersFirst = [...ringAgents].sort(
+    (a, b) => (a.pref == null ? 1 : 0) - (b.pref == null ? 1 : 0) || a.id.localeCompare(b.id)
+  );
+  for (const agent of sellersFirst) {
+    let best = -1;
+    for (const i of free) {
+      if (best === -1) best = i;
+      else if (agent.pref != null && angDist(slots[i], agent.pref) < angDist(slots[best], agent.pref)) best = i;
     }
+    free.delete(best);
+    place(agent.id, slots[best]);
   }
-  for (const [dId, ids] of perDistrict) {
-    const dist = districts.find((x) => x.id === dId)!;
-    // Back-row districts keep stations behind them; front-row districts face
-    // the plaza (the aisle between the rows is left for walking)
-    const edge =
-      dist.z === BACK_ROW_Z ? dist.z - dist.d / 2 - 0.9 : dist.z + dist.d / 2 + 0.9;
-    ids.forEach((id, k) => {
-      homePos.set(id, {
-        x: dist.x + (k - (ids.length - 1) / 2) * 2.2,
-        z: edge,
-      });
-    });
-  }
-  plaza.forEach((id, k) => {
-    homePos.set(id, { x: (k - (plaza.length - 1) / 2) * 3, z: PLAZA_Z });
-  });
 
   return {
     districts,
     stallPos,
     homePos,
+    buildings,
     districtOf: (category) => alias.get(categoryKey(category)) ?? "general",
   };
 }

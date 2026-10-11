@@ -91,6 +91,8 @@ export type WorldAgent = {
   target_stall_id?: string | null;
   /** District ids this agent shops in (from policy.categories). */
   categories?: string[];
+  /** The agent's cottage on the village ring (front faces the square). */
+  building?: { x: number; z: number; rot: number };
 };
 
 export type WorldStall = {

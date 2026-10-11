@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { categoryKey, layoutDistricts } from "../districts";
+import { categoryKey, COURT_POS, layoutDistricts, VILLAGE } from "../districts";
 
 const L = (id: string, category: string | null, seller = "S1") => ({
   id,
@@ -49,16 +49,39 @@ describe("layoutDistricts", () => {
     expect(districtOf("h")).toBe("general");
   });
 
-  it("homes sellers in their main district and buyers on the plaza", () => {
-    const { homePos, districts } = layoutDistricts(
-      [L("a", "data", "seller"), L("b", "data", "seller"), L("c", "software", "seller")],
-      [{ id: "seller" }, { id: "buyer" }]
-    );
-    const data = districts.find((d) => d.id === "data")!;
-    expect(homePos.get("seller")!.x).toBeCloseTo(data.x);
-    // Station sits just outside its own district plate
-    expect(Math.abs(homePos.get("seller")!.z - data.z)).toBeGreaterThan(data.d / 2);
-    expect(homePos.get("buyer")!.z).toBeGreaterThan(8);
+  it("puts every agent's cottage on the ring, facing the square, clear of the court", () => {
+    const agents = Array.from({ length: 9 }, (_, i) => ({ id: `a${i}` }));
+    const { buildings, homePos } = layoutDistricts([L("x", "data", "a0")], agents);
+    expect(buildings.size).toBe(9);
+    const list = [...buildings.values()];
+    for (const b of list) {
+      const r = Math.hypot(b.x - VILLAGE.cx, b.z - VILLAGE.cz);
+      expect(r).toBeCloseTo(VILLAGE.ringRadius);
+      // front (+z rotated by rot) points back toward the centre
+      const fx = Math.sin(b.rot);
+      const fz = Math.cos(b.rot);
+      expect(fx * (VILLAGE.cx - b.x) + fz * (VILLAGE.cz - b.z)).toBeGreaterThan(0);
+      expect(Math.hypot(b.x - COURT_POS.x, b.z - COURT_POS.z)).toBeGreaterThan(8);
+    }
+    for (const a of list)
+      for (const b of list) if (a !== b) expect(Math.hypot(a.x - b.x, a.z - b.z)).toBeGreaterThan(7);
+    // the idle spot is the porch, between the cottage and the square
+    const h = homePos.get("a0")!;
+    expect(Math.hypot(h.x - VILLAGE.cx, h.z - VILLAGE.cz)).toBeCloseTo(VILLAGE.ringRadius - VILLAGE.porch);
+  });
+
+  it("puts a seller's cottage on the side of the ring nearest its district", () => {
+    const listings = [L("e1", "electronics", "seller"), L("e2", "electronics", "seller"), L("s1", "software", "other")];
+    const agents = ["seller", "b1", "b2", "b3", "b4", "b5"].map((id) => ({ id }));
+    const { buildings, districts } = layoutDistricts(listings, agents);
+    const e = districts.find((d) => d.id === "electronics")!;
+    const toDistrict = (id: string) => {
+      const b = buildings.get(id)!;
+      return Math.hypot(b.x - e.x, b.z - e.z);
+    };
+    for (const other of ["b1", "b2", "b3", "b4", "b5"]) {
+      expect(toDistrict("seller")).toBeLessThanOrEqual(toDistrict(other));
+    }
   });
 
   it("respects explicit world coordinates", () => {

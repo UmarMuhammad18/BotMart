@@ -11,8 +11,8 @@ export type WorldSelection =
   | { kind: "stall"; id: string }
   | null;
 
-const IsoScene = dynamic(
-  () => import("@/components/world/IsoScene").then((m) => m.IsoScene),
+const VillageScene = dynamic(
+  () => import("@/components/world/village/VillageScene").then((m) => m.VillageScene),
   {
     ssr: false,
     loading: () => (
@@ -20,7 +20,7 @@ const IsoScene = dynamic(
         className="w-full rounded-2xl border border-white/10 bg-zinc-950 flex items-center justify-center text-sm text-zinc-500"
         style={{ height: "min(70vh, 640px)", minHeight: 520 }}
       >
-        Loading busy marketplace…
+        Loading the village…
       </div>
     ),
   }
@@ -42,7 +42,7 @@ export function WorldCanvas({
   director: WorldDirector;
 }) {
   return (
-    <IsoScene
+    <VillageScene
       snapshot={snapshot}
       director={director}
       selection={selection}

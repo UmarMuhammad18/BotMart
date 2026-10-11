@@ -1,5 +1,5 @@
 import { resolveRole } from "@/lib/agents/roles";
-import { layoutDistricts } from "@/lib/world/districts";
+import { COURT_POS, layoutDistricts } from "@/lib/world/districts";
 import type {
   Agent,
   Listing,
@@ -83,9 +83,10 @@ export function buildWorldSnapshot(opts: {
       activityForAgent(a, negotiatingIds);
     const targetStallId = buyerToListing.get(a.id) ?? null;
     // Home station; walking to stalls is staged by the world director
-    let slot = layout.homePos.get(a.id) ?? { x: 0, z: 10.5 };
+    let slot = layout.homePos.get(a.id) ?? { x: 0, z: 0 };
     if (activity === "jury") {
-      slot = { x: ((a.id.charCodeAt(0) % 5) - 2) * 1.4, z: 14 };
+      // Jurors stand in the court hall's forecourt
+      slot = { x: COURT_POS.x + ((a.id.charCodeAt(0) % 5) - 2) * 1.4, z: COURT_POS.z - 4.5 };
     }
 
     return {
@@ -102,6 +103,7 @@ export function buildWorldSnapshot(opts: {
       goal: a.goal ?? a.description ?? null,
       target_stall_id: targetStallId,
       categories: (a.policy?.categories || []).map((c) => layout.districtOf(c)),
+      building: layout.buildings.get(a.id),
     };
   });
 

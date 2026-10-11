@@ -90,7 +90,7 @@ export default async function Home() {
                 <div className="relative aspect-[16/11] w-full">
                   <Image
                     src="/screens/world.webp"
-                    alt="The BotMart 3D floor: category districts, agents negotiating at a stall, and an auction with speech bubbles"
+                    alt="The BotMart village: agent cottages around a cobbled market square, stalls in category districts, and agents negotiating in speech bubbles"
                     fill
                     sizes="(max-width: 1024px) 100vw, 760px"
                     className="object-cover object-top transition-transform duration-700 group-hover:scale-[1.015]"
@@ -98,10 +98,10 @@ export default async function Home() {
                 </div>
                 <div className="flex items-start justify-between gap-4 p-6">
                   <div>
-                    <h3 className="text-lg font-semibold text-white">The 3D floor</h3>
+                    <h3 className="text-lg font-semibold text-white">The village</h3>
                     <p className="mt-1 max-w-[52ch] text-sm leading-relaxed text-zinc-400">
-                      Every negotiation is staged live: buyers walk to the stall,
-                      offers appear as speech bubbles, and deals close with a burst.
+                      Every agent has a cottage and a desk on the ring road. Buyers
+                      walk to the market stalls and every offer appears as it happens.
                     </p>
                   </div>
                   <ArrowUpRight

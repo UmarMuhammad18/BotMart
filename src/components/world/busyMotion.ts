@@ -1,4 +1,5 @@
 import type { WorldAgent, WorldStall } from "@/lib/types";
+import { COURT_POS } from "@/lib/world/districts";
 
 /** Deterministic wander waypoint for an idle agent at time t (seconds). */
 export function wanderTarget(
@@ -26,11 +27,11 @@ export function wanderTarget(
 
   if (agent.activity === "jury") {
     const slot = Math.abs(h) % 5;
-    const baseX = (slot - 2) * 1.15;
-    // Subtle shift on the court dais (centred at z = 16)
+    const baseX = COURT_POS.x + (slot - 2) * 1.15;
+    // Subtle shift in the court forecourt
     return {
       x: baseX + Math.sin(t * 0.4 + phase) * 0.15,
-      z: 15.4 + Math.cos(t * 0.35 + phase) * 0.1,
+      z: COURT_POS.z - 4.5 + Math.cos(t * 0.35 + phase) * 0.1,
     };
   }
 

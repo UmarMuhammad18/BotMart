@@ -3,9 +3,12 @@
 import type { WorldSnapshot } from "@/lib/types";
 import { ROLE_BY_ID } from "@/lib/agents/roles";
 import type { WorldSelection } from "@/components/world/WorldCanvas";
+import { COURT_POS, VILLAGE } from "@/lib/world/districts";
+import { ZONES } from "@/lib/world/terrain";
 
-const SCALE = 4.2;
+/** Fit the whole village ring (plus cottages) into the 120-unit map. */
 const OFFSET = 60;
+const SCALE = (OFFSET - 4) / (VILLAGE.ringRadius + 4);
 
 export function MiniMap({
   snapshot,
@@ -20,7 +23,7 @@ export function MiniMap({
   const h = 120;
 
   function toXY(x: number, z: number) {
-    return { cx: OFFSET + x * SCALE, cy: OFFSET + z * SCALE };
+    return { cx: OFFSET + (x - VILLAGE.cx) * SCALE, cy: OFFSET + (z - VILLAGE.cz) * SCALE };
   }
 
   return (
@@ -33,13 +36,27 @@ export function MiniMap({
         className="w-full h-auto aspect-square rounded-lg bg-[#0a1911]"
       >
         <rect x={0} y={0} width={w} height={h} fill="#0a1911" />
-        {/* grid */}
-        {[20, 40, 60, 80, 100].map((g) => (
-          <g key={g}>
-            <line x1={g} y1={0} x2={g} y2={h} stroke="#1f2937" strokeWidth={0.5} />
-            <line x1={0} y1={g} x2={w} y2={g} stroke="#1f2937" strokeWidth={0.5} />
-          </g>
-        ))}
+        {/* ring road + market */}
+        <circle cx={OFFSET} cy={OFFSET} r={ZONES.roadRadius * SCALE} fill="none" stroke="#3a5a44" strokeWidth={ZONES.roadHalfWidth * 2 * SCALE} strokeOpacity={0.6} />
+        <circle cx={OFFSET} cy={OFFSET} r={ZONES.marketRadius * SCALE} fill="#12261b" />
+        {/* cottages */}
+        {snapshot.agents.map((a) => {
+          if (!a.building) return null;
+          const { cx, cy } = toXY(a.building.x, a.building.z);
+          return (
+            <rect
+              key={`home-${a.id}`}
+              x={cx - 3}
+              y={cy - 3}
+              width={6}
+              height={6}
+              rx={1}
+              transform={`rotate(${(-a.building.rot * 180) / Math.PI} ${cx} ${cy})`}
+              fill="#efe6d3"
+              fillOpacity={0.55}
+            />
+          );
+        })}
         {(snapshot.districts || []).map((d) => {
           const { cx, cy } = toXY(d.x - d.w / 2, d.z - d.d / 2);
           return (
@@ -97,7 +114,18 @@ export function MiniMap({
           );
         })}
         {/* court marker */}
-        <circle cx={OFFSET} cy={OFFSET + 10 * SCALE} r={4} fill="none" stroke="#a78bfa" strokeWidth={0.8} />
+        <rect
+          x={toXY(COURT_POS.x, COURT_POS.z).cx - 5}
+          y={toXY(COURT_POS.x, COURT_POS.z).cy - 4}
+          width={10}
+          height={8}
+          rx={1.5}
+          fill="none"
+          stroke="#5f9e86"
+          strokeWidth={0.9}
+        >
+          <title>Court</title>
+        </rect>
       </svg>
     </div>
   );

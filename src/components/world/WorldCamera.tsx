@@ -6,63 +6,56 @@ import * as THREE from "three";
 import type { WorldSnapshot } from "@/lib/types";
 import type { CameraMode } from "@/components/world/WorldCanvas";
 import type { WorldDirector } from "@/lib/world/director";
+import { COURT_POS, VILLAGE } from "@/lib/world/districts";
 
-export function contentCenter(snapshot: WorldSnapshot) {
-  const pts = [
-    ...snapshot.stalls.map((s) => [s.x, s.z] as const),
-    ...snapshot.agents.map((a) => [a.x, a.z] as const),
-  ];
-  if (pts.length === 0) return { x: 0, z: 0, radius: 10 };
-  let minX = Infinity,
-    maxX = -Infinity,
-    minZ = Infinity,
-    maxZ = -Infinity;
-  for (const [x, z] of pts) {
-    minX = Math.min(minX, x);
-    maxX = Math.max(maxX, x);
-    minZ = Math.min(minZ, z);
-    maxZ = Math.max(maxZ, z);
-  }
-  // Slightly pad but keep radius modest so default zoom is close
-  const span = Math.max(maxX - minX, maxZ - minZ, 6);
-  return {
-    x: (minX + maxX) / 2,
-    z: (minZ + maxZ) / 2,
-    radius: span * 0.5 + 3,
-  };
+/** Where the camera looks by default, and how much of the village to fit. */
+export const VILLAGE_VIEW = {
+  target: new THREE.Vector3(VILLAGE.cx, 0, VILLAGE.cz + 1),
+  radius: VILLAGE.ringRadius + 5,
+  elevation: THREE.MathUtils.degToRad(36),
+  azimuth: THREE.MathUtils.degToRad(38),
+};
+
+/** Distance that fits a sphere of `radius` in a perspective view. */
+function fitDistance(cam: THREE.PerspectiveCamera, radius: number) {
+  const vFov = THREE.MathUtils.degToRad(cam.fov);
+  const hFov = 2 * Math.atan(Math.tan(vFov / 2) * cam.aspect);
+  return radius / Math.sin(Math.min(vFov, hFov) / 2);
 }
 
-/** Frames the market so agents fill the view (not zoomed way out). */
-export function FrameCamera({ snapshot }: { snapshot: WorldSnapshot }) {
+export function overviewPosition(cam: THREE.PerspectiveCamera) {
+  const { target, radius, elevation, azimuth } = VILLAGE_VIEW;
+  const d = fitDistance(cam, radius) * 0.78;
+  return new THREE.Vector3(
+    target.x + d * Math.cos(elevation) * Math.sin(azimuth),
+    target.y + d * Math.sin(elevation),
+    target.z + d * Math.cos(elevation) * Math.cos(azimuth)
+  );
+}
+
+/** Frames the whole village once the real camera exists (and on resize). */
+export function FrameCamera() {
   const { camera, size } = useThree();
   const framed = useRef(false);
 
-  // Re-frame when the default camera changes too: the first effect can run
-  // against R3F's initial camera before <OrthographicCamera makeDefault>
-  // takes over, which left the real camera unplaced at the origin.
   useEffect(() => {
     framed.current = false;
-  }, [camera, snapshot.agents.length, snapshot.stalls.length, size.width, size.height]);
+  }, [camera, size.width, size.height]);
 
   useEffect(() => {
-    if (framed.current) return;
-    const c = contentCenter(snapshot);
-    const cam = camera as THREE.OrthographicCamera;
-    const dist = 14;
-    cam.position.set(c.x + dist, dist * 0.8, c.z + dist);
-    cam.lookAt(c.x, 0.3, c.z);
-    cam.near = -100;
-    cam.far = 250;
-    // Higher zoom = closer. Tuned for typical 5–15 agents/stalls.
-    const fit = Math.max(c.radius, 6);
-    const base = Math.min(size.width, size.height);
-    cam.zoom = THREE.MathUtils.clamp(base / (fit * 2.1), 28, 70);
+    if (framed.current || !(camera as THREE.PerspectiveCamera).isPerspectiveCamera) return;
+    const cam = camera as THREE.PerspectiveCamera;
+    cam.position.copy(overviewPosition(cam));
+    cam.lookAt(VILLAGE_VIEW.target);
     cam.updateProjectionMatrix();
     framed.current = true;
-  }, [camera, snapshot, size.height, size.width]);
+  }, [camera, size.height, size.width]);
 
   return null;
 }
+
+const _pos = new THREE.Vector3();
+const _look = new THREE.Vector3();
 
 export function CameraDirector({
   mode,
@@ -85,24 +78,25 @@ export function CameraDirector({
       controls.enabled = true;
       return;
     }
+    controls.enabled = false;
     if (mode === "court") {
-      controls.enabled = false;
-      camera.position.lerp(new THREE.Vector3(12, 14, 28), 0.07);
-      controls.target.lerp(new THREE.Vector3(0, 0.4, 16), 0.07);
-      controls.update();
-      return;
-    }
-    if (mode === "follow" && followAgentId) {
+      // Stand in the square, looking up at the court hall's portico
+      const ang = Math.atan2(VILLAGE.cz - COURT_POS.z, VILLAGE.cx - COURT_POS.x);
+      _pos.set(COURT_POS.x + Math.cos(ang) * 17 + 6, 9, COURT_POS.z + Math.sin(ang) * 17);
+      _look.set(COURT_POS.x, 2.4, COURT_POS.z);
+    } else if (mode === "follow" && followAgentId) {
       // Track where the robot actually is, not its home slot
       const a =
         director.livePos.get(followAgentId) ??
         snapshot.agents.find((x) => x.id === followAgentId);
       if (!a) return;
-      controls.enabled = false;
-      camera.position.lerp(new THREE.Vector3(a.x + 8, 10, a.z + 8), 0.1);
-      controls.target.lerp(new THREE.Vector3(a.x, 0.5, a.z), 0.1);
-      controls.update();
-    }
+      // High enough to clear cottage roofs (~4.8) while staying close
+      _pos.set(a.x + 6, 8.5, a.z + 8);
+      _look.set(a.x, 1.1, a.z);
+    } else return;
+    camera.position.lerp(_pos, 0.06);
+    controls.target.lerp(_look, 0.08);
+    controls.update();
   });
 
   return null;
