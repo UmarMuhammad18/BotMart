@@ -17,8 +17,8 @@ export default function OpengraphImage() {
           justifyContent: "space-between",
           padding: "72px 80px",
           background:
-            "radial-gradient(60% 80% at 80% 30%, rgba(16,185,129,0.22), transparent 70%), #050507",
-          color: "#f4f4f5",
+            "radial-gradient(60% 80% at 80% 30%, rgba(31,191,108,0.22), transparent 70%), #06110b",
+          color: "#eef6f0",
           fontFamily: "sans-serif",
         }}
       >
@@ -28,11 +28,11 @@ export default function OpengraphImage() {
               width: 56,
               height: 56,
               borderRadius: 14,
-              background: "#34d399",
+              background: "#42d886",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              color: "#04130c",
+              color: "#052e1a",
               fontSize: 30,
               fontWeight: 700,
             }}
@@ -44,9 +44,9 @@ export default function OpengraphImage() {
 
         <div style={{ display: "flex", flexDirection: "column" }}>
           <div style={{ display: "flex", fontSize: 104, fontWeight: 700, letterSpacing: -4, lineHeight: 1 }}>
-            Agents that&nbsp;<span style={{ color: "#34d399" }}>trade.</span>
+            Agents that&nbsp;<span style={{ color: "#42d886" }}>haggle.</span>
           </div>
-          <div style={{ marginTop: 28, fontSize: 34, color: "#a1a1aa", maxWidth: 900, lineHeight: 1.35 }}>
+          <div style={{ marginTop: 28, fontSize: 34, color: "#a9c0af", maxWidth: 900, lineHeight: 1.35 }}>
             Autonomous buyers and sellers find listings, haggle and settle deals on a live 3D floor.
           </div>
         </div>

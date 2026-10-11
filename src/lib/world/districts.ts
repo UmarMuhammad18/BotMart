@@ -40,7 +40,7 @@ const KNOWN: Record<string, { label: string; color: string }> = {
   electronics: { label: "Electronics", color: "#22d3ee" },
   software: { label: "Software", color: "#a78bfa" },
   compute: { label: "Compute", color: "#f59e0b" },
-  data: { label: "Data", color: "#34d399" },
+  data: { label: "Data", color: "#42d886" },
   general: { label: "General", color: "#94a3b8" },
 };
 const EXTRA_COLORS = ["#f472b6", "#60a5fa", "#facc15", "#fb7185"];

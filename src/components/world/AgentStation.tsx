@@ -8,7 +8,7 @@ import { Text } from "@react-three/drei";
  */
 export function AgentStation({
   screenText,
-  accent = "#34d399",
+  accent = "#42d886",
 }: {
   screenText: string;
   accent?: string;
@@ -97,7 +97,7 @@ export function AgentStation({
           <Text
             position={[0, -0.08, 0.01]}
             fontSize={0.04}
-            color="#6ee7b7"
+            color="#74e9a5"
             anchorX="center"
             anchorY="middle"
           >

@@ -57,7 +57,7 @@ export function AgentCard({
             style={{
               background:
                 agent.status === "active"
-                  ? "linear-gradient(135deg, rgba(16,185,129,0.15), rgba(6,182,212,0.15))"
+                  ? "linear-gradient(135deg, rgba(31,191,108,0.15), rgba(6,182,212,0.15))"
                   : agent.status === "paused"
                     ? "linear-gradient(135deg, rgba(245,158,11,0.15), rgba(234,179,8,0.1))"
                     : "linear-gradient(135deg, rgba(239,68,68,0.15), rgba(220,38,38,0.1))",
@@ -122,7 +122,7 @@ export function AgentCard({
               background:
                 usedPct > 80
                   ? "linear-gradient(90deg, #f59e0b, #ef4444)"
-                  : "linear-gradient(90deg, #10b981, #06b6d4)",
+                  : "linear-gradient(90deg, #1fbf6c, #06b6d4)",
             }}
           />
         </div>

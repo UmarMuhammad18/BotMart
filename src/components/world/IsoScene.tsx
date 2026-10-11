@@ -51,7 +51,7 @@ function Floor() {
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.03, 0]}>
         <ringGeometry args={[28, 28.3, 64]} />
         <meshBasicMaterial
-          color="#10b981"
+          color="#1fbf6c"
           transparent
           opacity={0.28}
           toneMapped={false}
@@ -90,7 +90,7 @@ function StallMesh({
           metalness={0.45}
           roughness={0.35}
           clearcoat={0.3}
-          emissive={selected ? "#10b981" : "#000000"}
+          emissive={selected ? "#1fbf6c" : "#000000"}
           emissiveIntensity={selected ? 0.35 : 0}
         />
       </mesh>
@@ -107,8 +107,8 @@ function StallMesh({
         <mesh position={[0, 1.2, 0.1]} castShadow>
           <boxGeometry args={[2.15, 0.07, 1.65]} />
           <meshStandardMaterial
-            color="#10b981"
-            emissive="#10b981"
+            color="#1fbf6c"
+            emissive="#1fbf6c"
             emissiveIntensity={1.4}
             toneMapped={false}
           />
@@ -135,7 +135,7 @@ function StallMesh({
       >
         <boxGeometry args={[0.5, 0.05, 0.04]} />
         <meshBasicMaterial
-          color={stockPct > 0.3 ? "#34d399" : "#f59e0b"}
+          color={stockPct > 0.3 ? "#42d886" : "#f59e0b"}
           toneMapped={false}
         />
       </mesh>
@@ -153,7 +153,7 @@ function StallMesh({
         <Text
           position={[0, -0.26, 0]}
           fontSize={0.2}
-          color={sold ? "#a1a1aa" : "#6ee7b7"}
+          color={sold ? "#a1a1aa" : "#74e9a5"}
           anchorX="center"
           anchorY="top"
           outlineWidth={0.014}
@@ -286,7 +286,7 @@ function DealBurst({
   const ring = useRef<THREE.Mesh>(null);
   const coins = useRef<(THREE.Mesh | null)[]>([]);
   const deal = burst.tone === "deal";
-  const color = deal ? "#34d399" : "#fb7185";
+  const color = deal ? "#42d886" : "#fb7185";
 
   useFrame(() => {
     // Seconds since birth on the director clock (respects playback speed)
@@ -343,7 +343,7 @@ function DealBurst({
         <Billboard>
           <Text
             fontSize={deal ? 0.5 : 0.36}
-            color={deal ? "#6ee7b7" : "#fda4af"}
+            color={deal ? "#74e9a5" : "#fda4af"}
             anchorX="center"
             outlineWidth={0.03}
             outlineColor={deal ? "#052e16" : "#4c0519"}
@@ -462,7 +462,7 @@ function Lights() {
         shadow-camera-bottom={-35}
         color="#e2e8f0"
       />
-      <pointLight position={[-14, 7, -8]} intensity={1.2} color="#34d399" distance={36} />
+      <pointLight position={[-14, 7, -8]} intensity={1.2} color="#42d886" distance={36} />
       <pointLight position={[14, 6, 8]} intensity={1.0} color="#22d3ee" distance={36} />
       <pointLight position={[0, 7, 16]} intensity={1.4} color="#a78bfa" distance={28} />
     </>
@@ -577,7 +577,7 @@ export function IsoScene({
   const bubbles = useRef(new Map<string, HTMLDivElement>());
   return (
     <div
-      className="w-full rounded-2xl overflow-hidden border border-white/10 bg-[#050507] relative"
+      className="w-full rounded-2xl overflow-hidden border border-white/10 bg-background relative"
       style={{ height: "min(70vh, 640px)", minHeight: 520 }}
     >
       <Canvas
@@ -594,8 +594,8 @@ export function IsoScene({
         }}
         onPointerMissed={() => onSelect(null)}
       >
-        <color attach="background" args={["#06080f"]} />
-        <fog attach="fog" args={["#06080f", 50, 100]} />
+        <color attach="background" args={["#06110b"]} />
+        <fog attach="fog" args={["#06110b", 50, 100]} />
         <SceneContent
           snapshot={snapshot}
           selection={selection}

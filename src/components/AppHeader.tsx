@@ -77,11 +77,11 @@ export function AppHeader({ active }: { active?: string }) {
   }
 
   return (
-    <header className="sticky top-0 z-50 border-b border-white/[0.07] bg-[#050507]/80 backdrop-blur-xl">
+    <header className="sticky top-0 z-50 border-b border-white/[0.07] bg-background/80 backdrop-blur-xl">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 h-14 sm:h-16 flex items-center justify-between gap-3">
         <Link href="/" className="flex items-center gap-2.5 shrink-0">
           <span className="w-8 h-8 rounded-[10px] bg-emerald-400 flex items-center justify-center">
-            <Bot size={17} className="text-[#04130c]" aria-hidden />
+            <Bot size={17} className="text-[#052e1a]" aria-hidden />
           </span>
           <span className="font-semibold text-[15px] tracking-tight text-white">
             BotMart
@@ -163,7 +163,7 @@ export function AppHeader({ active }: { active?: string }) {
         <nav
           id="mobile-nav"
           aria-label="Main navigation"
-          className="md:hidden border-t border-white/[0.06] bg-[#050507]/95 backdrop-blur-xl px-4 py-3 space-y-1"
+          className="md:hidden border-t border-white/[0.06] bg-background/95 backdrop-blur-xl px-4 py-3 space-y-1"
         >
           {links.map((link) => {
             const isActive = currentPath === link.href;

@@ -231,7 +231,7 @@ export default function DashboardPage() {
                           style={{
                             background:
                               agent.status === "active"
-                                ? "rgba(16,185,129,0.12)"
+                                ? "rgba(31,191,108,0.12)"
                                 : agent.status === "paused"
                                 ? "rgba(245,158,11,0.12)"
                                 : "rgba(239,68,68,0.12)",

@@ -29,8 +29,8 @@ export default async function Home() {
     <div className="flex flex-col min-h-screen overflow-x-hidden">
       <AppHeader active="/" />
       <main id="main" className="flex flex-1 flex-col">
-        {/* Hero: value prop, two actions, a real deal on the stage (and a live one on demand) */}
-        <Hero />
+        {/* Hero: value prop, two actions, and the price duel (real deals; a live one on demand) */}
+        <Hero duels={stats.duels} />
 
         {/* Real numbers from the database */}
         <section aria-label="Marketplace numbers" className="border-b border-white/[0.06]">
@@ -38,7 +38,7 @@ export default async function Home() {
             {/* 1px gaps over a hairline background draw the dividers at any column count */}
             <dl className="grid grid-cols-2 lg:grid-cols-4 gap-px bg-white/[0.06] border-x border-white/[0.06]">
               {numbers.map((n) => (
-                <div key={n.label} className="flex flex-col-reverse bg-[#050507] px-5 py-7 sm:px-7 sm:py-9">
+                <div key={n.label} className="flex flex-col-reverse bg-background px-5 py-7 sm:px-7 sm:py-9">
                   <dt className="mt-1 text-sm text-zinc-500">{n.label}</dt>
                   <dd className="text-3xl sm:text-4xl font-semibold tracking-tight tabular-nums text-white">
                     {n.value}
@@ -85,7 +85,7 @@ export default async function Home() {
             <div className="mt-12 grid gap-4 lg:grid-cols-3">
               <Link
                 href="/world"
-                className="group relative lg:col-span-2 lg:row-span-2 overflow-hidden rounded-2xl border border-white/[0.08] bg-[#0b0d10] transition-colors hover:border-emerald-400/40"
+                className="group relative lg:col-span-2 lg:row-span-2 overflow-hidden rounded-2xl border border-white/[0.08] bg-[#0a1911] transition-colors hover:border-emerald-400/40"
               >
                 <div className="relative aspect-[16/11] w-full">
                   <Image
@@ -129,7 +129,7 @@ export default async function Home() {
 
               <Link
                 href="/court"
-                className="group rounded-2xl border border-white/[0.08] bg-[#0b0d10] p-6 transition-colors hover:border-white/20"
+                className="group rounded-2xl border border-white/[0.08] bg-[#0a1911] p-6 transition-colors hover:border-white/20"
               >
                 <h3 className="text-lg font-semibold text-white">Secret jury court</h3>
                 <p className="mt-2 text-sm leading-relaxed text-zinc-400">
@@ -144,7 +144,7 @@ export default async function Home() {
 
               <Link
                 href="/agents"
-                className="group lg:col-span-3 flex flex-col gap-4 rounded-2xl border border-white/[0.08] bg-[linear-gradient(110deg,#0b0d10_40%,rgba(16,185,129,0.07))] p-6 transition-colors hover:border-white/20 sm:flex-row sm:items-center sm:justify-between"
+                className="group lg:col-span-3 flex flex-col gap-4 rounded-2xl border border-white/[0.08] bg-[linear-gradient(110deg,#0a1911_40%,rgba(31,191,108,0.07))] p-6 transition-colors hover:border-white/20 sm:flex-row sm:items-center sm:justify-between"
               >
                 <div>
                   <h3 className="text-lg font-semibold text-white">Autonomous agents</h3>

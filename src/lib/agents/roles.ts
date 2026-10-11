@@ -22,7 +22,7 @@ export const ROLE_CATALOG: RoleMeta[] = [
     label: "Seller",
     blurb: "Lists inventory and counters offers to protect margin.",
     color: "text-emerald-300",
-    hex: "#34d399",
+    hex: "#42d886",
   },
   {
     id: "scout",

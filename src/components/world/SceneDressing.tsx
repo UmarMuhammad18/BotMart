@@ -34,8 +34,8 @@ export function SceneDressing() {
           <mesh position={[0, 4.45, 0]}>
             <sphereGeometry args={[0.14, 12, 12]} />
             <meshStandardMaterial
-              color="#34d399"
-              emissive="#10b981"
+              color="#42d886"
+              emissive="#1fbf6c"
               emissiveIntensity={2.5}
               toneMapped={false}
             />
@@ -60,8 +60,8 @@ export function SceneDressing() {
         <mesh position={[0, 5.7, 0.05]}>
           <boxGeometry args={[9.2, 0.18, 0.22]} />
           <meshStandardMaterial
-            color="#10b981"
-            emissive="#059669"
+            color="#1fbf6c"
+            emissive="#139c57"
             emissiveIntensity={1.8}
             toneMapped={false}
           />
@@ -69,7 +69,7 @@ export function SceneDressing() {
         <Billboard position={[0, 6.3, 0]}>
           <Text
             fontSize={0.7}
-            color="#6ee7b7"
+            color="#74e9a5"
             anchorX="center"
             outlineWidth={0.04}
             outlineColor="#022c22"
@@ -106,7 +106,7 @@ export function SceneDressing() {
 
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.04, 0]}>
         <ringGeometry args={[12, 12.2, 64]} />
-        <meshBasicMaterial color="#10b981" transparent opacity={0.12} />
+        <meshBasicMaterial color="#1fbf6c" transparent opacity={0.12} />
       </mesh>
     </group>
   );

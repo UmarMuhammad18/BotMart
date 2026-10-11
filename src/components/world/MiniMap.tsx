@@ -30,9 +30,9 @@ export function MiniMap({
       </p>
       <svg
         viewBox={`0 0 ${w} ${h}`}
-        className="w-full h-auto aspect-square rounded-lg bg-[#0a0c10]"
+        className="w-full h-auto aspect-square rounded-lg bg-[#0a1911]"
       >
-        <rect x={0} y={0} width={w} height={h} fill="#0a0c10" />
+        <rect x={0} y={0} width={w} height={h} fill="#0a1911" />
         {/* grid */}
         {[20, 40, 60, 80, 100].map((g) => (
           <g key={g}>
@@ -71,7 +71,7 @@ export function MiniMap({
               width={6}
               height={6}
               rx={1}
-              fill={s.status === "sold" || s.stock <= 0 ? "#52525b" : "#10b981"}
+              fill={s.status === "sold" || s.stock <= 0 ? "#52525b" : "#1fbf6c"}
               stroke={active ? "#fff" : "transparent"}
               strokeWidth={1}
               className="cursor-pointer"

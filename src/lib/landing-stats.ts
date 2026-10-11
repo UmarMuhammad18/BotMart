@@ -18,6 +18,15 @@ export type LatestNegotiation = {
   messages: NegotiationMessage[];
 };
 
+/** A finished negotiation with every priced move, for the hero's price duel. */
+export type Duel = {
+  listingTitle: string;
+  askPrice: number;
+  buyerName: string;
+  sellerName: string;
+  messages: NegotiationMessage[];
+};
+
 export type LandingStats = {
   agentCount: number;
   activeAgentCount: number;
@@ -26,6 +35,7 @@ export type LandingStats = {
   totalValue: number;
   recentDeals: RecentDeal[];
   latestNegotiation: LatestNegotiation | null;
+  duels: Duel[];
 };
 
 const EMPTY_STATS: LandingStats = {
@@ -36,6 +46,7 @@ const EMPTY_STATS: LandingStats = {
   totalValue: 0,
   recentDeals: [],
   latestNegotiation: null,
+  duels: [],
 };
 
 /**
@@ -68,11 +79,11 @@ export async function getLandingStats(): Promise<LandingStats> {
           messages,
           buyer:agents!buyer_agent_id (name),
           seller:agents!seller_agent_id (name),
-          listing:listings (title)
+          listing:listings (title, price)
         `)
         .eq("status", "accepted")
         .order("updated_at", { ascending: false })
-        .limit(5),
+        .limit(12),
     ]);
 
     const agents = agentsRes.data ?? [];
@@ -101,11 +112,32 @@ export async function getLandingStats(): Promise<LandingStats> {
       messages: NegotiationMessage[] | null;
       buyer: { name: string } | null;
       seller: { name: string } | null;
-      listing: { title: string } | null;
+      listing: { title: string; price: number } | null;
     };
-    const neg = ((negRes.data ?? []) as unknown as NegRow[]).find(
-      (n) => (n.messages?.length ?? 0) >= 3 && n.buyer?.name !== n.seller?.name
+    // Accepted deals with a real back-and-forth (not legacy self-trades)
+    const finished = ((negRes.data ?? []) as unknown as NegRow[]).filter(
+      (n) =>
+        (n.messages?.length ?? 0) >= 3 &&
+        n.buyer?.name !== n.seller?.name &&
+        (n.messages ?? []).some((m) => m.type === "accept" && m.price)
     );
+    const neg = finished[0];
+
+    // Up to four, one per listing, for the hero's price duel
+    const seenListings = new Set<string>();
+    const duels: Duel[] = [];
+    for (const n of finished) {
+      const title = n.listing?.title ?? "listing";
+      if (seenListings.has(title) || duels.length >= 4) continue;
+      seenListings.add(title);
+      duels.push({
+        listingTitle: title,
+        askPrice: Number(n.listing?.price ?? 0),
+        buyerName: n.buyer?.name ?? "Buyer agent",
+        sellerName: n.seller?.name ?? "Seller agent",
+        messages: n.messages ?? [],
+      });
+    }
     const latestNegotiation: LatestNegotiation | null = neg
       ? {
           listingTitle: neg.listing?.title ?? "listing",
@@ -123,6 +155,7 @@ export async function getLandingStats(): Promise<LandingStats> {
       totalValue,
       recentDeals,
       latestNegotiation,
+      duels,
     };
   } catch {
     return EMPTY_STATS;

@@ -25,7 +25,7 @@ export function LiveFeed({ deals }: { deals: RecentDeal[] }) {
   }
 
   return (
-    <ul className="divide-y divide-white/[0.06] rounded-2xl border border-white/[0.08] bg-[#0b0d10]">
+    <ul className="divide-y divide-white/[0.06] rounded-2xl border border-white/[0.08] bg-[#0a1911]">
       {deals.map((deal) => (
         <li
           key={deal.id}

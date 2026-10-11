@@ -2,23 +2,23 @@
 
 /* ─── Design Tokens ──────────────────────────────────────── */
 :root {
-  --background: #050507;
-  --foreground: #f4f4f5;
+  --background: #06110b;
+  --foreground: #eef6f0;
 
   /* Brand gradient */
-  --grad-start: #10b981;
-  --grad-end:   #059669;
+  --grad-start: #1fbf6c;
+  --grad-end:   #139c57;
 
-  /* Surface levels */
-  --surface-0: #050507;
-  --surface-1: #0d0d10;
-  --surface-2: #131318;
-  --surface-3: #1c1c24;
-  --surface-border: rgba(255,255,255,0.07);
+  /* Surface levels (deep pine → moss) */
+  --surface-0: #06110b;
+  --surface-1: #0a1911;
+  --surface-2: #0e2117;
+  --surface-3: #132b1e;
+  --surface-border: rgba(190,235,205,0.08);
 
   /* Glow effects */
   /* Tinted depth, not neon: one accent (emerald), shadows carry its hue */
-  --glow-emerald: 0 1px 0 rgba(52,211,153,0.10) inset, 0 8px 24px -12px rgba(16,185,129,0.35);
+  --glow-emerald: 0 1px 0 rgba(66,216,134,0.10) inset, 0 8px 24px -12px rgba(31,191,108,0.35);
   --glow-blue:    var(--glow-emerald);
   --glow-amber:   0 8px 24px -12px rgba(245,158,11,0.30);
 
@@ -31,21 +31,44 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-surface-1: var(--surface-1);
+  --color-surface-2: var(--surface-2);
+  --color-surface-3: var(--surface-3);
   /* Self-hosted by next/font in layout.tsx */
   --font-sans: var(--font-geist), system-ui, sans-serif;
   --font-mono: var(--font-geist-mono), ui-monospace, monospace;
 }
 
 /*
- * Muted-text greys, lifted for WCAG AA. zinc-500/600/700 are only used for
- * text in this app; stock values fell to 2.2–4.2:1 on our near-black
- * surfaces. These keep the same light→dim order but clear 4.5:1 on every
- * surface up to --surface-3 (#1c1c24).
+ * Palette: shades of green. zinc becomes a sage-tinted neutral (every step
+ * used for text clears 4.5:1 on all surfaces up to --surface-3), emerald
+ * becomes a true green accent scale. Existing zinc-* / emerald-* classes
+ * pick this up everywhere.
  */
 @theme {
-  --color-zinc-500: #9898a2;
-  --color-zinc-600: #8b8b95;
-  --color-zinc-700: #85858f;
+  --color-zinc-50: #f2f8f3;
+  --color-zinc-100: #e6f0e8;
+  --color-zinc-200: #d6e5da;
+  --color-zinc-300: #bfd3c4;
+  --color-zinc-400: #a9c0af;
+  --color-zinc-500: #98b09e;
+  --color-zinc-600: #8ca593;
+  --color-zinc-700: #87a08d;
+  --color-zinc-800: #1d3a2a;
+  --color-zinc-900: #12261b;
+  --color-zinc-950: #08150e;
+
+  --color-emerald-50: #ecfdf3;
+  --color-emerald-100: #d1fae2;
+  --color-emerald-200: #a6f4c6;
+  --color-emerald-300: #74e9a5;
+  --color-emerald-400: #42d886;
+  --color-emerald-500: #1fbf6c;
+  --color-emerald-600: #139c57;
+  --color-emerald-700: #127c47;
+  --color-emerald-800: #12623b;
+  --color-emerald-900: #0f5132;
+  --color-emerald-950: #052e1a;
 }
 
 /*
@@ -94,7 +117,7 @@
   ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.22); }
 
   /* ─── Selection ─────────────────────────────────────────── */
-  ::selection { background: rgba(16,185,129,0.25); color: #fff; }
+  ::selection { background: rgba(31,191,108,0.25); color: #fff; }
 
   /* ─── Typography ─────────────────────────────────────────── */
   h1, h2, h3, h4, h5, h6 {
@@ -105,7 +128,7 @@
 
   /* ─── Focus ring ─────────────────────────────────────────── */
   :focus-visible {
-    outline: 2px solid #34d399;
+    outline: 2px solid #42d886;
     outline-offset: 2px;
   }
 }
@@ -114,7 +137,7 @@
   /* ─── Utility: gradient text ─────────────────────────────── */
   /* Kept as a class name for existing markup: now the single solid accent */
   .gradient-text {
-    color: #34d399;
+    color: #42d886;
   }
 
   /* ─── Utility: glass card ────────────────────────────────── */
@@ -134,7 +157,7 @@
 
   /* ─── Utility: glow borders ──────────────────────────────── */
   .glow-border-emerald {
-    border-color: rgba(16,185,129,0.35) !important;
+    border-color: rgba(31,191,108,0.35) !important;
     box-shadow: var(--glow-emerald);
   }
   .glow-border-blue {
@@ -155,7 +178,7 @@
   }
   .orb-1 {
     width: 600px; height: 600px;
-    background: radial-gradient(circle, #10b981, transparent 70%);
+    background: radial-gradient(circle, #1fbf6c, transparent 70%);
     top: -200px; left: -200px;
     animation-delay: 0s;
   }
@@ -246,7 +269,7 @@
     border-radius: 50%;
     display: inline-block;
   }
-  .status-dot.active  { background: #10b981; animation: pulse-dot 2s ease infinite; }
+  .status-dot.active  { background: #1fbf6c; animation: pulse-dot 2s ease infinite; }
   .status-dot.paused  { background: #f59e0b; }
   .status-dot.blocked { background: #ef4444; }
 
@@ -254,15 +277,15 @@
   .btn-primary {
     display: inline-flex; align-items: center; gap: 8px;
     min-height: 44px;
-    /* Dark ink on emerald: white on #10b981 is only 2.5:1 */
-    background: #34d399;
-    color: #04130c; font-weight: 600;
+    /* Dark ink on emerald: white on #1fbf6c is only 2.5:1 */
+    background: #42d886;
+    color: #052e1a; font-weight: 600;
     padding: 10px 20px; border-radius: 12px;
     border: none; cursor: pointer;
     transition: background-color 0.2s ease, transform 0.15s ease, box-shadow 0.2s ease;
-    box-shadow: inset 0 1px 0 rgba(255,255,255,0.35), 0 8px 20px -10px rgba(16,185,129,0.55);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.35), 0 8px 20px -10px rgba(31,191,108,0.55);
   }
-  .btn-primary:hover { background: #6ee7b7; }
+  .btn-primary:hover { background: #74e9a5; }
   .btn-primary:active { transform: scale(0.98); }
   .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
 
@@ -297,7 +320,7 @@
   }
   .card:hover {
     border-color: rgba(255,255,255,0.12);
-    box-shadow: 0 12px 32px -16px rgba(16,185,129,0.18);
+    box-shadow: 0 12px 32px -16px rgba(31,191,108,0.18);
   }
   .card-interactive:hover {
     transform: translateY(-2px);
@@ -309,7 +332,7 @@
     font-size: 11px; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase;
     padding: 3px 10px; border-radius: 99px;
   }
-  .badge-emerald { background: rgba(16,185,129,0.12); color: #34d399; border: 1px solid rgba(16,185,129,0.2); }
+  .badge-emerald { background: rgba(31,191,108,0.12); color: #42d886; border: 1px solid rgba(31,191,108,0.2); }
   .badge-amber   { background: rgba(245,158,11,0.12);  color: #fbbf24; border: 1px solid rgba(245,158,11,0.2); }
   .badge-red     { background: rgba(239,68,68,0.12);   color: #f87171; border: 1px solid rgba(239,68,68,0.2); }
   .badge-purple  { background: rgba(139,92,246,0.12);  color: #a78bfa; border: 1px solid rgba(139,92,246,0.2); }
@@ -328,12 +351,12 @@
     outline: none;
   }
   .input:focus {
-    border-color: rgba(16,185,129,0.6);
+    border-color: rgba(31,191,108,0.6);
   }
   .input:focus-visible {
-    outline: 2px solid #34d399;
+    outline: 2px solid #42d886;
     outline-offset: 1px;
-    box-shadow: 0 0 0 4px rgba(16,185,129,0.15);
+    box-shadow: 0 0 0 4px rgba(31,191,108,0.15);
   }
   .input::placeholder { color: #8b8b95; }
 
@@ -353,13 +376,13 @@
     border-radius: 16px 16px 16px 4px;
   }
   .bubble-seller {
-    background: rgba(16,185,129,0.09);
-    border: 1px solid rgba(16,185,129,0.18);
+    background: rgba(31,191,108,0.09);
+    border: 1px solid rgba(31,191,108,0.18);
     border-radius: 16px 16px 4px 16px;
   }
   .bubble-accept {
-    background: rgba(16,185,129,0.15) !important;
-    border-color: rgba(16,185,129,0.35) !important;
+    background: rgba(31,191,108,0.15) !important;
+    border-color: rgba(31,191,108,0.35) !important;
     box-shadow: var(--glow-emerald);
   }
   .bubble-reject {
@@ -373,7 +396,7 @@
   }
   .progress-bar-fill {
     height: 100%;
-    background: #34d399;
+    background: #42d886;
     border-radius: 99px;
     transition: width 0.6s ease;
   }
@@ -381,7 +404,7 @@
   /* ─── Thinking spinner ───────────────────────────────────── */
   .thinking-dots span {
     display: inline-block; width: 5px; height: 5px;
-    border-radius: 50%; background: #10b981;
+    border-radius: 50%; background: #1fbf6c;
     animation: pulse-dot 1.2s ease-in-out infinite;
   }
   .btn-primary .thinking-dots span { background: currentColor; }
@@ -409,7 +432,7 @@
   .agent-avatar::after {
     content: "";
     position: absolute; inset: -2px; border-radius: 14px;
-    background: #10b981;
+    background: #1fbf6c;
     z-index: -1; opacity: 0.35;
   }
 
@@ -427,17 +450,42 @@
     from { opacity: 0; transform: translateY(18px) scale(0.98); }
     to   { opacity: 1; transform: none; }
   }
-  .hero-panel-in { animation: fade-in 0.35s ease both; }
-  .hero-msg { animation: msg-pop 0.35s cubic-bezier(0.34, 1.4, 0.64, 1) both; }
+  /* Price duel: segments draw in, labels fade, the handshake bursts */
+  .duel-draw {
+    stroke-dasharray: 1;
+    stroke-dashoffset: 1;
+    animation: duel-draw 0.9s cubic-bezier(0.65, 0, 0.35, 1) forwards;
+  }
+  @keyframes duel-draw { to { stroke-dashoffset: 0; } }
+  .duel-fade { animation: fade-in 0.45s ease both; }
+  /* The handshake waits for the accepting line to finish drawing */
+  .duel-after-draw, .duel-after-draw * { animation-delay: 0.85s; }
+  .duel-after-draw { animation: fade-in 0.01s linear both; }
+  .duel-ping { transform-box: fill-box; transform-origin: center; animation: duel-ping 1.8s ease-out infinite; }
+  @keyframes duel-ping {
+    from { transform: scale(0.6); opacity: 0.9; }
+    to   { transform: scale(1.6); opacity: 0; }
+  }
+  .duel-burst { transform-box: fill-box; transform-origin: center; animation: duel-burst 1.1s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+  @keyframes duel-burst {
+    from { transform: scale(0.2); opacity: 0; }
+    40%  { opacity: 1; }
+    to   { transform: scale(1); opacity: 0.85; }
+  }
+  .duel-ring { transform-box: fill-box; transform-origin: center; animation: duel-ring 1.4s ease-out both; }
+  @keyframes duel-ring {
+    from { transform: scale(0.3); opacity: 1; }
+    to   { transform: scale(3); opacity: 0; }
+  }
 
   /* Border that lights up under the pointer (1px padding = the border) */
   .hero-spotlight {
     --spot-x: 70%;
     --spot-y: 20%;
     background:
-      radial-gradient(420px circle at var(--spot-x) var(--spot-y), rgba(52, 211, 153, 0.55), transparent 60%),
+      radial-gradient(420px circle at var(--spot-x) var(--spot-y), rgba(66,216,134, 0.55), transparent 60%),
       rgba(255, 255, 255, 0.09);
-    box-shadow: 0 30px 80px -40px rgba(16, 185, 129, 0.35);
+    box-shadow: 0 30px 80px -40px rgba(31,191,108, 0.35);
   }
 
   /* ─── World speech bubbles ───────────────────────────────── */
