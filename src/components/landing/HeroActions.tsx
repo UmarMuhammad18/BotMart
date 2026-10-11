@@ -3,119 +3,84 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import {
-  Bot,
-  LayoutDashboard,
-  MessageSquare,
-  Package,
-  Play,
-  Sparkles,
-  ArrowRight,
-} from "lucide-react";
+import { ArrowRight, Boxes, Play } from "lucide-react";
 
+/**
+ * Hero calls to action, in priority order: one primary (demo), one secondary
+ * (the 3D world), one quiet text link. Agents / Marketplace / Dashboard are
+ * already in the header nav, and the demo seeds data itself.
+ */
 export function HeroActions() {
   const router = useRouter();
-  const [busy, setBusy] = useState<string | null>(null);
-
-  async function seed() {
-    setBusy("seed");
-    try {
-      const res = await fetch("/api/seed", { method: "POST" });
-      const data = await res.json();
-      if (!res.ok) alert(data.error || "Seed failed");
-      else
-        alert(
-          `Seeded ${data.agents?.length ?? 0} agents and ${data.listings?.length ?? 0} listings.`
-        );
-      router.refresh();
-    } finally {
-      setBusy(null);
-    }
-  }
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   async function demo() {
-    setBusy("demo");
+    setBusy(true);
+    setError(null);
     try {
       const res = await fetch("/api/demo", { method: "POST" });
       const data = await res.json();
       if (!res.ok) {
-        alert(data.error || "Demo failed");
+        setError(data.error || "The demo couldn't start. Try again in a moment.");
         return;
       }
       sessionStorage.setItem("botmart-demo-neg", JSON.stringify(data));
       router.push("/negotiate?demo=1");
+    } catch {
+      setError("Network error — check your connection and try again.");
     } finally {
-      setBusy(null);
+      setBusy(false);
     }
   }
 
   return (
     <div className="w-full max-w-lg lg:max-w-none">
-      <div className="flex flex-col sm:flex-row gap-2.5 sm:gap-3 justify-center lg:justify-start mb-4 sm:mb-5">
+      <div className="flex flex-col sm:flex-row gap-3 justify-center lg:justify-start">
         <button
+          type="button"
           onClick={demo}
-          disabled={!!busy}
-          className="btn-primary text-sm sm:text-base px-5 sm:px-7 py-3 sm:py-3.5 rounded-xl w-full sm:w-auto justify-center"
+          disabled={busy}
+          aria-busy={busy}
+          className="btn-primary text-base px-7 py-3.5 rounded-xl w-full sm:w-auto justify-center"
           id="btn-one-click-demo"
         >
-          {busy === "demo" ? (
-            <span className="thinking-dots flex gap-1">
+          {busy ? (
+            <span className="thinking-dots flex gap-1" aria-hidden>
               <span />
               <span />
               <span />
             </span>
           ) : (
-            <Play size={18} className="fill-white" />
+            <Play size={18} className="fill-white" aria-hidden />
           )}
-          {busy === "demo" ? "Spinning up demo..." : "One-click demo"}
+          {busy ? "Spinning up demo…" : "One-click demo"}
         </button>
 
         <Link
-          href="/negotiate"
-          className="btn-secondary text-sm sm:text-base px-5 sm:px-7 py-3 sm:py-3.5 rounded-xl w-full sm:w-auto justify-center"
-          id="btn-go-negotiate"
+          href="/world"
+          className="btn-secondary text-base px-7 py-3.5 rounded-xl w-full sm:w-auto justify-center"
+          id="btn-enter-world"
         >
-          <MessageSquare size={18} />
-          Start negotiating
-          <ArrowRight size={16} />
+          <Boxes size={18} aria-hidden />
+          Enter the 3D world
         </Link>
       </div>
 
-      <div className="flex flex-wrap gap-2 sm:gap-3 justify-center lg:justify-start text-sm">
-        <button
-          onClick={seed}
-          disabled={!!busy}
-          className="btn-ghost text-xs sm:text-sm px-3 sm:px-4 py-2 rounded-xl"
-          id="btn-seed-data"
-        >
-          <Sparkles size={15} />
-          {busy === "seed" ? "Seeding..." : "Seed demo data"}
-        </button>
-        <Link
-          href="/agents"
-          className="btn-ghost text-xs sm:text-sm px-3 sm:px-4 py-2 rounded-xl"
-          id="btn-go-agents"
-        >
-          <Bot size={15} />
-          View agents
-        </Link>
-        <Link
-          href="/listings"
-          className="btn-ghost text-xs sm:text-sm px-3 sm:px-4 py-2 rounded-xl"
-          id="btn-go-marketplace"
-        >
-          <Package size={15} />
-          Browse listings
-        </Link>
-        <Link
-          href="/dashboard"
-          className="btn-ghost text-xs sm:text-sm px-3 sm:px-4 py-2 rounded-xl"
-          id="btn-go-dashboard"
-        >
-          <LayoutDashboard size={15} />
-          Dashboard
-        </Link>
-      </div>
+      {error && (
+        <p role="alert" className="mt-3 text-sm text-rose-300">
+          {error}
+        </p>
+      )}
+
+      <Link
+        href="/negotiate"
+        className="mt-4 inline-flex min-h-[44px] items-center gap-1.5 text-sm font-medium text-zinc-400 hover:text-white transition-colors"
+        id="btn-go-negotiate"
+      >
+        or start a negotiation yourself
+        <ArrowRight size={14} aria-hidden />
+      </Link>
     </div>
   );
 }

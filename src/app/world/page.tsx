@@ -123,377 +123,387 @@ export default function WorldPage() {
       : 0;
 
   return (
-    <main className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col">
       <AppHeader active="/world" />
+      <main id="main" className="flex flex-1 flex-col">
 
-      <div className="max-w-7xl mx-auto w-full px-4 sm:px-6 py-6 sm:py-8 flex-1">
-        <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-4 mb-5">
-          <div>
-            <p className="section-label mb-1">Live floor</p>
-            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight flex items-center gap-2">
-              <Boxes size={22} className="text-emerald-400" />
-              3D Agent World
-            </h1>
-            <p className="text-sm text-zinc-500 mt-1 max-w-xl">
-              Every negotiation plays out on the floor: buyers walk up, haggle
-              in real offers, and close (or walk). Click any agent or stall.
-            </p>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            <div className="flex rounded-lg border border-white/10 overflow-hidden text-xs">
-              {(
-                [
-                  ["overview", "Overview", Crosshair],
-                  ["follow", "Follow", Eye],
-                  ["court", "Court", Gavel],
-                ] as const
-              ).map(([mode, label, Icon]) => (
-                <button
-                  key={mode}
-                  type="button"
-                  onClick={() => setMode(mode)}
-                  className={`px-3 py-2 inline-flex items-center gap-1.5 transition ${
-                    cameraMode === mode
-                      ? "bg-emerald-500/20 text-emerald-300"
-                      : "text-zinc-400 hover:bg-white/5"
-                  }`}
-                >
-                  <Icon size={13} />
-                  {label}
-                </button>
-              ))}
+        <div className="max-w-7xl mx-auto w-full px-4 sm:px-6 py-6 sm:py-8 flex-1">
+          <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-4 mb-5">
+            <div>
+              <p className="section-label mb-1">Live floor</p>
+              <h1 className="text-2xl sm:text-3xl font-bold tracking-tight flex items-center gap-2">
+                <Boxes size={22} className="text-emerald-400" />
+                3D Agent World
+              </h1>
+              <p className="text-sm text-zinc-500 mt-1 max-w-xl">
+                Every negotiation plays out on the floor: buyers walk up, haggle
+                in real offers, and close (or walk). Click any agent or stall.
+              </p>
             </div>
-            <button
-              type="button"
-              onClick={() => void load()}
-              className="btn-secondary text-sm"
-              disabled={loading}
-            >
-              <RefreshCw size={14} className={loading ? "animate-spin" : ""} />
-              Refresh
-            </button>
-            <Link href="/negotiate" className="btn-primary text-sm">
-              <Activity size={14} />
-              Negotiate
-            </Link>
-          </div>
-        </div>
-
-        {error && (
-          <div className="mb-4 rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-200">
-            {error}
-          </div>
-        )}
-
-        <div className="grid lg:grid-cols-[1fr_320px] gap-4 items-start">
-          <div className="min-h-[480px] relative">
-            {snapshot ? (
-              <>
-                <WorldCanvas
-                  snapshot={snapshot}
-                  selection={selection}
-                  onSelect={setSelection}
-                  cameraMode={cameraMode}
-                  followAgentId={followId}
-                  director={director}
-                />
-                <WorldOverlay
-                  director={director}
-                  onReplay={() => void replayRecent()}
-                />
-              </>
-            ) : (
-              <div className="w-full min-h-[480px] rounded-2xl border border-white/10 bg-zinc-950 flex items-center justify-center text-sm text-zinc-500">
-                {loading
-                  ? "Loading world…"
-                  : "No world data — seed agents & listings."}
-              </div>
-            )}
-          </div>
-
-          <aside className="space-y-4">
-            <div className="card p-4 min-h-[180px]">
-              <div className="flex items-center justify-between mb-2">
-                <h2 className="text-sm font-semibold">Inspector</h2>
-                {selection && (
+            <div className="flex flex-wrap gap-2">
+              <div className="flex rounded-lg border border-white/10 overflow-hidden text-xs">
+                {(
+                  [
+                    ["overview", "Overview", Crosshair],
+                    ["follow", "Follow", Eye],
+                    ["court", "Court", Gavel],
+                  ] as const
+                ).map(([mode, label, Icon]) => (
                   <button
+                    key={mode}
                     type="button"
-                    className="text-zinc-500 hover:text-white"
-                    onClick={() => setSelection(null)}
+                    onClick={() => setMode(mode)}
+                    className={`px-3 py-2 inline-flex items-center gap-1.5 transition ${
+                      cameraMode === mode
+                        ? "bg-emerald-500/20 text-emerald-300"
+                        : "text-zinc-400 hover:bg-white/5"
+                    }`}
                   >
-                    <X size={14} />
+                    <Icon size={13} />
+                    {label}
                   </button>
+                ))}
+              </div>
+              <button
+                type="button"
+                onClick={() => void load()}
+                className="btn-secondary text-sm"
+                disabled={loading}
+              >
+                <RefreshCw size={14} className={loading ? "animate-spin" : ""} />
+                Refresh
+              </button>
+              <Link href="/negotiate" className="btn-primary text-sm">
+                <Activity size={14} />
+                Negotiate
+              </Link>
+            </div>
+          </div>
+
+          {error && (
+            <div className="mb-4 rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-200">
+              {error}
+            </div>
+          )}
+
+          <div className="grid lg:grid-cols-[1fr_320px] gap-4 items-start">
+            <div className="min-h-[480px] relative">
+              {snapshot ? (
+                <>
+                  <WorldCanvas
+                    snapshot={snapshot}
+                    selection={selection}
+                    onSelect={setSelection}
+                    cameraMode={cameraMode}
+                    followAgentId={followId}
+                    director={director}
+                  />
+                  <WorldOverlay
+                    director={director}
+                    onReplay={() => void replayRecent()}
+                  />
+                </>
+              ) : (
+                <div className="w-full min-h-[480px] rounded-2xl border border-white/10 bg-zinc-950 flex items-center justify-center text-sm text-zinc-500">
+                  {loading
+                    ? "Loading world…"
+                    : "No world data — seed agents & listings."}
+                </div>
+              )}
+            </div>
+
+            <aside className="space-y-4">
+              <div className="card p-4 min-h-[180px]">
+                <div className="flex items-center justify-between mb-2">
+                  <h2 className="text-sm font-semibold">Inspector</h2>
+                  {selection && (
+                    <button
+                      type="button"
+                      className="text-zinc-500 hover:text-white"
+                      onClick={() => setSelection(null)}
+                    >
+                      <X size={14} />
+                    </button>
+                  )}
+                </div>
+
+                {!selection && (
+                  <p className="text-xs text-zinc-500">
+                    Click an agent or stall on the floor (or list / mini-map).
+                  </p>
+                )}
+
+                {selectedAgent && (
+                  <div className="space-y-3 text-sm">
+                    <div className="flex items-center gap-2">
+                      <span
+                        className="w-3.5 h-3.5 rounded-full shrink-0"
+                        style={{
+                          background:
+                            ROLE_BY_ID[selectedAgent.role]?.hex || "#888",
+                        }}
+                      />
+                      <span className="font-semibold text-base">
+                        {selectedAgent.name}
+                      </span>
+                    </div>
+
+                    <div className="flex flex-wrap gap-1.5 text-[10px] uppercase tracking-wide">
+                      <span className="px-2 py-0.5 rounded-full bg-white/5 border border-white/10 text-zinc-300">
+                        {ROLE_BY_ID[selectedAgent.role]?.label ||
+                          selectedAgent.role}
+                      </span>
+                      <span className="px-2 py-0.5 rounded-full bg-white/5 border border-white/10 text-zinc-300">
+                        {selectedAgent.activity}
+                      </span>
+                      <span className="px-2 py-0.5 rounded-full bg-white/5 border border-white/10 text-zinc-300">
+                        {selectedAgent.status}
+                      </span>
+                    </div>
+
+                    {ROLE_BY_ID[selectedAgent.role]?.blurb && (
+                      <p className="text-[11px] text-zinc-500 leading-relaxed">
+                        {ROLE_BY_ID[selectedAgent.role].blurb}
+                      </p>
+                    )}
+
+                    {selectedAgent.goal && (
+                      <div className="rounded-lg bg-black/30 border border-white/5 px-3 py-2">
+                        <div className="text-[10px] uppercase text-zinc-500 mb-0.5">
+                          Goal
+                        </div>
+                        <p className="text-xs text-zinc-200 leading-relaxed">
+                          {selectedAgent.goal}
+                        </p>
+                      </div>
+                    )}
+
+                    <div className="grid grid-cols-3 gap-1.5 text-xs">
+                      <div className="rounded-lg bg-black/30 border border-white/5 px-2 py-1.5">
+                        <div className="text-zinc-500 text-[10px]">Budget</div>
+                        <div className="font-mono font-semibold">
+                          {gbp(selectedAgent.budget)}
+                        </div>
+                      </div>
+                      <div className="rounded-lg bg-black/30 border border-white/5 px-2 py-1.5">
+                        <div className="text-zinc-500 text-[10px]">Spent</div>
+                        <div className="font-mono font-semibold">
+                          {gbp(selectedAgent.spent)}
+                        </div>
+                      </div>
+                      <div className="rounded-lg bg-black/30 border border-white/5 px-2 py-1.5">
+                        <div className="text-zinc-500 text-[10px]">Left</div>
+                        <div className="font-mono font-semibold text-emerald-300">
+                          {gbp(remaining)}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="text-xs text-zinc-400">
+                      Reputation{" "}
+                      <span className="text-zinc-200 font-semibold">
+                        {selectedAgent.reputation}
+                      </span>
+                    </div>
+
+                    {agentListings.length > 0 && (
+                      <div>
+                        <div className="text-[10px] uppercase text-zinc-500 mb-1 flex items-center gap-1">
+                          <Laptop size={11} /> Selling
+                        </div>
+                        <ul className="space-y-1">
+                          {agentListings.map((l) => (
+                            <li key={l.id}>
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  setSelection({ kind: "stall", id: l.id })
+                                }
+                                className="w-full text-left text-xs rounded-lg px-2 py-1.5 bg-emerald-500/5 border border-emerald-500/20 hover:bg-emerald-500/10 transition"
+                              >
+                                <span className="text-zinc-200">{l.title}</span>
+                                <span className="float-right font-mono text-emerald-300">
+                                  {gbp(l.price)}
+                                </span>
+                              </button>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+
+                    {agentDeals.length > 0 && (
+                      <p className="text-[11px] text-amber-300/90">
+                        In {agentDeals.length} open negotiation
+                        {agentDeals.length > 1 ? "s" : ""} on the floor
+                      </p>
+                    )}
+
+                    <div className="flex gap-2 pt-0.5">
+                      <button
+                        type="button"
+                        className="btn-secondary text-xs flex-1"
+                        onClick={() => {
+                          setSelection({
+                            kind: "agent",
+                            id: selectedAgent.id,
+                          });
+                          setCameraMode("follow");
+                        }}
+                      >
+                        <Eye size={12} /> Follow
+                      </button>
+                      <Link
+                        href="/negotiate"
+                        className="btn-primary text-xs flex-1 justify-center"
+                      >
+                        Negotiate
+                      </Link>
+                    </div>
+                  </div>
+                )}
+
+                {selectedStall && (
+                  <div className="space-y-2 text-sm">
+                    <div className="font-semibold">{selectedStall.title}</div>
+                    <p className="text-xs text-zinc-400">
+                      {snapshot?.districts?.find((d) => d.id === selectedStall.district)
+                        ?.label ?? selectedStall.category ?? "General"}{" "}
+                      district · stock {selectedStall.stock} · {selectedStall.status}
+                    </p>
+                    <p className="text-lg font-mono font-bold text-emerald-300">
+                      {gbp(selectedStall.price)}
+                    </p>
+                    {selectedStall.seller_name && (
+                      <p className="text-xs text-zinc-500">
+                        Seller: {selectedStall.seller_name}
+                      </p>
+                    )}
+                    <Link
+                      href="/negotiate"
+                      className="btn-primary text-xs w-full justify-center mt-1"
+                    >
+                      Start negotiation
+                    </Link>
+                    <StallAuction
+                      key={selectedStall.id}
+                      stall={selectedStall}
+                      director={director}
+                      onDone={() => void load()}
+                    />
+                  </div>
                 )}
               </div>
 
-              {!selection && (
-                <p className="text-xs text-zinc-500">
-                  Click an agent or stall on the floor (or list / mini-map).
-                </p>
+              {snapshot && (
+                <MiniMap
+                  snapshot={snapshot}
+                  selection={selection}
+                  onSelect={setSelection}
+                />
               )}
 
-              {selectedAgent && (
-                <div className="space-y-3 text-sm">
-                  <div className="flex items-center gap-2">
-                    <span
-                      className="w-3.5 h-3.5 rounded-full shrink-0"
-                      style={{
-                        background:
-                          ROLE_BY_ID[selectedAgent.role]?.hex || "#888",
-                      }}
-                    />
-                    <span className="font-semibold text-base">
-                      {selectedAgent.name}
-                    </span>
+              <div className="card p-4">
+                <h2 className="text-sm font-semibold mb-3">Floor stats</h2>
+                <dl className="grid grid-cols-2 gap-2 text-xs">
+                  <div className="rounded-lg bg-black/30 border border-white/5 px-3 py-2">
+                    <dt className="text-zinc-500">Agents</dt>
+                    <dd className="text-lg font-bold">
+                      {snapshot?.agents.length ?? "—"}
+                    </dd>
                   </div>
-
-                  <div className="flex flex-wrap gap-1.5 text-[10px] uppercase tracking-wide">
-                    <span className="px-2 py-0.5 rounded-full bg-white/5 border border-white/10 text-zinc-300">
-                      {ROLE_BY_ID[selectedAgent.role]?.label ||
-                        selectedAgent.role}
-                    </span>
-                    <span className="px-2 py-0.5 rounded-full bg-white/5 border border-white/10 text-zinc-300">
-                      {selectedAgent.activity}
-                    </span>
-                    <span className="px-2 py-0.5 rounded-full bg-white/5 border border-white/10 text-zinc-300">
-                      {selectedAgent.status}
-                    </span>
+                  <div className="rounded-lg bg-black/30 border border-white/5 px-3 py-2">
+                    <dt className="text-zinc-500">Stalls</dt>
+                    <dd className="text-lg font-bold">
+                      {snapshot?.stalls.length ?? "—"}
+                    </dd>
                   </div>
-
-                  {ROLE_BY_ID[selectedAgent.role]?.blurb && (
-                    <p className="text-[11px] text-zinc-500 leading-relaxed">
-                      {ROLE_BY_ID[selectedAgent.role].blurb}
-                    </p>
-                  )}
-
-                  {selectedAgent.goal && (
-                    <div className="rounded-lg bg-black/30 border border-white/5 px-3 py-2">
-                      <div className="text-[10px] uppercase text-zinc-500 mb-0.5">
-                        Goal
-                      </div>
-                      <p className="text-xs text-zinc-200 leading-relaxed">
-                        {selectedAgent.goal}
-                      </p>
-                    </div>
-                  )}
-
-                  <div className="grid grid-cols-3 gap-1.5 text-xs">
-                    <div className="rounded-lg bg-black/30 border border-white/5 px-2 py-1.5">
-                      <div className="text-zinc-500 text-[10px]">Budget</div>
-                      <div className="font-mono font-semibold">
-                        {gbp(selectedAgent.budget)}
-                      </div>
-                    </div>
-                    <div className="rounded-lg bg-black/30 border border-white/5 px-2 py-1.5">
-                      <div className="text-zinc-500 text-[10px]">Spent</div>
-                      <div className="font-mono font-semibold">
-                        {gbp(selectedAgent.spent)}
-                      </div>
-                    </div>
-                    <div className="rounded-lg bg-black/30 border border-white/5 px-2 py-1.5">
-                      <div className="text-zinc-500 text-[10px]">Left</div>
-                      <div className="font-mono font-semibold text-emerald-300">
-                        {gbp(remaining)}
-                      </div>
-                    </div>
+                  <div className="rounded-lg bg-black/30 border border-white/5 px-3 py-2 col-span-2">
+                    <dt className="text-zinc-500">Open negotiations</dt>
+                    <dd className="text-lg font-bold text-amber-300">
+                      {snapshot?.open_negotiations ?? "—"}
+                    </dd>
                   </div>
+                </dl>
+              </div>
 
-                  <div className="text-xs text-zinc-400">
-                    Reputation{" "}
-                    <span className="text-zinc-200 font-semibold">
-                      {selectedAgent.reputation}
-                    </span>
-                  </div>
+              <section
+                className="card p-4 max-h-48 overflow-y-auto"
+                tabIndex={0}
+                aria-labelledby="world-agents-heading"
+              >
+                <h2 id="world-agents-heading" className="text-sm font-semibold mb-2">Agents</h2>
+                <ul className="space-y-1.5">
+                  {(snapshot?.agents || []).map((a) => (
+                    <li key={a.id}>
+                      <button
+                        type="button"
+                        onClick={() => setSelection({ kind: "agent", id: a.id })}
+                        className={`w-full flex items-center justify-between text-xs gap-2 rounded-lg px-2 min-h-[44px] sm:min-h-[36px] text-left transition ${
+                          selection?.kind === "agent" && selection.id === a.id
+                            ? "bg-white/10"
+                            : "hover:bg-white/5"
+                        }`}
+                      >
+                        <span className="truncate">
+                          <span
+                            className="inline-block w-2 h-2 rounded-full mr-1.5"
+                            style={{
+                              background: ROLE_BY_ID[a.role]?.hex || "#888",
+                            }}
+                          />
+                          {a.name}
+                        </span>
+                        <span className="text-zinc-500 shrink-0">{a.activity}</span>
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </section>
 
-                  {agentListings.length > 0 && (
-                    <div>
-                      <div className="text-[10px] uppercase text-zinc-500 mb-1 flex items-center gap-1">
-                        <Laptop size={11} /> Selling
-                      </div>
-                      <ul className="space-y-1">
-                        {agentListings.map((l) => (
-                          <li key={l.id}>
-                            <button
-                              type="button"
-                              onClick={() =>
-                                setSelection({ kind: "stall", id: l.id })
-                              }
-                              className="w-full text-left text-xs rounded-lg px-2 py-1.5 bg-emerald-500/5 border border-emerald-500/20 hover:bg-emerald-500/10 transition"
-                            >
-                              <span className="text-zinc-200">{l.title}</span>
-                              <span className="float-right font-mono text-emerald-300">
-                                {gbp(l.price)}
-                              </span>
-                            </button>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-
-                  {agentDeals.length > 0 && (
-                    <p className="text-[11px] text-amber-300/90">
-                      In {agentDeals.length} open negotiation
-                      {agentDeals.length > 1 ? "s" : ""} on the floor
-                    </p>
-                  )}
-
-                  <div className="flex gap-2 pt-0.5">
-                    <button
-                      type="button"
-                      className="btn-secondary text-xs flex-1"
-                      onClick={() => {
-                        setSelection({
-                          kind: "agent",
-                          id: selectedAgent.id,
-                        });
-                        setCameraMode("follow");
-                      }}
-                    >
-                      <Eye size={12} /> Follow
-                    </button>
-                    <Link
-                      href="/negotiate"
-                      className="btn-primary text-xs flex-1 justify-center"
-                    >
-                      Negotiate
-                    </Link>
-                  </div>
-                </div>
-              )}
-
-              {selectedStall && (
-                <div className="space-y-2 text-sm">
-                  <div className="font-semibold">{selectedStall.title}</div>
-                  <p className="text-xs text-zinc-400">
-                    {snapshot?.districts?.find((d) => d.id === selectedStall.district)
-                      ?.label ?? selectedStall.category ?? "General"}{" "}
-                    district · stock {selectedStall.stock} · {selectedStall.status}
-                  </p>
-                  <p className="text-lg font-mono font-bold text-emerald-300">
-                    {gbp(selectedStall.price)}
-                  </p>
-                  {selectedStall.seller_name && (
-                    <p className="text-xs text-zinc-500">
-                      Seller: {selectedStall.seller_name}
-                    </p>
-                  )}
-                  <Link
-                    href="/negotiate"
-                    className="btn-primary text-xs w-full justify-center mt-1"
-                  >
-                    Start negotiation
-                  </Link>
-                  <StallAuction
-                    key={selectedStall.id}
-                    stall={selectedStall}
-                    director={director}
-                    onDone={() => void load()}
-                  />
-                </div>
-              )}
-            </div>
-
-            {snapshot && (
-              <MiniMap
-                snapshot={snapshot}
-                selection={selection}
-                onSelect={setSelection}
-              />
-            )}
-
-            <div className="card p-4">
-              <h2 className="text-sm font-semibold mb-3">Floor stats</h2>
-              <dl className="grid grid-cols-2 gap-2 text-xs">
-                <div className="rounded-lg bg-black/30 border border-white/5 px-3 py-2">
-                  <dt className="text-zinc-500">Agents</dt>
-                  <dd className="text-lg font-bold">
-                    {snapshot?.agents.length ?? "—"}
-                  </dd>
-                </div>
-                <div className="rounded-lg bg-black/30 border border-white/5 px-3 py-2">
-                  <dt className="text-zinc-500">Stalls</dt>
-                  <dd className="text-lg font-bold">
-                    {snapshot?.stalls.length ?? "—"}
-                  </dd>
-                </div>
-                <div className="rounded-lg bg-black/30 border border-white/5 px-3 py-2 col-span-2">
-                  <dt className="text-zinc-500">Open negotiations</dt>
-                  <dd className="text-lg font-bold text-amber-300">
-                    {snapshot?.open_negotiations ?? "—"}
-                  </dd>
-                </div>
-              </dl>
-            </div>
-
-            <div className="card p-4 max-h-48 overflow-y-auto">
-              <h2 className="text-sm font-semibold mb-2">Agents</h2>
-              <ul className="space-y-1.5">
-                {(snapshot?.agents || []).map((a) => (
-                  <li key={a.id}>
-                    <button
-                      type="button"
-                      onClick={() => setSelection({ kind: "agent", id: a.id })}
-                      className={`w-full flex items-center justify-between text-xs gap-2 rounded-lg px-2 py-1.5 text-left transition ${
-                        selection?.kind === "agent" && selection.id === a.id
-                          ? "bg-white/10"
-                          : "hover:bg-white/5"
-                      }`}
-                    >
-                      <span className="truncate">
-                        <span
-                          className="inline-block w-2 h-2 rounded-full mr-1.5"
-                          style={{
-                            background: ROLE_BY_ID[a.role]?.hex || "#888",
-                          }}
-                        />
-                        {a.name}
-                      </span>
-                      <span className="text-zinc-500 shrink-0">{a.activity}</span>
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            <div className="card p-4 max-h-40 overflow-y-auto">
-              <h2 className="text-sm font-semibold mb-2">Events</h2>
-              <ul className="space-y-2">
-                {director.feed.map((e) => (
-                  <li key={e.id} className="text-[11px] text-zinc-400 leading-snug">
-                    <span className="text-zinc-600">
-                      {new Date(e.at).toLocaleTimeString()}
-                    </span>{" "}
-                    <span
-                      className={
-                        e.tone === "accept"
-                          ? "text-emerald-300"
-                          : e.tone === "reject"
-                            ? "text-rose-300"
-                            : undefined
-                      }
-                    >
-                      {e.text}
-                    </span>
-                  </li>
-                ))}
-                {director.feed.length === 0 &&
-                  (snapshot?.events || []).map((e) => (
+              <section
+                className="card p-4 max-h-40 overflow-y-auto"
+                tabIndex={0}
+                aria-labelledby="world-events-heading"
+              >
+                <h2 id="world-events-heading" className="text-sm font-semibold mb-2">Events</h2>
+                <ul className="space-y-2">
+                  {director.feed.map((e) => (
                     <li key={e.id} className="text-[11px] text-zinc-400 leading-snug">
                       <span className="text-zinc-600">
                         {new Date(e.at).toLocaleTimeString()}
                       </span>{" "}
-                      {e.text}
+                      <span
+                        className={
+                          e.tone === "accept"
+                            ? "text-emerald-300"
+                            : e.tone === "reject"
+                              ? "text-rose-300"
+                              : undefined
+                        }
+                      >
+                        {e.text}
+                      </span>
                     </li>
                   ))}
-                {director.feed.length === 0 && !snapshot?.events?.length && (
-                  <li className="text-zinc-500 text-xs">No recent events.</li>
-                )}
-              </ul>
-            </div>
-          </aside>
+                  {director.feed.length === 0 &&
+                    (snapshot?.events || []).map((e) => (
+                      <li key={e.id} className="text-[11px] text-zinc-400 leading-snug">
+                        <span className="text-zinc-600">
+                          {new Date(e.at).toLocaleTimeString()}
+                        </span>{" "}
+                        {e.text}
+                      </li>
+                    ))}
+                  {director.feed.length === 0 && !snapshot?.events?.length && (
+                    <li className="text-zinc-500 text-xs">No recent events.</li>
+                  )}
+                </ul>
+              </section>
+            </aside>
+          </div>
         </div>
-      </div>
-    </main>
+      </main>
+    </div>
   );
 }

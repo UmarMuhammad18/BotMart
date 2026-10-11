@@ -227,219 +227,221 @@ export function NegotiateClient() {
   return (
     <div className="flex flex-col min-h-screen">
       <AppHeader active="/negotiate" />
+      <main id="main" className="flex flex-1 flex-col">
 
-      <div className="max-w-3xl mx-auto w-full px-4 sm:px-6 py-10 flex flex-col gap-6">
-        <div className="flex items-start justify-between gap-4 animate-fade-up">
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight">Live Negotiation</h1>
-            <p className="text-zinc-500 mt-1 text-sm">
-              Watch two AI agents negotiate — then convene a secret jury
-            </p>
-          </div>
-          <button
-            onClick={() => void oneClickDemo()}
-            disabled={!!loading || running}
-            className="btn-primary shrink-0 text-sm"
-            id="btn-one-click-demo-negotiate"
-          >
-            <Zap size={15} className="fill-white" />
-            {loading ? "Loading..." : "One-click demo"}
-          </button>
-        </div>
-
-        {!negotiation && (
-          <div className="card glass p-6 space-y-5 animate-fade-up delay-100">
-            <p className="section-label">Configure negotiation</p>
-            <div className="grid sm:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-xs text-zinc-400 mb-2 font-medium">
-                  Buyer Agent
-                </label>
-                <select
-                  id="select-buyer-agent"
-                  value={buyerId}
-                  onChange={(e) => setBuyerId(e.target.value)}
-                  className="input"
-                >
-                  {agents.map((a) => (
-                    <option key={a.id} value={a.id}>
-                      {a.name} ({gbp(a.budget - a.spent)} left)
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label className="block text-xs text-zinc-400 mb-2 font-medium">
-                  Listing to buy
-                </label>
-                <select
-                  id="select-listing"
-                  value={listingId}
-                  onChange={(e) => setListingId(e.target.value)}
-                  className="input"
-                >
-                  {listings.map((l) => (
-                    <option key={l.id} value={l.id}>
-                      {l.title} — {gbp(l.price)}
-                    </option>
-                  ))}
-                </select>
-              </div>
+        <div className="max-w-3xl mx-auto w-full px-4 sm:px-6 py-10 flex flex-col gap-6">
+          <div className="flex items-start justify-between gap-4 animate-fade-up">
+            <div>
+              <h1 className="text-3xl font-bold tracking-tight">Live Negotiation</h1>
+              <p className="text-zinc-500 mt-1 text-sm">
+                Watch two AI agents negotiate — then convene a secret jury
+              </p>
             </div>
             <button
-              onClick={() => void startNegotiation()}
-              disabled={!!loading || !buyerId || !listingId}
-              className="btn-primary"
-              id="btn-start-negotiation"
+              onClick={() => void oneClickDemo()}
+              disabled={!!loading || running}
+              className="btn-primary shrink-0 text-sm"
+              id="btn-one-click-demo-negotiate"
             >
-              <Play size={16} className="fill-white" />
-              {loading ? "Starting…" : "Start Negotiation"}
+              <Zap size={15} className="fill-white" />
+              {loading ? "Loading..." : "One-click demo"}
             </button>
           </div>
-        )}
 
-        {negotiation && (
-          <div className="space-y-4 animate-fade-up">
-            <div className="card glass-strong p-4 flex items-center justify-between gap-4 flex-wrap">
-              <div className="flex items-center gap-5 text-sm">
-                <div className="flex items-center gap-2">
-                  <div className="w-7 h-7 rounded-full bg-indigo-500/20 border border-indigo-500/30 flex items-center justify-center">
-                    <Bot size={13} className="text-indigo-400" />
-                  </div>
-                  <div>
-                    <div className="font-semibold text-sm">
-                      {negotiation.buyer.name}
-                    </div>
-                    <div className="text-[11px] text-zinc-600">
-                      Buyer · {gbp(negotiation.buyer.budget - negotiation.buyer.spent)}{" "}
-                      left
-                    </div>
-                  </div>
+          {!negotiation && (
+            <div className="card glass p-6 space-y-5 animate-fade-up delay-100">
+              <p className="section-label">Configure negotiation</p>
+              <div className="grid sm:grid-cols-2 gap-4">
+                <div>
+                  <label htmlFor="select-buyer-agent" className="block text-xs text-zinc-400 mb-2 font-medium">
+                    Buyer Agent
+                  </label>
+                  <select
+                    id="select-buyer-agent"
+                    value={buyerId}
+                    onChange={(e) => setBuyerId(e.target.value)}
+                    className="input"
+                  >
+                    {agents.map((a) => (
+                      <option key={a.id} value={a.id}>
+                        {a.name} ({gbp(a.budget - a.spent)} left)
+                      </option>
+                    ))}
+                  </select>
                 </div>
-                <div className="text-zinc-700 font-light text-lg">⇄</div>
-                <div className="flex items-center gap-2">
-                  <div className="w-7 h-7 rounded-full bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center">
-                    <Bot size={13} className="text-emerald-400" />
-                  </div>
-                  <div>
-                    <div className="font-semibold text-sm">
-                      {negotiation.seller.name}
-                    </div>
-                    <div className="text-[11px] text-zinc-600">
-                      Seller · asking {gbp(negotiation.listing.price)}
-                    </div>
-                  </div>
+                <div>
+                  <label htmlFor="select-listing" className="block text-xs text-zinc-400 mb-2 font-medium">
+                    Listing to buy
+                  </label>
+                  <select
+                    id="select-listing"
+                    value={listingId}
+                    onChange={(e) => setListingId(e.target.value)}
+                    className="input"
+                  >
+                    {listings.map((l) => (
+                      <option key={l.id} value={l.id}>
+                        {l.title} — {gbp(l.price)}
+                      </option>
+                    ))}
+                  </select>
                 </div>
               </div>
-              <StatusBadge status={negotiation.status} />
-            </div>
-
-            <div className="flex items-center justify-between bg-white/[0.03] border border-white/[0.06] rounded-xl px-4 py-3 text-sm">
-              <span className="text-zinc-400">
-                Negotiating for{" "}
-                <span className="text-white font-semibold">
-                  {negotiation.listing.title}
-                </span>
-              </span>
-              <span className="font-mono text-zinc-400">
-                Asking{" "}
-                <span className="text-white font-bold">
-                  {gbp(negotiation.listing.price)}
-                </span>
-              </span>
-            </div>
-
-            {isLive && (
-              <div className="progress-bar">
-                <div
-                  className="progress-bar-fill"
-                  style={{ width: `${progressPct}%` }}
-                />
-              </div>
-            )}
-
-            <div
-              ref={chatRef}
-              id="negotiation-chat"
-              className="card glass min-h-[320px] max-h-[500px] overflow-y-auto p-5 space-y-4"
-            >
-              {negotiation.messages.length === 0 && !thinking && (
-                <p className="text-zinc-600 text-sm text-center py-10">
-                  Negotiation started. Waiting for the first move…
-                </p>
-              )}
-              {negotiation.messages.map((msg, i) => (
-                <ChatMessage
-                  key={i}
-                  msg={msg}
-                  buyerName={negotiation.buyer.name}
-                  sellerName={negotiation.seller.name}
-                  idx={i}
-                />
-              ))}
-              {thinking && <ThinkingIndicator who={thinking} />}
-            </div>
-
-            {!isLive && negotiation.current_offer != null && (
-              <div
-                className={`rounded-xl px-5 py-4 flex items-center justify-between text-sm ${
-                  negotiation.status === "accepted"
-                    ? "bg-emerald-500/10 border border-emerald-500/25"
-                    : "bg-red-500/10 border border-red-500/25"
-                }`}
-              >
-                <span className="text-zinc-300 font-medium">Final price</span>
-                <span className="font-mono font-bold text-xl">
-                  {gbp(negotiation.current_offer)}
-                </span>
-              </div>
-            )}
-
-            {isLive && (
-              <div className="flex gap-3 flex-wrap">
-                <button
-                  onClick={() => void nextTurn()}
-                  disabled={running}
-                  className="btn-secondary"
-                  id="btn-next-turn"
-                >
-                  <SkipForward size={16} />
-                  {running ? "Thinking…" : "Next Turn"}
-                </button>
-                <button
-                  onClick={() => void runToCompletion()}
-                  disabled={running}
-                  className="btn-primary"
-                  id="btn-run-to-completion"
-                >
-                  {running ? (
-                    <RefreshCw size={16} className="animate-spin-slow" />
-                  ) : (
-                    <Play size={16} className="fill-white" />
-                  )}
-                  Run to completion
-                </button>
-              </div>
-            )}
-
-            <CourtPanel negotiationId={negotiation.id} />
-
-            {!isLive && (
               <button
-                onClick={() => {
-                  setNegotiation(null);
-                  setThinking(null);
-                }}
-                className="btn-ghost text-sm"
-                id="btn-new-negotiation"
+                onClick={() => void startNegotiation()}
+                disabled={!!loading || !buyerId || !listingId}
+                className="btn-primary"
+                id="btn-start-negotiation"
               >
-                <ChevronRight size={16} className="rotate-180" />
-                Start another negotiation
+                <Play size={16} className="fill-white" />
+                {loading ? "Starting…" : "Start Negotiation"}
               </button>
-            )}
-          </div>
-        )}
-      </div>
+            </div>
+          )}
+
+          {negotiation && (
+            <div className="space-y-4 animate-fade-up">
+              <div className="card glass-strong p-4 flex items-center justify-between gap-4 flex-wrap">
+                <div className="flex items-center gap-5 text-sm">
+                  <div className="flex items-center gap-2">
+                    <div className="w-7 h-7 rounded-full bg-indigo-500/20 border border-indigo-500/30 flex items-center justify-center">
+                      <Bot size={13} className="text-indigo-400" />
+                    </div>
+                    <div>
+                      <div className="font-semibold text-sm">
+                        {negotiation.buyer.name}
+                      </div>
+                      <div className="text-[11px] text-zinc-600">
+                        Buyer · {gbp(negotiation.buyer.budget - negotiation.buyer.spent)}{" "}
+                        left
+                      </div>
+                    </div>
+                  </div>
+                  <div className="text-zinc-700 font-light text-lg">⇄</div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-7 h-7 rounded-full bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center">
+                      <Bot size={13} className="text-emerald-400" />
+                    </div>
+                    <div>
+                      <div className="font-semibold text-sm">
+                        {negotiation.seller.name}
+                      </div>
+                      <div className="text-[11px] text-zinc-600">
+                        Seller · asking {gbp(negotiation.listing.price)}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <StatusBadge status={negotiation.status} />
+              </div>
+
+              <div className="flex items-center justify-between bg-white/[0.03] border border-white/[0.06] rounded-xl px-4 py-3 text-sm">
+                <span className="text-zinc-400">
+                  Negotiating for{" "}
+                  <span className="text-white font-semibold">
+                    {negotiation.listing.title}
+                  </span>
+                </span>
+                <span className="font-mono text-zinc-400">
+                  Asking{" "}
+                  <span className="text-white font-bold">
+                    {gbp(negotiation.listing.price)}
+                  </span>
+                </span>
+              </div>
+
+              {isLive && (
+                <div className="progress-bar">
+                  <div
+                    className="progress-bar-fill"
+                    style={{ width: `${progressPct}%` }}
+                  />
+                </div>
+              )}
+
+              <div
+                ref={chatRef}
+                id="negotiation-chat"
+                className="card glass min-h-[320px] max-h-[500px] overflow-y-auto p-5 space-y-4"
+              >
+                {negotiation.messages.length === 0 && !thinking && (
+                  <p className="text-zinc-600 text-sm text-center py-10">
+                    Negotiation started. Waiting for the first move…
+                  </p>
+                )}
+                {negotiation.messages.map((msg, i) => (
+                  <ChatMessage
+                    key={i}
+                    msg={msg}
+                    buyerName={negotiation.buyer.name}
+                    sellerName={negotiation.seller.name}
+                    idx={i}
+                  />
+                ))}
+                {thinking && <ThinkingIndicator who={thinking} />}
+              </div>
+
+              {!isLive && negotiation.current_offer != null && (
+                <div
+                  className={`rounded-xl px-5 py-4 flex items-center justify-between text-sm ${
+                    negotiation.status === "accepted"
+                      ? "bg-emerald-500/10 border border-emerald-500/25"
+                      : "bg-red-500/10 border border-red-500/25"
+                  }`}
+                >
+                  <span className="text-zinc-300 font-medium">Final price</span>
+                  <span className="font-mono font-bold text-xl">
+                    {gbp(negotiation.current_offer)}
+                  </span>
+                </div>
+              )}
+
+              {isLive && (
+                <div className="flex gap-3 flex-wrap">
+                  <button
+                    onClick={() => void nextTurn()}
+                    disabled={running}
+                    className="btn-secondary"
+                    id="btn-next-turn"
+                  >
+                    <SkipForward size={16} />
+                    {running ? "Thinking…" : "Next Turn"}
+                  </button>
+                  <button
+                    onClick={() => void runToCompletion()}
+                    disabled={running}
+                    className="btn-primary"
+                    id="btn-run-to-completion"
+                  >
+                    {running ? (
+                      <RefreshCw size={16} className="animate-spin-slow" />
+                    ) : (
+                      <Play size={16} className="fill-white" />
+                    )}
+                    Run to completion
+                  </button>
+                </div>
+              )}
+
+              <CourtPanel negotiationId={negotiation.id} />
+
+              {!isLive && (
+                <button
+                  onClick={() => {
+                    setNegotiation(null);
+                    setThinking(null);
+                  }}
+                  className="btn-ghost text-sm"
+                  id="btn-new-negotiation"
+                >
+                  <ChevronRight size={16} className="rotate-180" />
+                  Start another negotiation
+                </button>
+              )}
+            </div>
+          )}
+        </div>
+      </main>
     </div>
   );
 }

@@ -40,11 +40,11 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center px-6">
+    <main id="main" className="min-h-screen flex flex-col items-center justify-center px-6">
       <div className="w-full max-w-md">
         <Link
           href="/"
-          className="inline-flex items-center gap-2 text-sm text-zinc-500 hover:text-zinc-300 mb-10"
+          className="inline-flex min-h-[44px] items-center gap-2 text-sm text-zinc-500 hover:text-zinc-300 mb-6"
         >
           <ArrowLeft size={14} />
           Back to BotMart
@@ -80,7 +80,7 @@ export default function LoginPage() {
           ) : (
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <label className="block text-xs text-zinc-400 mb-2 font-medium">
+                <label htmlFor="login-email" className="block text-xs text-zinc-400 mb-2 font-medium">
                   Email
                 </label>
                 <div className="relative">
@@ -89,6 +89,7 @@ export default function LoginPage() {
                     className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-600"
                   />
                   <input
+                    id="login-email"
                     type="email"
                     required
                     value={email}
@@ -129,6 +130,6 @@ export default function LoginPage() {
           )}
         </div>
       </div>
-    </div>
+    </main>
   );
 }

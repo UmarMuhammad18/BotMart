@@ -30,7 +30,7 @@ function ListingCard({
               </span>
             )}
           </div>
-          <h3 className="font-semibold text-base leading-snug">{listing.title}</h3>
+          <h2 className="font-semibold text-base leading-snug">{listing.title}</h2>
           <p className="text-xs text-zinc-500 mt-1 line-clamp-2">
             {listing.description || "No description"}
           </p>
@@ -54,8 +54,10 @@ function ListingCard({
           </span>
         </div>
         <button
+          type="button"
           onClick={() => onNegotiate(listing.id)}
-          className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-400 hover:text-emerald-300 transition group"
+          aria-label={`Negotiate for ${listing.title}`}
+          className="inline-flex min-h-[44px] items-center gap-1.5 px-2 -mr-2 text-xs font-semibold text-emerald-400 hover:text-emerald-300 transition group"
           id={`btn-negotiate-${listing.id}`}
         >
           Negotiate
@@ -166,220 +168,228 @@ export default function ListingsPage() {
   return (
     <div className="flex flex-col min-h-screen">
       <AppHeader active="/listings" />
-      <div className="max-w-5xl mx-auto w-full px-4 sm:px-6 py-10">
+      <main id="main" className="flex flex-1 flex-col">
+        <div className="max-w-5xl mx-auto w-full px-4 sm:px-6 py-10">
 
-        {/* Page header */}
-        <div className="flex items-start justify-between mb-8 animate-fade-up">
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight">Marketplace</h1>
-            <p className="text-zinc-500 mt-1 text-sm">
-              {listings.length} listing{listings.length !== 1 ? "s" : ""} available
-            </p>
-          </div>
-          <div className="flex gap-2 shrink-0">
-            <button
-              onClick={() => { setShowIntent(!showIntent); setShowForm(false); }}
-              className={`btn-ghost text-sm ${showIntent ? "text-white border-white/20" : ""}`}
-              id="btn-create-intent"
-            >
-              <Search size={15} />
-              AI Match
-            </button>
-            <button
-              onClick={() => { setShowForm(!showForm); setShowIntent(false); }}
-              className="btn-secondary text-sm"
-              id="btn-new-listing"
-            >
-              <Plus size={15} />
-              New Listing
-            </button>
-          </div>
-        </div>
-
-        {/* Search bar */}
-        <form onSubmit={handleSearch} className="flex gap-2 mb-6 animate-fade-up delay-100">
-          <div className="relative flex-1">
-            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-600 pointer-events-none" />
-            <input
-              id="input-search-listings"
-              value={q}
-              onChange={(e) => setQ(e.target.value)}
-              placeholder="Search listings…"
-              className="input pl-9"
-            />
-          </div>
-          <input
-            id="input-max-price"
-            value={maxPrice}
-            onChange={(e) => setMaxPrice(e.target.value)}
-            placeholder="Max £"
-            type="number"
-            className="input w-28"
-          />
-          <button type="submit" className="btn-secondary text-sm px-4">Search</button>
-        </form>
-
-        {/* Category pills */}
-        <div className="flex gap-2 flex-wrap mb-8 animate-fade-up delay-150">
-          {CATEGORIES.map((cat) => (
-            <button
-              key={cat}
-              onClick={() => {
-                setActiveCategory(cat);
-                fetchListings({ q, maxPrice, category: cat });
-              }}
-              className={`text-xs font-medium px-3.5 py-1.5 rounded-full border transition ${
-                activeCategory === cat
-                  ? "bg-emerald-500/15 border-emerald-500/30 text-emerald-300"
-                  : "bg-white/[0.03] border-white/[0.08] text-zinc-500 hover:text-zinc-300 hover:border-white/15"
-              }`}
-            >
-              {cat}
-            </button>
-          ))}
-        </div>
-
-        {/* AI Intent panel */}
-        {showIntent && (
-          <form
-            onSubmit={createIntent}
-            className="card glass p-6 mb-8 space-y-4 animate-fade-up"
-          >
-            <div className="flex items-center justify-between">
-              <p className="section-label">AI-powered matching</p>
-              <button type="button" onClick={() => setShowIntent(false)} className="text-zinc-600 hover:text-zinc-400">
-                <X size={16} />
+          {/* Page header */}
+          <div className="flex flex-wrap items-start justify-between gap-4 mb-8 animate-fade-up">
+            <div>
+              <h1 className="text-3xl font-bold tracking-tight">Marketplace</h1>
+              <p className="text-zinc-500 mt-1 text-sm">
+                {listings.length} listing{listings.length !== 1 ? "s" : ""} available
+              </p>
+            </div>
+            <div className="flex gap-2 shrink-0">
+              <button
+                onClick={() => { setShowIntent(!showIntent); setShowForm(false); }}
+                className={`btn-ghost text-sm ${showIntent ? "text-white border-white/20" : ""}`}
+                id="btn-create-intent"
+              >
+                <Search size={15} />
+                AI Match
+              </button>
+              <button
+                onClick={() => { setShowForm(!showForm); setShowIntent(false); }}
+                className="btn-secondary text-sm"
+                id="btn-new-listing"
+              >
+                <Plus size={15} />
+                New Listing
               </button>
             </div>
-            <p className="text-xs text-zinc-500">
-              Describe what you want in natural language and BotMart will rank listings by budget, category, and seller reputation.
-            </p>
-            <div className="grid sm:grid-cols-2 gap-4">
+          </div>
+
+          {/* Search bar */}
+          <form role="search" onSubmit={handleSearch} className="flex flex-wrap gap-2 mb-6 animate-fade-up delay-100">
+            <div className="relative basis-full sm:basis-auto sm:flex-1">
+              <Search size={14} aria-hidden className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-600 pointer-events-none" />
+              <input
+                id="input-search-listings"
+                type="search"
+                aria-label="Search listings"
+                value={q}
+                onChange={(e) => setQ(e.target.value)}
+                placeholder="Search listings…"
+                className="input pl-9"
+              />
+            </div>
+            <input
+              id="input-max-price"
+              aria-label="Maximum price in pounds"
+              inputMode="numeric"
+              value={maxPrice}
+              onChange={(e) => setMaxPrice(e.target.value)}
+              placeholder="Max £"
+              type="number"
+              className="input flex-1 sm:flex-none sm:w-28"
+            />
+            <button type="submit" className="btn-secondary text-sm px-4">Search</button>
+          </form>
+
+          {/* Category pills */}
+          <div className="flex gap-2 flex-wrap mb-8 animate-fade-up delay-150">
+            {CATEGORIES.map((cat) => (
+              <button
+                key={cat}
+                type="button"
+                aria-pressed={activeCategory === cat}
+                onClick={() => {
+                  setActiveCategory(cat);
+                  fetchListings({ q, maxPrice, category: cat });
+                }}
+                className={`text-xs font-medium capitalize px-4 min-h-[44px] sm:min-h-[36px] rounded-full border transition ${
+                  activeCategory === cat
+                    ? "bg-emerald-500/15 border-emerald-500/30 text-emerald-300"
+                    : "bg-white/[0.03] border-white/[0.08] text-zinc-500 hover:text-zinc-300 hover:border-white/15"
+                }`}
+              >
+                {cat}
+              </button>
+            ))}
+          </div>
+
+          {/* AI Intent panel */}
+          {showIntent && (
+            <form
+              onSubmit={createIntent}
+              className="card glass p-6 mb-8 space-y-4 animate-fade-up"
+            >
+              <div className="flex items-center justify-between">
+                <p className="section-label">AI-powered matching</p>
+                <button type="button" onClick={() => setShowIntent(false)} className="text-zinc-600 hover:text-zinc-400">
+                  <X size={16} />
+                </button>
+              </div>
+              <p className="text-xs text-zinc-500">
+                Describe what you want in natural language and BotMart will rank listings by budget, category, and seller reputation.
+              </p>
+              <div className="grid sm:grid-cols-2 gap-4">
+                <div>
+                  <label htmlFor="select-intent-buyer" className="block text-xs text-zinc-400 mb-2 font-medium">Buyer agent</label>
+                  <select
+                    id="select-intent-buyer"
+                    value={buyerId}
+                    onChange={(e) => setBuyerId(e.target.value)}
+                    className="input"
+                  >
+                    {agents.map((a) => (
+                      <option key={a.id} value={a.id}>
+                        {a.name} ({gbp(Number(a.budget) - Number(a.spent))} left)
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label htmlFor="input-intent-goal" className="block text-xs text-zinc-400 mb-2 font-medium">Natural language goal</label>
+                  <input
+                    id="input-intent-goal"
+                    value={goal}
+                    onChange={(e) => setGoal(e.target.value)}
+                    className="input"
+                  />
+                </div>
+              </div>
+              <button
+                id="btn-find-matches"
+                type="submit"
+                disabled={matching}
+                className="btn-primary text-sm"
+              >
+                <Search size={14} />
+                {matching ? "Matching…" : "Find matches"}
+              </button>
+            </form>
+          )}
+
+          {/* New listing form */}
+          {showForm && (
+            <form
+              onSubmit={createListing}
+              className="card glass p-6 mb-8 space-y-5 animate-fade-up"
+            >
+              <div className="flex items-center justify-between">
+                <p className="section-label">New listing</p>
+                <button type="button" onClick={() => setShowForm(false)} className="text-zinc-600 hover:text-zinc-400">
+                  <X size={16} />
+                </button>
+              </div>
               <div>
-                <label className="block text-xs text-zinc-400 mb-2 font-medium">Buyer agent</label>
-                <select
-                  id="select-intent-buyer"
-                  value={buyerId}
-                  onChange={(e) => setBuyerId(e.target.value)}
-                  className="input"
-                >
+                <label htmlFor="select-seller-agent" className="block text-xs text-zinc-400 mb-2 font-medium">Seller Agent</label>
+                <select id="select-seller-agent" value={sellerId} onChange={(e) => setSellerId(e.target.value)} required className="input">
                   {agents.map((a) => (
-                    <option key={a.id} value={a.id}>
-                      {a.name} ({gbp(Number(a.budget) - Number(a.spent))} left)
-                    </option>
+                    <option key={a.id} value={a.id}>{a.name} ({gbp(a.budget)} budget)</option>
                   ))}
                 </select>
               </div>
-              <div>
-                <label className="block text-xs text-zinc-400 mb-2 font-medium">Natural language goal</label>
-                <input
-                  id="input-intent-goal"
-                  value={goal}
-                  onChange={(e) => setGoal(e.target.value)}
-                  className="input"
-                />
+              <div className="grid sm:grid-cols-2 gap-4">
+                <div>
+                  <label htmlFor="input-listing-title" className="block text-xs text-zinc-400 mb-2 font-medium">Title</label>
+                  <input id="input-listing-title" value={title} onChange={(e) => setTitle(e.target.value)}
+                    required placeholder="e.g. Premium Wireless Headphones" className="input" />
+                </div>
+                <div>
+                  <label htmlFor="input-listing-desc" className="block text-xs text-zinc-400 mb-2 font-medium">Description</label>
+                  <input id="input-listing-desc" value={description} onChange={(e) => setDescription(e.target.value)}
+                    placeholder="Brief description" className="input" />
+                </div>
               </div>
-            </div>
-            <button
-              id="btn-find-matches"
-              type="submit"
-              disabled={matching}
-              className="btn-primary text-sm"
-            >
-              <Search size={14} />
-              {matching ? "Matching…" : "Find matches"}
-            </button>
-          </form>
-        )}
+              <div className="grid grid-cols-3 gap-4">
+                <div>
+                  <label htmlFor="input-listing-price" className="block text-xs text-zinc-400 mb-2 font-medium">Price (£)</label>
+                  <input id="input-listing-price" type="number" value={price}
+                    onChange={(e) => setPrice(Number(e.target.value))} required className="input" />
+                </div>
+                <div>
+                  <label htmlFor="input-listing-category" className="block text-xs text-zinc-400 mb-2 font-medium">Category</label>
+                  <input id="input-listing-category" value={category} onChange={(e) => setCategory(e.target.value)}
+                    placeholder="electronics" className="input" />
+                </div>
+                <div>
+                  <label htmlFor="input-listing-stock" className="block text-xs text-zinc-400 mb-2 font-medium">Stock</label>
+                  <input id="input-listing-stock" type="number" value={stock}
+                    onChange={(e) => setStock(Number(e.target.value))} className="input" />
+                </div>
+              </div>
+              <div className="flex gap-3">
+                <button id="btn-create-listing-submit" type="submit" disabled={creating} className="btn-primary text-sm">
+                  <Plus size={15} />
+                  {creating ? "Creating…" : "Create Listing"}
+                </button>
+                <button type="button" onClick={() => setShowForm(false)} className="btn-ghost text-sm">
+                  Cancel
+                </button>
+              </div>
+            </form>
+          )}
 
-        {/* New listing form */}
-        {showForm && (
-          <form
-            onSubmit={createListing}
-            className="card glass p-6 mb-8 space-y-5 animate-fade-up"
-          >
-            <div className="flex items-center justify-between">
-              <p className="section-label">New listing</p>
-              <button type="button" onClick={() => setShowForm(false)} className="text-zinc-600 hover:text-zinc-400">
-                <X size={16} />
-              </button>
+          {/* Grid */}
+          {loading ? (
+            <div className="grid gap-4 sm:grid-cols-2">
+              {[...Array(6)].map((_, i) => (
+                <div key={i} className="skeleton h-44 rounded-2xl" style={{ animationDelay: `${i * 0.1}s` }} />
+              ))}
             </div>
-            <div>
-              <label className="block text-xs text-zinc-400 mb-2 font-medium">Seller Agent</label>
-              <select id="select-seller-agent" value={sellerId} onChange={(e) => setSellerId(e.target.value)} required className="input">
-                {agents.map((a) => (
-                  <option key={a.id} value={a.id}>{a.name} ({gbp(a.budget)} budget)</option>
-                ))}
-              </select>
-            </div>
-            <div className="grid sm:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-xs text-zinc-400 mb-2 font-medium">Title</label>
-                <input id="input-listing-title" value={title} onChange={(e) => setTitle(e.target.value)}
-                  required placeholder="e.g. Premium Wireless Headphones" className="input" />
+          ) : listings.length === 0 ? (
+            <div className="card flex flex-col items-center justify-center py-24 gap-4 border-dashed animate-fade-up">
+              <div className="w-16 h-16 rounded-2xl bg-zinc-800/50 flex items-center justify-center">
+                <Package size={28} className="text-zinc-600" />
               </div>
-              <div>
-                <label className="block text-xs text-zinc-400 mb-2 font-medium">Description</label>
-                <input id="input-listing-desc" value={description} onChange={(e) => setDescription(e.target.value)}
-                  placeholder="Brief description" className="input" />
+              <div className="text-center">
+                <p className="font-medium text-zinc-300">No listings found</p>
+                <p className="text-sm text-zinc-500 mt-1">Try seeding demo data or create a new listing</p>
               </div>
             </div>
-            <div className="grid grid-cols-3 gap-4">
-              <div>
-                <label className="block text-xs text-zinc-400 mb-2 font-medium">Price (£)</label>
-                <input id="input-listing-price" type="number" value={price}
-                  onChange={(e) => setPrice(Number(e.target.value))} required className="input" />
-              </div>
-              <div>
-                <label className="block text-xs text-zinc-400 mb-2 font-medium">Category</label>
-                <input id="input-listing-category" value={category} onChange={(e) => setCategory(e.target.value)}
-                  placeholder="electronics" className="input" />
-              </div>
-              <div>
-                <label className="block text-xs text-zinc-400 mb-2 font-medium">Stock</label>
-                <input id="input-listing-stock" type="number" value={stock}
-                  onChange={(e) => setStock(Number(e.target.value))} className="input" />
-              </div>
+          ) : (
+            <div className="grid gap-4 sm:grid-cols-2">
+              {listings.map((listing, i) => (
+                <div key={listing.id} style={{ animationDelay: `${i * 0.07}s` }}>
+                  <ListingCard listing={listing} onNegotiate={startDeal} />
+                </div>
+              ))}
             </div>
-            <div className="flex gap-3">
-              <button id="btn-create-listing-submit" type="submit" disabled={creating} className="btn-primary text-sm">
-                <Plus size={15} />
-                {creating ? "Creating…" : "Create Listing"}
-              </button>
-              <button type="button" onClick={() => setShowForm(false)} className="btn-ghost text-sm">
-                Cancel
-              </button>
-            </div>
-          </form>
-        )}
-
-        {/* Grid */}
-        {loading ? (
-          <div className="grid gap-4 sm:grid-cols-2">
-            {[...Array(6)].map((_, i) => (
-              <div key={i} className="skeleton h-44 rounded-2xl" style={{ animationDelay: `${i * 0.1}s` }} />
-            ))}
-          </div>
-        ) : listings.length === 0 ? (
-          <div className="card flex flex-col items-center justify-center py-24 gap-4 border-dashed animate-fade-up">
-            <div className="w-16 h-16 rounded-2xl bg-zinc-800/50 flex items-center justify-center">
-              <Package size={28} className="text-zinc-600" />
-            </div>
-            <div className="text-center">
-              <p className="font-medium text-zinc-300">No listings found</p>
-              <p className="text-sm text-zinc-500 mt-1">Try seeding demo data or create a new listing</p>
-            </div>
-          </div>
-        ) : (
-          <div className="grid gap-4 sm:grid-cols-2">
-            {listings.map((listing, i) => (
-              <div key={listing.id} style={{ animationDelay: `${i * 0.07}s` }}>
-                <ListingCard listing={listing} onNegotiate={startDeal} />
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
+          )}
+        </div>
+      </main>
     </div>
   );
 }

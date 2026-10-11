@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Bot, Zap, LogIn, LogOut, User, Menu, X } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
@@ -19,6 +19,7 @@ type SessionUser = { id: string; email?: string | null } | null;
 
 export function AppHeader({ active }: { active?: string }) {
   const pathname = usePathname();
+  const router = useRouter();
   const currentPath = active ?? pathname;
   const [user, setUser] = useState<SessionUser>(null);
   const [loading, setLoading] = useState(true);
@@ -59,15 +60,20 @@ export function AppHeader({ active }: { active?: string }) {
     };
   }, []);
 
+  // Escape closes the mobile menu
   useEffect(() => {
-    setOpen(false);
-  }, [pathname]);
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setOpen(false);
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [open]);
 
   async function signOut() {
     const supabase = createClient();
     await supabase.auth.signOut();
     setUser(null);
-    window.location.href = "/";
+    router.push("/");
+    router.refresh();
   }
 
   return (
@@ -96,7 +102,8 @@ export function AppHeader({ active }: { active?: string }) {
               <Link
                 key={link.href}
                 href={link.href}
-                className={`relative px-2 lg:px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-200 ${
+                aria-current={isActive ? "page" : undefined}
+                className={`relative inline-flex min-h-[44px] items-center px-2 lg:px-3 rounded-lg text-sm font-medium transition-colors duration-200 ${
                   isActive
                     ? "text-white"
                     : "text-zinc-500 hover:text-zinc-200"
@@ -116,7 +123,7 @@ export function AppHeader({ active }: { active?: string }) {
 
         <div className="flex items-center gap-2 shrink-0">
           {loading ? (
-            <span className="text-xs text-zinc-600 px-2">…</span>
+            <span className="skeleton h-8 w-20" aria-hidden />
           ) : user ? (
             <>
               <span className="hidden lg:inline-flex items-center gap-1.5 text-xs text-zinc-400 max-w-[140px] truncate">
@@ -124,6 +131,7 @@ export function AppHeader({ active }: { active?: string }) {
                 {user.email}
               </span>
               <button
+                type="button"
                 onClick={signOut}
                 className="btn-ghost text-xs px-2.5 py-1.5"
                 title="Sign out"
@@ -144,9 +152,10 @@ export function AppHeader({ active }: { active?: string }) {
 
           <button
             type="button"
-            className="md:hidden btn-ghost p-2"
+            className="md:hidden btn-ghost min-w-[44px] justify-center p-2"
             aria-label={open ? "Close menu" : "Open menu"}
             aria-expanded={open}
+            aria-controls="mobile-nav"
             onClick={() => setOpen((v) => !v)}
           >
             {open ? <X size={18} /> : <Menu size={18} />}
@@ -155,14 +164,20 @@ export function AppHeader({ active }: { active?: string }) {
       </div>
 
       {open && (
-        <div className="md:hidden border-t border-white/[0.06] bg-[#050507]/95 backdrop-blur-xl px-4 py-3 space-y-1">
+        <nav
+          id="mobile-nav"
+          aria-label="Main navigation"
+          className="md:hidden border-t border-white/[0.06] bg-[#050507]/95 backdrop-blur-xl px-4 py-3 space-y-1"
+        >
           {links.map((link) => {
             const isActive = currentPath === link.href;
             return (
               <Link
                 key={link.href}
                 href={link.href}
-                className={`block px-3 py-2.5 rounded-lg text-sm font-medium ${
+                aria-current={isActive ? "page" : undefined}
+                onClick={() => setOpen(false)}
+                className={`flex min-h-[44px] items-center px-3 rounded-lg text-sm font-medium ${
                   isActive
                     ? "bg-white/[0.08] text-white"
                     : "text-zinc-400 hover:text-white hover:bg-white/[0.04]"
@@ -175,13 +190,14 @@ export function AppHeader({ active }: { active?: string }) {
           {!user && (
             <Link
               href="/login"
-              className="flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm text-emerald-400"
+              onClick={() => setOpen(false)}
+              className="flex min-h-[44px] items-center gap-2 px-3 rounded-lg text-sm text-emerald-400"
             >
               <LogIn size={14} />
               Sign in
             </Link>
           )}
-        </div>
+        </nav>
       )}
     </header>
   );

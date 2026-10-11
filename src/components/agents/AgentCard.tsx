@@ -75,12 +75,12 @@ export function AgentCard({
             />
           </div>
           <div>
-            <h3 className="font-semibold text-sm flex items-center gap-2">
+            <h2 className="font-semibold text-sm flex items-center gap-2">
               {agent.name}
               {isMine && (
                 <span className="badge badge-blue text-[9px]">yours</span>
               )}
-            </h3>
+            </h2>
             <p className="text-xs text-zinc-500 line-clamp-1 mt-0.5">
               {agent.goal || agent.description || "No goal set"}
             </p>
