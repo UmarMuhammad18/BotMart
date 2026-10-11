@@ -122,6 +122,24 @@ export type WorldLink = {
   stall_id: string;
 };
 
+/**
+ * One logged agent decision, shaped for the world's event playback.
+ * Negotiation beats carry buyer/seller/listing so a scene can be staged.
+ */
+export type WorldBeat = {
+  id: string;
+  at: string;
+  agent_id: string;
+  negotiation_id: string | null;
+  buyer_id: string | null;
+  seller_id: string | null;
+  listing_id: string | null;
+  role: string | null;
+  type: string;
+  price: number | null;
+  message: string;
+};
+
 export type WorldSnapshot = {
   agents: WorldAgent[];
   stalls: WorldStall[];
@@ -130,4 +148,86 @@ export type WorldSnapshot = {
   deal_popups: WorldDealPopup[];
   open_negotiations: number;
   live: boolean;
+};
+
+// Restored: removed in 9b169bb but still imported across the app.
+export type NegotiationStatus =
+  | "open"
+  | "countered"
+  | "accepted"
+  | "rejected"
+  | "escalated";
+export type OrderStatus = "pending" | "paid" | "fulfilled" | "cancelled";
+
+export type AgentMemoryNote = {
+  text: string;
+  at: string;
+  negotiation_id?: string;
+};
+
+export type ListingWithSeller = Listing & {
+  seller: { id: string; name: string; reputation: number } | null;
+  match_score?: number;
+};
+
+export type Negotiation = {
+  id: string;
+  buyer_agent_id: string;
+  seller_agent_id: string;
+  listing_id: string;
+  status: NegotiationStatus;
+  current_offer: number | null;
+  messages: NegotiationMessage[];
+  created_at: string;
+  updated_at: string;
+};
+
+export type Order = {
+  id: string;
+  negotiation_id: string;
+  buyer_agent_id: string;
+  seller_agent_id: string;
+  listing_id: string;
+  final_price: number;
+  status: OrderStatus;
+  created_at: string;
+  stripe_payment_intent_id?: string | null;
+};
+
+export type AgentDecision = {
+  id: string;
+  agent_id: string;
+  negotiation_id: string | null;
+  role: string | null;
+  action_type: string | null;
+  payload: Record<string, unknown>;
+  source: "rules" | "grok";
+  created_at: string;
+};
+
+/** Court / jury types */
+export type JuryVote = "accept" | "reject" | "counter";
+
+export type JurorBallot = {
+  role: AgentRole;
+  name: string;
+  vote: JuryVote;
+  confidence: number;
+  reason: string;
+  suggested_price?: number;
+};
+
+export type CourtSession = {
+  negotiation_id: string;
+  listing_title: string;
+  listing_price: number;
+  current_offer: number | null;
+  ballots: JurorBallot[];
+  accept_count: number;
+  reject_count: number;
+  counter_count: number;
+  judge_verdict: JuryVote;
+  judge_reason: string;
+  recommended_price: number | null;
+  created_at: string;
 };

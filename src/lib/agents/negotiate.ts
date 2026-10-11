@@ -142,9 +142,16 @@ export function decideNextAction(ctx: AgentContext): NegotiationMessage {
   if (lastMessage?.type === "offer" || lastMessage?.type === "counter") {
     const buyerPrice = lastMessage.price || 0;
 
-    // Too low → reject or counter hard
+    const ourLastCounter = [...ctx.messages]
+      .reverse()
+      .find((m) => m.from === "seller" && m.price)?.price;
+
+    // Too low → counter hard, but never above a price we already offered
     if (buyerPrice < minAcceptable) {
-      const counter = Math.round(ctx.listingPrice * 0.9);
+      const counter = Math.min(
+        Math.round(ctx.listingPrice * 0.9),
+        ourLastCounter ?? Number.POSITIVE_INFINITY
+      );
       return {
         from: "seller",
         type: "counter",
@@ -154,8 +161,11 @@ export function decideNextAction(ctx: AgentContext): NegotiationMessage {
       };
     }
 
-    // Good enough → accept
-    if (buyerPrice >= ctx.listingPrice * 0.88) {
+    // Good enough (or matches our own last counter) → accept
+    if (
+      buyerPrice >= ctx.listingPrice * 0.88 ||
+      (ourLastCounter !== undefined && buyerPrice >= ourLastCounter)
+    ) {
       return {
         from: "seller",
         type: "accept",
@@ -166,7 +176,10 @@ export function decideNextAction(ctx: AgentContext): NegotiationMessage {
     }
 
     // Otherwise meet in the middle
-    const counter = Math.round((buyerPrice + ctx.listingPrice) / 2);
+    const counter = Math.min(
+      Math.round((buyerPrice + ctx.listingPrice) / 2),
+      ourLastCounter ?? Number.POSITIVE_INFINITY
+    );
     return {
       from: "seller",
       type: "counter",

@@ -1,3 +1,4 @@
+import { describe, it, expect } from "vitest";
 import { rankListings, applyFilters } from "../match";
 import type { Agent, ListingWithSeller } from "@/lib/types";
 

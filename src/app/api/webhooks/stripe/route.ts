@@ -17,11 +17,17 @@ export async function POST(request: Request) {
   let event: Stripe.Event;
 
   try {
-    if (webhookSecret && sig) {
+    if (webhookSecret) {
+      if (!sig) throw new Error("Missing stripe-signature header");
       event = stripe.webhooks.constructEvent(body, sig, webhookSecret);
-    } else {
-      // Dev fallback without signature verification
+    } else if (process.env.NODE_ENV !== "production") {
+      // Local dev only: accept unsigned events
       event = JSON.parse(body) as Stripe.Event;
+    } else {
+      return NextResponse.json(
+        { error: "STRIPE_WEBHOOK_SECRET not configured" },
+        { status: 503 }
+      );
     }
   } catch (err) {
     const message = err instanceof Error ? err.message : "Invalid payload";

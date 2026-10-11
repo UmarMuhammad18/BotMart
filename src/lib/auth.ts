@@ -86,3 +86,16 @@ export async function assertCanControlAgent(
   }
   return { ok: true };
 }
+
+/** Agents created without a login (seed data, demo users). */
+export const DEMO_OWNER_FILTER = "owner_id.is.null,owner_id.eq.hackathon-user";
+
+/**
+ * Vercel cron sends `Authorization: Bearer <CRON_SECRET>`.
+ * Fails closed in production when CRON_SECRET is unset; open locally.
+ */
+export function isAuthorizedCron(request: Request): boolean {
+  const secret = process.env.CRON_SECRET;
+  if (!secret) return process.env.NODE_ENV !== "production";
+  return request.headers.get("authorization") === `Bearer ${secret}`;
+}

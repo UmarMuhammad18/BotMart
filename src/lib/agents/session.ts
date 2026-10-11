@@ -98,7 +98,7 @@ export async function startNegotiation(
     return { error: negError.message, status: 500 as const };
   }
 
-  const firstMessage = await decideAgentTurn(
+  const { move: firstMessage, source } = await decideAgentTurn(
     agentContext(buyer, "buyer", listing, null, [])
   );
 
@@ -108,7 +108,7 @@ export async function startNegotiation(
     role: "buyer",
     actionType: firstMessage.type,
     payload: firstMessage,
-    source: "grok",
+    source,
   });
 
   const { data: updated, error: updateError } = await supabase
@@ -174,7 +174,7 @@ export async function runNextTurn(
   const nextRole = lastMessage?.from === "buyer" ? "seller" : "buyer";
   const agent = nextRole === "buyer" ? neg.buyer : neg.seller;
 
-  const nextMessage = await decideAgentTurn(
+  const { move: nextMessage, source } = await decideAgentTurn(
     agentContext(agent, nextRole, neg.listing, neg.current_offer, messages)
   );
 
@@ -184,7 +184,7 @@ export async function runNextTurn(
     role: nextRole,
     actionType: nextMessage.type,
     payload: nextMessage,
-    source: "grok",
+    source,
   });
 
   const newMessages = [...messages, nextMessage];
@@ -198,41 +198,27 @@ export async function runNextTurn(
   let stripePaymentIntentId: string | null = null;
 
   if (newStatus === "accepted" && nextMessage.price) {
-    stripePaymentIntentId = await createTestPaymentIntent(nextMessage.price);
+    const settled = await settleDeal(supabase, neg, nextMessage.price, newMessages);
 
-    const orderRow: Record<string, unknown> = {
-      negotiation_id: neg.id,
-      buyer_agent_id: neg.buyer_agent_id,
-      seller_agent_id: neg.seller_agent_id,
-      listing_id: neg.listing_id,
-      final_price: nextMessage.price,
-      status: "paid",
-    };
-    if (stripePaymentIntentId) {
-      orderRow.stripe_payment_intent_id = stripePaymentIntentId;
+    if ("error" in settled) {
+      // Stock ran out or budget was spent by a concurrent deal — close it out.
+      await supabase
+        .from("negotiations")
+        .update({
+          messages: newMessages,
+          status: "rejected",
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", negotiation_id);
+      await applyNegotiationOutcome(supabase, {
+        buyerId: neg.buyer_agent_id,
+        sellerId: neg.seller_agent_id,
+        outcome: "rejected",
+      });
+      return { error: settled.error, status: 409 as const };
     }
 
-    const { error: orderError } = await supabase.from("orders").insert(orderRow);
-    if (orderError && stripePaymentIntentId) {
-      delete orderRow.stripe_payment_intent_id;
-      await supabase.from("orders").insert(orderRow);
-    }
-
-    await supabase
-      .from("agents")
-      .update({
-        spent: (Number(neg.buyer.spent) || 0) + nextMessage.price,
-      })
-      .eq("id", neg.buyer_agent_id);
-
-    const nextStock = Math.max(0, (neg.listing.stock || 1) - 1);
-    await supabase
-      .from("listings")
-      .update({
-        stock: nextStock,
-        status: nextStock === 0 ? "sold" : "active",
-      })
-      .eq("id", neg.listing_id);
+    stripePaymentIntentId = settled.stripePaymentIntentId;
   }
 
   if (
@@ -267,4 +253,92 @@ export async function runNextTurn(
     data: { ...updated, stripe_payment_intent_id: stripePaymentIntentId },
     status: 200 as const,
   };
+}
+
+type SettleNeg = {
+  id: string;
+  buyer_agent_id: string;
+  seller_agent_id: string;
+  listing_id: string;
+  buyer: { spent: number; budget: number };
+  listing: { stock: number | null };
+};
+
+/**
+ * Settle an accepted deal: order + buyer debit + stock decrement in one
+ * transaction (settle_negotiation in schema.sql), then take a Stripe test
+ * payment. The charge happens only after settlement succeeds, so a deal that
+ * loses a race for the last unit is never charged.
+ */
+async function settleDeal(
+  supabase: SupabaseClient,
+  neg: SettleNeg,
+  price: number,
+  messages: NegotiationMessage[]
+): Promise<{ orderId: string; stripePaymentIntentId: string | null } | { error: string }> {
+  const { data: orderId, error } = await supabase.rpc("settle_negotiation", {
+    p_negotiation_id: neg.id,
+    p_price: price,
+    p_messages: messages,
+  });
+
+  let id = orderId as string | null;
+
+  if (error) {
+    // Function not deployed yet (schema.sql not re-run) → legacy path
+    if (error.code === "PGRST202" || error.code === "42883") {
+      console.warn("[settle] settle_negotiation() missing — run supabase/schema.sql. Using non-atomic fallback.");
+      id = await legacySettle(supabase, neg, price);
+    } else {
+      return { error: error.message };
+    }
+  }
+
+  if (!id) return { error: "Settlement failed" };
+
+  const payment = await createTestPaymentIntent(price);
+  await supabase
+    .from("orders")
+    .update(
+      payment
+        ? { status: payment.orderStatus, stripe_payment_intent_id: payment.id }
+        : // No Stripe configured → simulated payment
+          { status: "paid" }
+    )
+    .eq("id", id);
+
+  return { orderId: id, stripePaymentIntentId: payment?.id ?? null };
+}
+
+/** Pre-RPC behaviour; races under concurrency. Kept only until the SQL is applied. */
+async function legacySettle(
+  supabase: SupabaseClient,
+  neg: SettleNeg,
+  price: number
+): Promise<string | null> {
+  const { data: order } = await supabase
+    .from("orders")
+    .insert({
+      negotiation_id: neg.id,
+      buyer_agent_id: neg.buyer_agent_id,
+      seller_agent_id: neg.seller_agent_id,
+      listing_id: neg.listing_id,
+      final_price: price,
+      status: "pending",
+    })
+    .select("id")
+    .single();
+
+  await supabase
+    .from("agents")
+    .update({ spent: (Number(neg.buyer.spent) || 0) + price })
+    .eq("id", neg.buyer_agent_id);
+
+  const nextStock = Math.max(0, (neg.listing.stock || 1) - 1);
+  await supabase
+    .from("listings")
+    .update({ stock: nextStock, status: nextStock === 0 ? "sold" : "active" })
+    .eq("id", neg.listing_id);
+
+  return order?.id ?? null;
 }

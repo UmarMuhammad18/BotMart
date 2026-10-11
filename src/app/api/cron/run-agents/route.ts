@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { isAuthorizedCron } from "@/lib/auth";
 import { runAllActiveBuyers } from "@/lib/agents/runner";
 
 /**
@@ -7,10 +8,7 @@ import { runAllActiveBuyers } from "@/lib/agents/runner";
  * Secure with CRON_SECRET (Vercel sends Authorization: Bearer <CRON_SECRET>).
  */
 export async function GET(request: Request) {
-  const auth = request.headers.get("authorization");
-  const secret = process.env.CRON_SECRET;
-
-  if (secret && auth !== `Bearer ${secret}`) {
+  if (!isAuthorizedCron(request)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 

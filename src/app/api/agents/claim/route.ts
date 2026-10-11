@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { getSessionUser } from "@/lib/auth";
+import { DEMO_OWNER_FILTER, getSessionUser } from "@/lib/auth";
 
 /**
  * POST /api/agents/claim
@@ -27,7 +27,7 @@ export async function POST(request: Request) {
           owner_id: user.id,
           updated_at: new Date().toISOString(),
         })
-        .or("owner_id.is.null,owner_id.eq.hackathon-user")
+        .or(DEMO_OWNER_FILTER)
         .select();
 
       if (error) {

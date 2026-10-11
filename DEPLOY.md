@@ -16,14 +16,14 @@ Copy from `.env.local.example` into Vercel → Settings → Environment Variable
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | ✅ |
 | `SUPABASE_SERVICE_ROLE_KEY` | ✅ |
 | `XAI_API_KEY` | Recommended |
-| `CRON_SECRET` | Recommended for cron |
+| `CRON_SECRET` | ✅ for cron — cron routes return 401 in production without it |
 | `STRIPE_SECRET_KEY` | Optional |
-| `STRIPE_WEBHOOK_SECRET` | Optional |
+| `STRIPE_WEBHOOK_SECRET` | Required if Stripe is on — unsigned webhooks are refused in production |
 | `NEXT_PUBLIC_DEMO_MODE` | `true` |
 
 ## 3. Supabase checklist
 
-- [ ] Run `supabase/schema.sql` in SQL Editor
+- [ ] Run `supabase/schema.sql` in SQL Editor (re-run after pulling — it creates `settle_negotiation()`, the atomic deal settlement; without it deals fall back to a non-atomic path)
 - [ ] Auth → Email magic link enabled
 - [ ] Auth → Redirect URLs include `https://YOUR_APP.vercel.app/auth/callback`
 - [ ] Database → Replication: enable `negotiations`, `orders`, `agents` for Realtime

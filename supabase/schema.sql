@@ -100,3 +100,66 @@ create index if not exists idx_negotiations_status on negotiations(status);
 create index if not exists idx_agents_owner on agents(owner_id);
 create index if not exists idx_agents_status on agents(status);
 create index if not exists idx_decisions_agent on agent_decisions(agent_id);
+
+-- ─── Atomic settlement ────────────────────────────────────
+-- Closes an accepted negotiation in one transaction: locks the negotiation,
+-- listing and buyer rows, checks stock + budget, then writes the order,
+-- debits the buyer and decrements stock. Concurrent accepts on the same
+-- listing or by the same buyer serialize here instead of overselling or
+-- overspending. Raises on any failed check (nothing is written).
+create or replace function settle_negotiation(
+  p_negotiation_id uuid,
+  p_price numeric,
+  p_messages jsonb
+) returns uuid
+language plpgsql
+as $$
+declare
+  v_neg negotiations%rowtype;
+  v_listing listings%rowtype;
+  v_buyer agents%rowtype;
+  v_order_id uuid;
+begin
+  if p_price is null or p_price <= 0 then
+    raise exception 'Invalid settlement price';
+  end if;
+
+  select * into v_neg from negotiations where id = p_negotiation_id for update;
+  if not found then
+    raise exception 'Negotiation not found';
+  end if;
+  if v_neg.status not in ('open', 'countered') then
+    raise exception 'Negotiation is already closed';
+  end if;
+
+  select * into v_listing from listings where id = v_neg.listing_id for update;
+  if not found or v_listing.status <> 'active' or coalesce(v_listing.stock, 0) < 1 then
+    raise exception 'Listing is sold out';
+  end if;
+
+  select * into v_buyer from agents where id = v_neg.buyer_agent_id for update;
+  if coalesce(v_buyer.spent, 0) + p_price > coalesce(v_buyer.budget, 0) then
+    raise exception 'Buyer budget exceeded';
+  end if;
+
+  insert into orders (negotiation_id, buyer_agent_id, seller_agent_id, listing_id, final_price, status)
+  values (v_neg.id, v_neg.buyer_agent_id, v_neg.seller_agent_id, v_neg.listing_id, p_price, 'pending')
+  returning id into v_order_id;
+
+  update agents set spent = coalesce(spent, 0) + p_price where id = v_buyer.id;
+
+  update listings
+     set stock = stock - 1,
+         status = case when stock - 1 <= 0 then 'sold' else 'active' end
+   where id = v_listing.id;
+
+  update negotiations
+     set status = 'accepted',
+         current_offer = p_price,
+         messages = p_messages,
+         updated_at = now()
+   where id = v_neg.id;
+
+  return v_order_id;
+end;
+$$;

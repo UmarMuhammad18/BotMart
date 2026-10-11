@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { runBuyerAgent, runAllActiveBuyers } from "@/lib/agents/runner";
-import { assertCanControlAgent, getSessionUser } from "@/lib/auth";
+import { assertCanControlAgent, DEMO_OWNER_FILTER, getSessionUser } from "@/lib/auth";
 
 /**
  * POST /api/agents/run
@@ -36,9 +36,12 @@ export async function POST(request: Request) {
         return NextResponse.json({ results });
       }
 
+      // Anonymous demo: only unowned/demo agents, one negotiation each,
+      // so visitors can't drive other users' agents or run up AI spend.
       const results = await runAllActiveBuyers(supabase, {
-        maxNegotiationsPerAgent: body.max_negotiations ?? 1,
+        maxNegotiationsPerAgent: 1,
         autoComplete: body.auto_complete !== false,
+        ownerFilter: DEMO_OWNER_FILTER,
       });
       return NextResponse.json({ results });
     }

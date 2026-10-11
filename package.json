@@ -7,19 +7,19 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js --passWithNoTests 2>/dev/null || echo \"Install jest to run unit tests: pnpm add -D jest @types/jest ts-jest\""
+    "test": "vitest run"
   },
   "dependencies": {
     "@react-three/drei": "^10.7.7",
     "@react-three/fiber": "^9.4.2",
-    "@react-three/postprocessing": "^3.0.4",
+    "@react-three/postprocessing": "^3.2.0",
     "@supabase/ssr": "^0.12.7",
     "@supabase/supabase-js": "^2.117.2",
     "clsx": "^2.1.1",
     "date-fns": "^4.4.0",
     "lucide-react": "^1.48.0",
     "next": "16.3.6",
-    "postprocessing": "^6.36.0",
+    "postprocessing": "^6.39.5",
     "react": "19.2.8",
     "react-dom": "19.2.8",
     "stripe": "^22.6.2",
@@ -36,6 +36,7 @@
     "eslint": "^9",
     "eslint-config-next": "16.3.6",
     "tailwindcss": "^4",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^3.2.7"
   }
 }

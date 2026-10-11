@@ -80,10 +80,7 @@ export async function runBuyerAgent(
   // Don't buy from self
   candidates = candidates.filter((l) => l.seller_agent_id !== agentId);
 
-  // Only active sellers
-  candidates = candidates.filter(
-    (l) => !l.seller || l.seller.reputation === undefined || true
-  );
+  // Skip blocked sellers
   candidates = candidates.filter(
     (l) => !(l as ListingWithSeller & { seller?: { status?: string } }).seller ||
       (l as ListingWithSeller & { seller?: { status?: string } }).seller?.status !== "blocked"
@@ -172,12 +169,19 @@ export async function runBuyerAgent(
  */
 export async function runAllActiveBuyers(
   supabase: SupabaseClient,
-  opts: { maxNegotiationsPerAgent?: number; autoComplete?: boolean } = {}
+  opts: {
+    maxNegotiationsPerAgent?: number;
+    autoComplete?: boolean;
+    /** PostgREST `or` filter on owner, e.g. DEMO_OWNER_FILTER */
+    ownerFilter?: string;
+  } = {}
 ) {
-  const { data: agents } = await supabase
+  let query = supabase
     .from("agents")
     .select("id, name, budget, spent, status")
     .eq("status", "active");
+  if (opts.ownerFilter) query = query.or(opts.ownerFilter);
+  const { data: agents } = await query;
 
   const results: RunAgentResult[] = [];
 
