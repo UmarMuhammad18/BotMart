@@ -25,7 +25,6 @@ const t0 = Date.now();
 let sawEnd = false;
 while (Date.now() - t0 < 240000 && state !== "done") {
   const b = await bubbles(page);
-  const mine = b.filter((x) => x.text.startsWith(agent) || x.text.includes(startText));
   if (state === "preroll" && b.some((x) => x.text.includes(startText))) {
     state = "live";
     console.log("start trigger at", ((Date.now() - t0) / 1000).toFixed(1), "s");
