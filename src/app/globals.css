@@ -166,39 +166,7 @@
     66%       { transform: translate(-20px, 40px) scale(0.97); }
   }
 
-  /* ─── Hero robot chrome ──────────────────────────────────── */
-  .hero-chrome {
-    background: linear-gradient(
-      145deg,
-      rgba(255, 255, 255, 0.22) 0%,
-      rgba(16, 185, 129, 0.25) 35%,
-      rgba(6, 182, 212, 0.2) 55%,
-      rgba(24, 24, 32, 0.9) 100%
-    );
-    border: 1px solid rgba(255, 255, 255, 0.18);
-    box-shadow:
-      inset 0 1px 0 rgba(255, 255, 255, 0.35),
-      inset 0 -8px 20px rgba(0, 0, 0, 0.35),
-      0 20px 50px rgba(0, 0, 0, 0.45),
-      0 0 40px rgba(16, 185, 129, 0.12);
-  }
 
-  .hero-chrome-dim {
-    background: linear-gradient(
-      160deg,
-      rgba(255, 255, 255, 0.12) 0%,
-      rgba(16, 185, 129, 0.12) 40%,
-      rgba(12, 12, 16, 0.95) 100%
-    );
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    box-shadow:
-      inset 0 1px 0 rgba(255, 255, 255, 0.15),
-      0 8px 24px rgba(0, 0, 0, 0.35);
-  }
-
-  .hero-robot-stage {
-    filter: drop-shadow(0 24px 48px rgba(16, 185, 129, 0.15));
-  }
 
   /* ─── Animations ─────────────────────────────────────────── */
   @keyframes fade-up {
@@ -443,6 +411,33 @@
     position: absolute; inset: -2px; border-radius: 14px;
     background: #10b981;
     z-index: -1; opacity: 0.35;
+  }
+
+  /* ─── Landing hero ──────────────────────────────────────── */
+  .hero-word {
+    animation: hero-word-in 0.7s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  }
+  @keyframes hero-word-in {
+    from { opacity: 0; transform: translateY(0.35em); filter: blur(6px); }
+    to   { opacity: 1; transform: none; filter: blur(0); }
+  }
+  .hero-rise { animation: fade-up 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+  .hero-stage-in { animation: hero-stage-in 0.9s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+  @keyframes hero-stage-in {
+    from { opacity: 0; transform: translateY(18px) scale(0.98); }
+    to   { opacity: 1; transform: none; }
+  }
+  .hero-panel-in { animation: fade-in 0.35s ease both; }
+  .hero-msg { animation: msg-pop 0.35s cubic-bezier(0.34, 1.4, 0.64, 1) both; }
+
+  /* Border that lights up under the pointer (1px padding = the border) */
+  .hero-spotlight {
+    --spot-x: 70%;
+    --spot-y: 20%;
+    background:
+      radial-gradient(420px circle at var(--spot-x) var(--spot-y), rgba(52, 211, 153, 0.55), transparent 60%),
+      rgba(255, 255, 255, 0.09);
+    box-shadow: 0 30px 80px -40px rgba(16, 185, 129, 0.35);
   }
 
   /* ─── World speech bubbles ───────────────────────────────── */

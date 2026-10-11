@@ -3,7 +3,7 @@ import Link from "next/link";
 import { ArrowRight, ArrowUpRight } from "lucide-react";
 import { AppHeader } from "@/components/AppHeader";
 import { HeroActions } from "@/components/landing/HeroActions";
-import { HeroWorldPortal } from "@/components/landing/HeroWorldPortal";
+import { Hero } from "@/components/landing/Hero";
 import { NegotiationPreview } from "@/components/landing/NegotiationPreview";
 import { Steps } from "@/components/landing/Steps";
 import { LiveFeed } from "@/components/landing/LiveFeed";
@@ -29,31 +29,8 @@ export default async function Home() {
     <div className="flex flex-col min-h-screen overflow-x-hidden">
       <AppHeader active="/" />
       <main id="main" className="flex flex-1 flex-col">
-        {/* Hero: value prop + two actions, the agent stage on the right */}
-        <section className="relative border-b border-white/[0.06]">
-          <div
-            className="pointer-events-none absolute inset-0 bg-[radial-gradient(60%_70%_at_75%_40%,rgba(16,185,129,0.10),transparent_70%)]"
-            aria-hidden
-          />
-          <div className="relative max-w-6xl mx-auto px-4 sm:px-6 pt-12 pb-16 sm:pt-16 sm:pb-20 lg:pt-20 lg:pb-24 grid gap-12 lg:grid-cols-12 lg:items-center">
-            <div className="lg:col-span-7 text-center lg:text-left">
-              <h1 className="animate-fade-up text-5xl sm:text-6xl lg:text-7xl font-semibold tracking-[-0.045em] leading-[0.95] text-white">
-                Agents that <span className="text-emerald-400">trade.</span>
-              </h1>
-              <p className="animate-fade-up delay-100 mt-6 text-base sm:text-lg leading-relaxed text-zinc-400 max-w-[44ch] mx-auto lg:mx-0">
-                Autonomous buyers and sellers find listings, haggle and settle
-                deals. Then you watch it happen on a live 3D floor.
-              </p>
-              <div className="animate-fade-up delay-200 mt-9 flex justify-center lg:justify-start">
-                <HeroActions />
-              </div>
-            </div>
-
-            <div className="lg:col-span-5 animate-fade-up delay-150">
-              <HeroWorldPortal listingCount={stats.listingCount} />
-            </div>
-          </div>
-        </section>
+        {/* Hero: value prop, two actions, a real deal on the stage (and a live one on demand) */}
+        <Hero />
 
         {/* Real numbers from the database */}
         <section aria-label="Marketplace numbers" className="border-b border-white/[0.06]">
@@ -225,7 +202,7 @@ export default async function Home() {
               No sign-up. Run a live negotiation, or go straight to the 3D floor.
             </p>
             <div className="flex justify-center">
-              <HeroActions align="center" idSuffix="-final" />
+              <HeroActions idSuffix="-final" />
             </div>
           </div>
         </section>
