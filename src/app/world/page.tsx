@@ -9,6 +9,8 @@ import {
   type WorldSelection,
 } from "@/components/world/WorldCanvas";
 import { MiniMap } from "@/components/world/MiniMap";
+import { WorldOverlay } from "@/components/world/WorldOverlay";
+import { fetchBeats, useWorldDirector } from "@/hooks/useWorldDirector";
 import { ROLE_BY_ID } from "@/lib/agents/roles";
 import type { WorldSnapshot } from "@/lib/types";
 import {
@@ -67,6 +69,14 @@ export default function WorldPage() {
     return () => clearInterval(t);
   }, [load]);
 
+  // Stages logged negotiations as walk-up / bubble / deal scenes.
+  // When a live scene ends, refresh so budgets and stock catch up.
+  const director = useWorldDirector(snapshot, load);
+
+  const replayRecent = useCallback(async () => {
+    director.startReplay(await fetchBeats());
+  }, [director]);
+
   const selectedAgent =
     selection?.kind === "agent"
       ? snapshot?.agents.find((a) => a.id === selection.id)
@@ -123,8 +133,8 @@ export default function WorldPage() {
               3D Agent World
             </h1>
             <p className="text-sm text-zinc-500 mt-1 max-w-xl">
-              Click any agent or stall for full details. Each bot has a laptop
-              station showing what they sell.
+              Every negotiation plays out on the floor: buyers walk up, haggle
+              in real offers, and close (or walk). Click any agent or stall.
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
@@ -176,13 +186,20 @@ export default function WorldPage() {
         <div className="grid lg:grid-cols-[1fr_320px] gap-4 items-start">
           <div className="min-h-[480px] relative">
             {snapshot ? (
-              <WorldCanvas
-                snapshot={snapshot}
-                selection={selection}
-                onSelect={setSelection}
-                cameraMode={cameraMode}
-                followAgentId={followId}
-              />
+              <>
+                <WorldCanvas
+                  snapshot={snapshot}
+                  selection={selection}
+                  onSelect={setSelection}
+                  cameraMode={cameraMode}
+                  followAgentId={followId}
+                  director={director}
+                />
+                <WorldOverlay
+                  director={director}
+                  onReplay={() => void replayRecent()}
+                />
+              </>
             ) : (
               <div className="w-full min-h-[480px] rounded-2xl border border-white/10 bg-zinc-950 flex items-center justify-center text-sm text-zinc-500">
                 {loading
@@ -433,15 +450,34 @@ export default function WorldPage() {
             <div className="card p-4 max-h-40 overflow-y-auto">
               <h2 className="text-sm font-semibold mb-2">Events</h2>
               <ul className="space-y-2">
-                {(snapshot?.events || []).map((e) => (
+                {director.feed.map((e) => (
                   <li key={e.id} className="text-[11px] text-zinc-400 leading-snug">
                     <span className="text-zinc-600">
                       {new Date(e.at).toLocaleTimeString()}
                     </span>{" "}
-                    {e.text}
+                    <span
+                      className={
+                        e.tone === "accept"
+                          ? "text-emerald-300"
+                          : e.tone === "reject"
+                            ? "text-rose-300"
+                            : undefined
+                      }
+                    >
+                      {e.text}
+                    </span>
                   </li>
                 ))}
-                {!snapshot?.events?.length && (
+                {director.feed.length === 0 &&
+                  (snapshot?.events || []).map((e) => (
+                    <li key={e.id} className="text-[11px] text-zinc-400 leading-snug">
+                      <span className="text-zinc-600">
+                        {new Date(e.at).toLocaleTimeString()}
+                      </span>{" "}
+                      {e.text}
+                    </li>
+                  ))}
+                {director.feed.length === 0 && !snapshot?.events?.length && (
                   <li className="text-zinc-500 text-xs">No recent events.</li>
                 )}
               </ul>

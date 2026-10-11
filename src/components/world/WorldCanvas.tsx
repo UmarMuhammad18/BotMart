@@ -1,9 +1,8 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useMemo } from "react";
 import type { WorldSnapshot } from "@/lib/types";
-import { enrichBusySnapshot } from "@/components/world/busyMotion";
+import type { WorldDirector } from "@/lib/world/director";
 
 export type CameraMode = "overview" | "follow" | "court";
 
@@ -33,19 +32,19 @@ export function WorldCanvas({
   onSelect,
   cameraMode,
   followAgentId,
+  director,
 }: {
   snapshot: WorldSnapshot;
   selection: WorldSelection;
   onSelect: (s: WorldSelection) => void;
   cameraMode: CameraMode;
   followAgentId: string | null;
+  director: WorldDirector;
 }) {
-  // Keep the floor visually alive even when few real negotiations are open
-  const busy = useMemo(() => enrichBusySnapshot(snapshot), [snapshot]);
-
   return (
     <IsoScene
-      snapshot={busy}
+      snapshot={snapshot}
+      director={director}
       selection={selection}
       onSelect={onSelect}
       cameraMode={cameraMode}

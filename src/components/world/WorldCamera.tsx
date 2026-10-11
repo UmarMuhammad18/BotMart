@@ -5,6 +5,7 @@ import { useFrame, useThree } from "@react-three/fiber";
 import * as THREE from "three";
 import type { WorldSnapshot } from "@/lib/types";
 import type { CameraMode } from "@/components/world/WorldCanvas";
+import type { WorldDirector } from "@/lib/world/director";
 
 export function contentCenter(snapshot: WorldSnapshot) {
   const pts = [
@@ -64,17 +65,18 @@ export function CameraDirector({
   mode,
   followAgentId,
   snapshot,
+  director,
 }: {
   mode: CameraMode;
   followAgentId: string | null;
   snapshot: WorldSnapshot;
+  director: WorldDirector;
 }) {
-  const { camera } = useThree();
-  const controls = useThree((s) => s.controls) as
-    | { target: THREE.Vector3; update: () => void; enabled: boolean }
-    | undefined;
-
-  useFrame(() => {
+  useFrame((state) => {
+    const { camera } = state;
+    const controls = state.controls as unknown as
+      | { target: THREE.Vector3; update: () => void; enabled: boolean }
+      | null;
     if (!controls) return;
     if (mode === "overview") {
       controls.enabled = true;
@@ -88,7 +90,10 @@ export function CameraDirector({
       return;
     }
     if (mode === "follow" && followAgentId) {
-      const a = snapshot.agents.find((x) => x.id === followAgentId);
+      // Track where the robot actually is, not its home slot
+      const a =
+        director.livePos.get(followAgentId) ??
+        snapshot.agents.find((x) => x.id === followAgentId);
       if (!a) return;
       controls.enabled = false;
       camera.position.lerp(new THREE.Vector3(a.x + 8, 10, a.z + 8), 0.1);

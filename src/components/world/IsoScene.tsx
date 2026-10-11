@@ -1,13 +1,12 @@
 "use client";
 
-import { Canvas, useFrame, useThree } from "@react-three/fiber";
+import { Canvas, useFrame } from "@react-three/fiber";
 import {
   OrbitControls,
   ContactShadows,
   Text,
   Billboard,
   OrthographicCamera,
-  Line,
   Environment,
   Float,
 } from "@react-three/drei";
@@ -19,10 +18,10 @@ import {
 } from "@react-three/postprocessing";
 import { useMemo, useRef } from "react";
 import * as THREE from "three";
-import type { WorldAgent, WorldStall, WorldSnapshot } from "@/lib/types";
+import type { WorldStall, WorldSnapshot } from "@/lib/types";
+import type { WorldDirector } from "@/lib/world/director";
 import type { CameraMode, WorldSelection } from "@/components/world/WorldCanvas";
 import { ProductMesh } from "@/components/world/ProductMesh";
-import { pulsePhase } from "@/components/world/busyMotion";
 import { SceneDressing } from "@/components/world/SceneDressing";
 import { WorldAgentMesh } from "@/components/world/WorldAgent";
 import {
@@ -162,11 +161,20 @@ function StallMesh({
   );
 }
 
-function NegotiateLinks({ snapshot }: { snapshot: WorldSnapshot }) {
-  const agentMap = useMemo(
-    () => new Map(snapshot.agents.map((a) => [a.id, a])),
-    [snapshot.agents]
-  );
+/** Advances the director on the render clock (sim time scales with speed). */
+function DirectorClock({ director }: { director: WorldDirector }) {
+  useFrame((_, dt) => director.tick(dt * 1000));
+  return null;
+}
+
+/** Live price tag + pulsing floor ring over each stall being negotiated. */
+function NegotiationTags({
+  snapshot,
+  director,
+}: {
+  snapshot: WorldSnapshot;
+  director: WorldDirector;
+}) {
   const stallMap = useMemo(
     () => new Map(snapshot.stalls.map((s) => [s.id, s])),
     [snapshot.stalls]
@@ -174,93 +182,150 @@ function NegotiateLinks({ snapshot }: { snapshot: WorldSnapshot }) {
 
   return (
     <>
-      {(snapshot.links || []).map((link) => {
-        const a = agentMap.get(link.agent_id);
-        const s = stallMap.get(link.stall_id);
-        if (!a || !s) return null;
-        const mid = new THREE.Vector3((a.x + s.x) / 2, 1.9, (a.z + s.z) / 2);
+      {director.links.map((link) => {
+        const s = stallMap.get(link.stallId);
+        if (!s) return null;
         return (
-          <group key={`${link.agent_id}-${link.stall_id}`}>
-            <Line
-              points={[
-                new THREE.Vector3(a.x, 0.9, a.z),
-                mid,
-                new THREE.Vector3(s.x, 1.15, s.z),
-              ]}
-              color="#fbbf24"
-              lineWidth={2.5}
-              transparent
-              opacity={0.9}
-            />
-            <Billboard position={[mid.x, mid.y + 0.35, mid.z]}>
-              <Text
-                fontSize={0.28}
-                color="#fde68a"
-                anchorX="center"
-                outlineWidth={0.02}
-                outlineColor="#422006"
-              >
-                {`£${s.price}`}
-              </Text>
-            </Billboard>
-            <Sparkle id={link.agent_id} a={a} s={s} />
-          </group>
+          <NegotiationTag
+            key={`${link.buyerId}-${link.stallId}`}
+            stall={s}
+            price={link.price}
+          />
         );
       })}
     </>
   );
 }
 
-function Sparkle({
-  id,
-  a,
-  s,
+function NegotiationTag({
+  stall,
+  price,
 }: {
-  id: string;
-  a: WorldAgent;
-  s: WorldStall;
+  stall: WorldStall;
+  price: number | null;
 }) {
-  const ref = useRef<THREE.Mesh>(null);
+  const ring = useRef<THREE.Mesh>(null);
   useFrame(({ clock }) => {
-    if (!ref.current) return;
-    const t = clock.getElapsedTime();
-    const u = (Math.sin(pulsePhase(id, t)) + 1) / 2;
-    ref.current.position.set(
-      a.x + (s.x - a.x) * u,
-      1.0 + Math.sin(u * Math.PI) * 1.2,
-      a.z + (s.z - a.z) * u
-    );
+    if (!ring.current) return;
+    const k = 1 + ((clock.getElapsedTime() * 0.8) % 1) * 0.35;
+    ring.current.scale.set(k, k, 1);
+    (ring.current.material as THREE.MeshBasicMaterial).opacity = 1.35 - k;
   });
+
   return (
-    <mesh ref={ref}>
-      <sphereGeometry args={[0.09, 10, 10]} />
-      <meshStandardMaterial
-        color="#fbbf24"
-        emissive="#f59e0b"
-        emissiveIntensity={3}
-        toneMapped={false}
-      />
-    </mesh>
+    <group position={[stall.x, 0, stall.z]}>
+      <mesh ref={ring} rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.04, 0.6]}>
+        <ringGeometry args={[1.7, 1.82, 48]} />
+        <meshBasicMaterial color="#fbbf24" transparent toneMapped={false} />
+      </mesh>
+      {price != null && (
+        <Billboard position={[0, 2.95, 0]}>
+          <Text
+            fontSize={0.34}
+            color="#fde68a"
+            anchorX="center"
+            outlineWidth={0.024}
+            outlineColor="#422006"
+          >
+            {`⇄ £${Math.round(price)}`}
+          </Text>
+        </Billboard>
+      )}
+    </group>
   );
 }
 
-function DealPopups({ snapshot }: { snapshot: WorldSnapshot }) {
+/** Deal / no-deal bursts: rising label, shockwave ring, coin spray. */
+function DealBursts({ director }: { director: WorldDirector }) {
   return (
     <>
-      {(snapshot.deal_popups || []).map((p, i) => (
-        <Billboard key={p.id} position={[p.x, 2.7 + (i % 3) * 0.12, p.z]}>
-          <Text
-            fontSize={0.3}
-            color="#6ee7b7"
-            anchorX="center"
-            outlineWidth={0.022}
-            outlineColor="#052e16"
-          >
-            {p.label}
-          </Text>
-        </Billboard>
+      {director.activeBursts.map((b) => (
+        <DealBurst key={b.id} burst={b} director={director} />
       ))}
     </>
+  );
+}
+
+const COINS = 10;
+
+function DealBurst({
+  burst,
+  director,
+}: {
+  burst: { x: number; z: number; label: string; tone: "deal" | "walk"; bornAt: number };
+  director: WorldDirector;
+}) {
+  const label = useRef<THREE.Group>(null);
+  const ring = useRef<THREE.Mesh>(null);
+  const coins = useRef<(THREE.Mesh | null)[]>([]);
+  const deal = burst.tone === "deal";
+  const color = deal ? "#34d399" : "#fb7185";
+
+  useFrame(() => {
+    // Seconds since birth on the director clock (respects playback speed)
+    const age = (director.now - burst.bornAt) / 1000;
+    if (label.current) label.current.position.y = 2.6 + Math.min(age, 1.2) * 0.9;
+    if (ring.current) {
+      const k = 0.3 + age * 2.2;
+      ring.current.scale.set(k, k, 1);
+      (ring.current.material as THREE.MeshBasicMaterial).opacity = Math.max(
+        0,
+        0.9 - age * 0.6
+      );
+    }
+    coins.current.forEach((c, i) => {
+      if (!c) return;
+      const a = (i / COINS) * Math.PI * 2;
+      const r = age * 1.6;
+      c.position.set(
+        Math.cos(a) * r,
+        1.4 + age * 3.2 - age * age * 3.4,
+        Math.sin(a) * r
+      );
+      c.rotation.y = age * 8 + i;
+      c.visible = deal && c.position.y > 0;
+    });
+  });
+
+  return (
+    <group position={[burst.x, 0, burst.z]}>
+      <mesh ref={ring} rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.05, 0]}>
+        <ringGeometry args={[1, 1.15, 48]} />
+        <meshBasicMaterial color={color} transparent toneMapped={false} />
+      </mesh>
+      {Array.from({ length: COINS }, (_, i) => (
+        <mesh
+          key={i}
+          ref={(el) => {
+            coins.current[i] = el;
+          }}
+          rotation={[Math.PI / 2, 0, 0]}
+        >
+          <cylinderGeometry args={[0.1, 0.1, 0.03, 16]} />
+          <meshStandardMaterial
+            color="#fbbf24"
+            emissive="#f59e0b"
+            emissiveIntensity={1.6}
+            metalness={0.9}
+            roughness={0.2}
+            toneMapped={false}
+          />
+        </mesh>
+      ))}
+      <group ref={label}>
+        <Billboard>
+          <Text
+            fontSize={deal ? 0.5 : 0.36}
+            color={deal ? "#6ee7b7" : "#fda4af"}
+            anchorX="center"
+            outlineWidth={0.03}
+            outlineColor={deal ? "#052e16" : "#4c0519"}
+          >
+            {burst.label}
+          </Text>
+        </Billboard>
+      </group>
+    </group>
   );
 }
 
@@ -330,12 +395,14 @@ function SceneContent({
   onSelect,
   cameraMode,
   followAgentId,
+  director,
 }: {
   snapshot: WorldSnapshot;
   selection: WorldSelection;
   onSelect: (s: WorldSelection) => void;
   cameraMode: CameraMode;
   followAgentId: string | null;
+  director: WorldDirector;
 }) {
   const center = contentCenter(snapshot);
 
@@ -348,8 +415,9 @@ function SceneContent({
       <Floor />
       <SceneDressing />
       <CourtDais />
-      <NegotiateLinks snapshot={snapshot} />
-      <DealPopups snapshot={snapshot} />
+      <DirectorClock director={director} />
+      <NegotiationTags snapshot={snapshot} director={director} />
+      <DealBursts director={director} />
       {snapshot.stalls.map((s) => (
         <StallMesh
           key={s.id}
@@ -365,6 +433,7 @@ function SceneContent({
           stalls={snapshot.stalls}
           selected={selection?.kind === "agent" && selection.id === a.id}
           onSelect={() => onSelect({ kind: "agent", id: a.id })}
+          director={director}
         />
       ))}
       <ContactShadows
@@ -388,6 +457,7 @@ function SceneContent({
         mode={cameraMode}
         followAgentId={followAgentId}
         snapshot={snapshot}
+        director={director}
       />
       <EffectComposer multisampling={0}>
         <SMAA />
@@ -409,12 +479,14 @@ export function IsoScene({
   onSelect,
   cameraMode,
   followAgentId,
+  director,
 }: {
   snapshot: WorldSnapshot;
   selection: WorldSelection;
   onSelect: (s: WorldSelection) => void;
   cameraMode: CameraMode;
   followAgentId: string | null;
+  director: WorldDirector;
 }) {
   return (
     <div
@@ -443,6 +515,7 @@ export function IsoScene({
           onSelect={onSelect}
           cameraMode={cameraMode}
           followAgentId={followAgentId}
+          director={director}
         />
       </Canvas>
     </div>
