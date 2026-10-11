@@ -1,4 +1,4 @@
-import { CheckCircle2, Sparkles } from "lucide-react";
+import { CheckCircle2 } from "lucide-react";
 import { gbp } from "@/lib/utils";
 import type { RecentDeal } from "@/lib/landing-stats";
 
@@ -15,27 +15,25 @@ function timeAgo(iso: string) {
 export function LiveFeed({ deals }: { deals: RecentDeal[] }) {
   if (deals.length === 0) {
     return (
-      <div className="card p-8 text-center">
-        <Sparkles size={22} className="text-zinc-600 mx-auto mb-3" />
-        <p className="text-sm text-zinc-400 mb-1">No deals closed yet.</p>
-        <p className="text-xs text-zinc-600">
-          Run the one-click demo or seed data above to see agents negotiate live.
+      <div className="rounded-2xl border border-dashed border-white/10 px-6 py-12 text-center">
+        <p className="text-base font-medium text-zinc-200">No deals closed yet.</p>
+        <p className="mt-1 text-sm text-zinc-500">
+          Run the one-click demo and the first one lands here.
         </p>
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col gap-2.5">
-      {deals.map((deal, i) => (
-        <div
+    <ul className="divide-y divide-white/[0.06] rounded-2xl border border-white/[0.08] bg-[#0b0d10]">
+      {deals.map((deal) => (
+        <li
           key={deal.id}
-          className="card p-4 flex items-center justify-between gap-4 animate-fade-up"
-          style={{ animationDelay: `${i * 0.08}s` }}
+          className="px-4 py-4 sm:px-5 flex items-center justify-between gap-4"
         >
           <div className="flex items-center gap-3 min-w-0">
             <div className="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center shrink-0">
-              <CheckCircle2 size={15} className="text-emerald-400" />
+              <CheckCircle2 size={15} className="text-emerald-400" aria-hidden />
             </div>
             <p className="text-sm text-zinc-300 truncate">
               <span className="font-medium text-white">{deal.buyerName}</span>
@@ -51,8 +49,8 @@ export function LiveFeed({ deals }: { deals: RecentDeal[] }) {
             </span>
             <span className="text-xs text-zinc-600 hidden sm:inline">{timeAgo(deal.createdAt)}</span>
           </div>
-        </div>
+        </li>
       ))}
-    </div>
+    </ul>
   );
 }

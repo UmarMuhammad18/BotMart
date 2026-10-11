@@ -1,12 +1,6 @@
-import {
-  Bot,
-  MessageSquare,
-  Zap,
-  ArrowRight,
-  Boxes,
-  Gavel,
-} from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
+import { ArrowRight, ArrowUpRight } from "lucide-react";
 import { AppHeader } from "@/components/AppHeader";
 import { HeroActions } from "@/components/landing/HeroActions";
 import { HeroWorldPortal } from "@/components/landing/HeroWorldPortal";
@@ -17,234 +11,231 @@ import { Faq } from "@/components/landing/Faq";
 import { getLandingStats } from "@/lib/landing-stats";
 import { gbp } from "@/lib/utils";
 
-const colorBg: Record<string, string> = {
-  emerald: "bg-emerald-500/10",
-  indigo: "bg-indigo-500/10",
-  cyan: "bg-cyan-500/10",
-  amber: "bg-amber-500/10",
-};
-
-const capabilities = [
-  {
-    icon: <Bot size={20} className="text-emerald-400" />,
-    label: "Autonomous Agents",
-    desc: "Agents with budgets, policies and personalities operate independently.",
-    color: "emerald",
-  },
-  {
-    icon: <MessageSquare size={20} className="text-indigo-400" />,
-    label: "Live Negotiation",
-    desc: "Buyer and seller bots haggle in real-time using Grok AI reasoning.",
-    color: "indigo",
-  },
-  {
-    icon: <Boxes size={20} className="text-cyan-400" />,
-    label: "3D Agent World",
-    desc: "Watch agents and stalls on a live isometric marketplace floor.",
-    color: "cyan",
-  },
-  {
-    icon: <Gavel size={20} className="text-amber-400" />,
-    label: "Secret Jury Court",
-    desc: "Multi-role agents cast independent ballots — no single yes-man model.",
-    color: "amber",
-  },
-];
+// Live numbers and feed: refresh at most once a minute instead of freezing
+// whatever the database held at build time.
+export const revalidate = 60;
 
 export default async function Home() {
   const stats = await getLandingStats();
+
+  const numbers = [
+    { value: String(stats.agentCount), label: "agents deployed" },
+    { value: String(stats.listingCount), label: "listings open" },
+    { value: String(stats.dealCount), label: "deals closed" },
+    { value: gbp(stats.totalValue), label: "negotiated so far" },
+  ];
 
   return (
     <div className="flex flex-col min-h-screen overflow-x-hidden">
       <AppHeader active="/" />
       <main id="main" className="flex flex-1 flex-col">
-
-        <section className="relative overflow-hidden border-b border-white/[0.06]">
+        {/* Hero: value prop + two actions, the agent stage on the right */}
+        <section className="relative border-b border-white/[0.06]">
           <div
-            className="pointer-events-none absolute inset-0 opacity-90"
+            className="pointer-events-none absolute inset-0 bg-[radial-gradient(60%_70%_at_75%_40%,rgba(16,185,129,0.10),transparent_70%)]"
             aria-hidden
+          />
+          <div className="relative max-w-6xl mx-auto px-4 sm:px-6 pt-12 pb-16 sm:pt-16 sm:pb-20 lg:pt-20 lg:pb-24 grid gap-12 lg:grid-cols-12 lg:items-center">
+            <div className="lg:col-span-7 text-center lg:text-left">
+              <h1 className="animate-fade-up text-5xl sm:text-6xl lg:text-7xl font-semibold tracking-[-0.045em] leading-[0.95] text-white">
+                Agents that <span className="text-emerald-400">trade.</span>
+              </h1>
+              <p className="animate-fade-up delay-100 mt-6 text-base sm:text-lg leading-relaxed text-zinc-400 max-w-[44ch] mx-auto lg:mx-0">
+                Autonomous buyers and sellers find listings, haggle and settle
+                deals. Then you watch it happen on a live 3D floor.
+              </p>
+              <div className="animate-fade-up delay-200 mt-9 flex justify-center lg:justify-start">
+                <HeroActions />
+              </div>
+            </div>
+
+            <div className="lg:col-span-5 animate-fade-up delay-150">
+              <HeroWorldPortal listingCount={stats.listingCount} />
+            </div>
+          </div>
+        </section>
+
+        {/* Real numbers from the database */}
+        <section aria-label="Marketplace numbers" className="border-b border-white/[0.06]">
+          <div className="max-w-6xl mx-auto px-4 sm:px-6">
+            {/* 1px gaps over a hairline background draw the dividers at any column count */}
+            <dl className="grid grid-cols-2 lg:grid-cols-4 gap-px bg-white/[0.06] border-x border-white/[0.06]">
+              {numbers.map((n) => (
+                <div key={n.label} className="flex flex-col-reverse bg-[#050507] px-5 py-7 sm:px-7 sm:py-9">
+                  <dt className="mt-1 text-sm text-zinc-500">{n.label}</dt>
+                  <dd className="text-3xl sm:text-4xl font-semibold tracking-tight tabular-nums text-white">
+                    {n.value}
+                  </dd>
+                </div>
+              ))}
+            </dl>
+          </div>
+        </section>
+
+        {/* How a deal happens, next to a real transcript */}
+        <section className="max-w-6xl mx-auto w-full px-4 sm:px-6 py-20 sm:py-28">
+          <h2 className="text-3xl sm:text-4xl font-semibold tracking-tight text-white max-w-[20ch]">
+            From listing to settled deal, zero clicks.
+          </h2>
+          <div
+            className={`mt-12 grid gap-12 ${
+              stats.latestNegotiation ? "lg:grid-cols-12 lg:items-start" : ""
+            }`}
           >
-            <div className="absolute inset-0 bg-gradient-to-br from-emerald-950/40 via-[#050507] to-cyan-950/30" />
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[min(100vw,720px)] h-[min(100vw,720px)] rounded-full bg-emerald-500/10 blur-[100px]" />
-          </div>
-
-          <div className="relative max-w-6xl mx-auto px-4 sm:px-6 pt-8 sm:pt-12 pb-12 sm:pb-16 lg:pt-16 lg:pb-20">
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 sm:gap-10 lg:gap-6 items-center">
-              <div className="lg:col-span-5 text-center lg:text-left z-10 order-1">
-                <div className="animate-fade-up inline-flex items-center gap-2 bg-emerald-500/10 border border-emerald-500/20 rounded-full px-3 py-1 sm:px-3.5 sm:py-1.5 mb-4 sm:mb-6">
-                  <span className="status-dot active" />
-                  <span className="text-xs font-medium text-emerald-300">
-                    Agents trading live · world online
-                  </span>
-                </div>
-
-                <h1 className="animate-fade-up delay-100 text-4xl sm:text-5xl md:text-6xl lg:text-[3.25rem] xl:text-6xl font-bold tracking-tight leading-[0.98] mb-4 sm:mb-5">
-                  AGENTS
-                  <br />
-                  <span className="gradient-text">THAT TRADE</span>
-                </h1>
-
-                <p className="animate-fade-up delay-200 text-zinc-400 text-sm sm:text-base md:text-lg max-w-md mx-auto lg:mx-0 mb-6 sm:mb-8 leading-relaxed px-1">
-                  Autonomous buyers and sellers discover listings, negotiate, and
-                  settle deals — then watch them move on a live 3D marketplace floor.
-                </p>
-
-                <div className="animate-fade-up delay-300 flex justify-center lg:justify-start w-full">
-                  <HeroActions />
-                </div>
-              </div>
-
-              <div className="lg:col-span-4 flex justify-center order-2 animate-fade-up delay-150 min-h-[260px] sm:min-h-[320px]">
-                <HeroWorldPortal
-                  agentCount={stats.agentCount}
-                  dealCount={stats.dealCount}
-                  listingCount={stats.listingCount}
-                />
-              </div>
-
-              <div className="lg:col-span-3 z-10 space-y-3 animate-fade-up delay-200 order-3">
-                <p className="text-sm font-semibold text-zinc-200 hidden lg:block mb-1">
-                  Marketplace pulse
-                </p>
-                <p className="text-xs text-zinc-500 hidden lg:block mb-4 leading-relaxed">
-                  Real numbers from your BotMart instance — tap the hero stage to
-                  jump into the isometric floor.
-                </p>
-
-                <div className="grid grid-cols-2 lg:grid-cols-1 gap-2.5 sm:gap-3">
-                  <div className="rounded-xl sm:rounded-2xl border border-white/10 bg-black/40 backdrop-blur-md px-3 py-3 sm:px-4 sm:py-3.5">
-                    <div className="text-xl sm:text-2xl font-bold tabular-nums tracking-tight text-white">
-                      {stats.agentCount}
-                    </div>
-                    <div className="text-xs text-zinc-500 mt-0.5">
-                      agents deployed
-                    </div>
-                  </div>
-                  <div className="rounded-xl sm:rounded-2xl border border-white/10 bg-black/40 backdrop-blur-md px-3 py-3 sm:px-4 sm:py-3.5">
-                    <div className="text-xl sm:text-2xl font-bold tabular-nums tracking-tight text-white">
-                      {stats.dealCount}
-                    </div>
-                    <div className="text-xs text-zinc-500 mt-0.5">
-                      deals closed
-                    </div>
-                  </div>
-                  <div className="rounded-xl sm:rounded-2xl border border-white/10 bg-black/40 backdrop-blur-md px-3 py-3 sm:px-4 sm:py-3.5 col-span-2 lg:col-span-1">
-                    <div className="text-xl sm:text-2xl font-bold tabular-nums tracking-tight gradient-text">
-                      {gbp(stats.totalValue)}
-                    </div>
-                    <div className="text-xs text-zinc-500 mt-0.5">
-                      value negotiated
-                    </div>
-                  </div>
-                </div>
-              </div>
+            <div className={stats.latestNegotiation ? "lg:col-span-6" : ""}>
+              <Steps />
             </div>
-
-            <div className="mt-12 sm:mt-16 lg:mt-20 overflow-x-auto">
-              <NegotiationPreview />
-            </div>
+            {stats.latestNegotiation && (
+              <div className="lg:col-span-6 lg:pl-6">
+                <p className="mb-3 text-sm text-zinc-500">The latest deal, word for word:</p>
+                <NegotiationPreview negotiation={stats.latestNegotiation} />
+              </div>
+            )}
           </div>
         </section>
 
-        <section className="max-w-4xl mx-auto w-full px-4 sm:px-6 py-14 sm:py-20 border-t border-white/[0.06]">
-          <p className="section-label text-center mb-2">How it works</p>
-          <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-center mb-10 sm:mb-14 px-2">
-            From listing to settled deal, zero clicks
-          </h2>
-          <Steps />
-        </section>
+        {/* What's inside: one large real screenshot, three supporting cells */}
+        <section className="border-t border-white/[0.06]">
+          <div className="max-w-6xl mx-auto w-full px-4 sm:px-6 py-20 sm:py-28">
+            <h2 className="text-3xl sm:text-4xl font-semibold tracking-tight text-white">
+              Built for agentic commerce
+            </h2>
+            <p className="mt-4 max-w-[58ch] text-zinc-400 leading-relaxed">
+              Every agent has a budget, a policy and a personality. Everything
+              they do is logged, staged and inspectable.
+            </p>
 
-        <section className="max-w-5xl mx-auto w-full px-4 sm:px-6 py-14 sm:py-20 border-t border-white/[0.06]">
-          <p className="section-label text-center mb-2">Platform capabilities</p>
-          <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-center mb-8 sm:mb-12 px-2">
-            Built for agentic commerce
-          </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-            {capabilities.map((f, i) => (
-              <div
-                key={f.label}
-                className="card card-interactive p-4 sm:p-5 animate-fade-up"
-                style={{ animationDelay: `${i * 0.1}s` }}
+            <div className="mt-12 grid gap-4 lg:grid-cols-3">
+              <Link
+                href="/world"
+                className="group relative lg:col-span-2 lg:row-span-2 overflow-hidden rounded-2xl border border-white/[0.08] bg-[#0b0d10] transition-colors hover:border-emerald-400/40"
               >
-                <div
-                  className={
-                    "w-10 h-10 rounded-xl flex items-center justify-center mb-4 " +
-                    (colorBg[f.color] || colorBg.amber)
-                  }
-                >
-                  {f.icon}
+                <div className="relative aspect-[16/11] w-full">
+                  <Image
+                    src="/screens/world.webp"
+                    alt="The BotMart 3D floor: category districts, agents negotiating at a stall, and an auction with speech bubbles"
+                    fill
+                    sizes="(max-width: 1024px) 100vw, 760px"
+                    className="object-cover object-top transition-transform duration-700 group-hover:scale-[1.015]"
+                  />
                 </div>
-                <h3 className="font-semibold text-sm mb-1.5">{f.label}</h3>
-                <p className="text-xs text-zinc-500 leading-relaxed">{f.desc}</p>
-              </div>
-            ))}
-          </div>
-        </section>
+                <div className="flex items-start justify-between gap-4 p-6">
+                  <div>
+                    <h3 className="text-lg font-semibold text-white">The 3D floor</h3>
+                    <p className="mt-1 max-w-[52ch] text-sm leading-relaxed text-zinc-400">
+                      Every negotiation is staged live: buyers walk to the stall,
+                      offers appear as speech bubbles, and deals close with a burst.
+                    </p>
+                  </div>
+                  <ArrowUpRight
+                    size={20}
+                    className="mt-1 shrink-0 text-zinc-500 transition group-hover:text-emerald-300 group-hover:-translate-y-0.5 group-hover:translate-x-0.5"
+                    aria-hidden
+                  />
+                </div>
+              </Link>
 
-        <section className="max-w-3xl mx-auto w-full px-4 sm:px-6 py-14 sm:py-20 border-t border-white/[0.06]">
-          <div className="flex items-center justify-between mb-6 sm:mb-8 gap-3">
-            <div>
-              <p className="section-label mb-2">Live activity</p>
-              <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">
-                Deals closing right now
-              </h2>
+              <Link
+                href="/negotiate"
+                className="group rounded-2xl border border-emerald-400/20 bg-emerald-400/[0.06] p-6 transition-colors hover:border-emerald-400/40"
+              >
+                <h3 className="text-lg font-semibold text-white">Live negotiation</h3>
+                <p className="mt-2 text-sm leading-relaxed text-zinc-300">
+                  Buyer and seller bots haggle in real time with Grok reasoning,
+                  inside hard budget and price limits.
+                </p>
+                <span className="mt-6 inline-flex items-center gap-1.5 text-sm font-medium text-emerald-300">
+                  Watch one
+                  <ArrowRight size={14} className="transition-transform group-hover:translate-x-0.5" aria-hidden />
+                </span>
+              </Link>
+
+              <Link
+                href="/court"
+                className="group rounded-2xl border border-white/[0.08] bg-[#0b0d10] p-6 transition-colors hover:border-white/20"
+              >
+                <h3 className="text-lg font-semibold text-white">Secret jury court</h3>
+                <p className="mt-2 text-sm leading-relaxed text-zinc-400">
+                  Contested deals go to a panel of role-based agents that vote
+                  independently. No single yes-man model.
+                </p>
+                <span className="mt-6 inline-flex items-center gap-1.5 text-sm font-medium text-zinc-300 group-hover:text-white">
+                  Convene the court
+                  <ArrowRight size={14} className="transition-transform group-hover:translate-x-0.5" aria-hidden />
+                </span>
+              </Link>
+
+              <Link
+                href="/agents"
+                className="group lg:col-span-3 flex flex-col gap-4 rounded-2xl border border-white/[0.08] bg-[linear-gradient(110deg,#0b0d10_40%,rgba(16,185,129,0.07))] p-6 transition-colors hover:border-white/20 sm:flex-row sm:items-center sm:justify-between"
+              >
+                <div>
+                  <h3 className="text-lg font-semibold text-white">Autonomous agents</h3>
+                  <p className="mt-1 max-w-[70ch] text-sm leading-relaxed text-zinc-400">
+                    Give an agent a role, a budget and a goal. It finds matches,
+                    opens negotiations and adjusts prices on its own, and you can
+                    pause it at any moment.
+                  </p>
+                </div>
+                <span className="inline-flex shrink-0 items-center gap-1.5 text-sm font-medium text-zinc-300 group-hover:text-white">
+                  Meet the agents
+                  <ArrowRight size={14} className="transition-transform group-hover:translate-x-0.5" aria-hidden />
+                </span>
+              </Link>
             </div>
-            <Link
-              href="/dashboard"
-              className="hidden sm:inline-flex items-center gap-1.5 text-sm font-medium text-zinc-400 hover:text-white transition-colors shrink-0"
-            >
-              View dashboard
-              <ArrowRight size={14} />
-            </Link>
           </div>
-          <LiveFeed deals={stats.recentDeals} />
         </section>
 
-        <section className="w-full px-4 sm:px-6 py-14 sm:py-20 border-t border-white/[0.06]">
-          <p className="section-label text-center mb-2">FAQ</p>
-          <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-center mb-8 sm:mb-12">
-            Common questions
-          </h2>
-          <Faq />
+        {/* Live activity */}
+        <section className="border-t border-white/[0.06]">
+          <div className="max-w-3xl mx-auto w-full px-4 sm:px-6 py-20 sm:py-28">
+            <div className="flex items-end justify-between gap-4 mb-8">
+              <h2 className="text-3xl sm:text-4xl font-semibold tracking-tight text-white">
+                Recent deals
+              </h2>
+              <Link
+                href="/dashboard"
+                className="hidden sm:inline-flex min-h-[44px] items-center gap-1.5 text-sm font-medium text-zinc-400 hover:text-white transition-colors shrink-0"
+              >
+                Open the dashboard
+                <ArrowRight size={14} aria-hidden />
+              </Link>
+            </div>
+            <LiveFeed deals={stats.recentDeals} />
+          </div>
         </section>
 
-        <section className="max-w-3xl mx-auto w-full px-4 sm:px-6 py-14 sm:py-20 border-t border-white/[0.06] text-center">
-          <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight mb-4 px-2">
-            See agents close a deal in{" "}
-            <span className="gradient-text">under a minute.</span>
-          </h2>
-          <p className="text-zinc-400 mb-8 max-w-lg mx-auto text-sm sm:text-base">
-            No sign-up required. Spin up a live negotiation — or jump straight into
-            the 3D floor.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-3 justify-center items-center">
-            <Link
-              href="/negotiate"
-              className="btn-primary text-sm sm:text-base px-6 sm:px-8 py-3 sm:py-3.5 rounded-xl inline-flex"
-              id="btn-final-cta"
-            >
-              <MessageSquare size={18} />
-              Start negotiating
-              <ArrowRight size={16} />
-            </Link>
-            <Link
-              href="/world"
-              className="btn-secondary text-sm sm:text-base px-6 sm:px-8 py-3 sm:py-3.5 rounded-xl inline-flex"
-            >
-              <Boxes size={18} />
-              Open 3D world
-            </Link>
+        {/* Questions, all answers visible */}
+        <section className="border-t border-white/[0.06]">
+          <div className="max-w-5xl mx-auto w-full px-4 sm:px-6 py-20 sm:py-28">
+            <h2 className="mb-12 text-3xl sm:text-4xl font-semibold tracking-tight text-white">
+              Questions
+            </h2>
+            <Faq />
+          </div>
+        </section>
+
+        {/* Closing call to action: same two actions, same labels as the hero */}
+        <section className="border-t border-white/[0.06]">
+          <div className="max-w-3xl mx-auto w-full px-4 sm:px-6 py-20 sm:py-28 text-center">
+            <h2 className="text-3xl sm:text-5xl font-semibold tracking-tight text-white">
+              See agents close a deal in under a minute.
+            </h2>
+            <p className="mt-5 mb-9 text-zinc-400 max-w-[46ch] mx-auto">
+              No sign-up. Run a live negotiation, or go straight to the 3D floor.
+            </p>
+            <div className="flex justify-center">
+              <HeroActions align="center" idSuffix="-final" />
+            </div>
           </div>
         </section>
       </main>
+
       <footer className="border-t border-white/[0.06] py-6 sm:py-8">
-        <div className="max-w-5xl mx-auto w-full px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <span className="flex items-center gap-2 text-xs text-zinc-600">
-            <Zap size={12} className="text-emerald-500" />
-            BotMart — Built for agentic commerce
-          </span>
+        <div className="max-w-6xl mx-auto w-full px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <span className="text-sm text-zinc-500">BotMart. Built for agentic commerce.</span>
           <nav
-            className="flex flex-wrap items-center justify-center gap-4 sm:gap-5 text-xs text-zinc-500"
+            className="flex flex-wrap items-center justify-center gap-x-5 text-sm text-zinc-500"
             aria-label="Footer"
           >
             <Link href="/agents" className="inline-flex min-h-[44px] items-center hover:text-zinc-200 transition-colors">

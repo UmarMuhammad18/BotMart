@@ -7,7 +7,7 @@
 
   /* Brand gradient */
   --grad-start: #10b981;
-  --grad-end:   #06b6d4;
+  --grad-end:   #059669;
 
   /* Surface levels */
   --surface-0: #050507;
@@ -17,17 +17,23 @@
   --surface-border: rgba(255,255,255,0.07);
 
   /* Glow effects */
-  --glow-emerald: 0 0 30px rgba(16, 185, 129, 0.18), 0 0 60px rgba(16,185,129,0.06);
-  --glow-blue:    0 0 30px rgba(99, 102, 241, 0.18), 0 0 60px rgba(99,102,241,0.06);
-  --glow-amber:   0 0 30px rgba(245, 158, 11, 0.15), 0 0 60px rgba(245,158,11,0.05);
+  /* Tinted depth, not neon: one accent (emerald), shadows carry its hue */
+  --glow-emerald: 0 1px 0 rgba(52,211,153,0.10) inset, 0 8px 24px -12px rgba(16,185,129,0.35);
+  --glow-blue:    var(--glow-emerald);
+  --glow-amber:   0 8px 24px -12px rgba(245,158,11,0.30);
+
+  /*
+   * Shape lock: controls (buttons, inputs) 12px, cards 16px, chips/badges
+   * full pill. Keep new components on this scale.
+   */
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   /* Self-hosted by next/font in layout.tsx */
-  --font-sans: var(--font-inter), system-ui, sans-serif;
-  --font-mono: var(--font-jetbrains), ui-monospace, monospace;
+  --font-sans: var(--font-geist), system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
 }
 
 /*
@@ -67,7 +73,6 @@
     background: var(--background);
     color: var(--foreground);
     font-family: var(--font-sans);
-    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
     min-height: 100dvh;
     -webkit-font-smoothing: antialiased;
   }
@@ -93,9 +98,10 @@
 
   /* ─── Typography ─────────────────────────────────────────── */
   h1, h2, h3, h4, h5, h6 {
-    font-feature-settings: "ss01", "cv02";
     letter-spacing: -0.02em;
+    text-wrap: balance;
   }
+  p { text-wrap: pretty; }
 
   /* ─── Focus ring ─────────────────────────────────────────── */
   :focus-visible {
@@ -106,11 +112,9 @@
 
 @layer components {
   /* ─── Utility: gradient text ─────────────────────────────── */
+  /* Kept as a class name for existing markup: now the single solid accent */
   .gradient-text {
-    background: linear-gradient(135deg, #10b981 0%, #06b6d4 60%, #6366f1 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
+    color: #34d399;
   }
 
   /* ─── Utility: glass card ────────────────────────────────── */
@@ -143,7 +147,7 @@
     position: fixed;
     border-radius: 50%;
     filter: blur(80px);
-    opacity: 0.12;
+    opacity: 0.09;
     pointer-events: none;
     z-index: 0;
     animation: orb-drift 18s ease-in-out infinite;
@@ -154,18 +158,6 @@
     background: radial-gradient(circle, #10b981, transparent 70%);
     top: -200px; left: -200px;
     animation-delay: 0s;
-  }
-  .orb-2 {
-    width: 500px; height: 500px;
-    background: radial-gradient(circle, #6366f1, transparent 70%);
-    top: 30%; right: -150px;
-    animation-delay: -6s;
-  }
-  .orb-3 {
-    width: 400px; height: 400px;
-    background: radial-gradient(circle, #06b6d4, transparent 70%);
-    bottom: -100px; left: 40%;
-    animation-delay: -12s;
   }
 
   @keyframes orb-drift {
@@ -286,7 +278,7 @@
     border-radius: 50%;
     display: inline-block;
   }
-  .status-dot.active  { background: #10b981; animation: pulse-dot 2s ease infinite; box-shadow: 0 0 6px rgba(16,185,129,0.6); }
+  .status-dot.active  { background: #10b981; animation: pulse-dot 2s ease infinite; }
   .status-dot.paused  { background: #f59e0b; }
   .status-dot.blocked { background: #ef4444; }
 
@@ -294,24 +286,17 @@
   .btn-primary {
     display: inline-flex; align-items: center; gap: 8px;
     min-height: 44px;
-    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-    color: #fff; font-weight: 600;
+    /* Dark ink on emerald: white on #10b981 is only 2.5:1 */
+    background: #34d399;
+    color: #04130c; font-weight: 600;
     padding: 10px 20px; border-radius: 12px;
     border: none; cursor: pointer;
-    transition: all 0.2s ease;
-    box-shadow: 0 4px 12px rgba(16,185,129,0.3), inset 0 1px 0 rgba(255,255,255,0.15);
-    position: relative; overflow: hidden;
+    transition: background-color 0.2s ease, transform 0.15s ease, box-shadow 0.2s ease;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.35), 0 8px 20px -10px rgba(16,185,129,0.55);
   }
-  .btn-primary::after {
-    content: "";
-    position: absolute; inset: 0;
-    background: linear-gradient(135deg, rgba(255,255,255,0.1), transparent);
-    opacity: 0; transition: opacity 0.2s;
-  }
-  .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(16,185,129,0.4), inset 0 1px 0 rgba(255,255,255,0.15); }
-  .btn-primary:hover::after { opacity: 1; }
-  .btn-primary:active { transform: translateY(0); }
-  .btn-primary:disabled { opacity: 0.45; cursor: not-allowed; transform: none; }
+  .btn-primary:hover { background: #6ee7b7; }
+  .btn-primary:active { transform: scale(0.98); }
+  .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
 
   .btn-secondary {
     display: inline-flex; align-items: center; gap: 8px;
@@ -319,9 +304,10 @@
     background: rgba(255,255,255,0.06); color: #e4e4e7;
     font-weight: 500; padding: 10px 20px; border-radius: 12px;
     border: 1px solid rgba(255,255,255,0.1); cursor: pointer;
-    transition: all 0.2s ease;
+    transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease, transform 0.15s ease;
   }
   .btn-secondary:hover { background: rgba(255,255,255,0.10); border-color: rgba(255,255,255,0.18); color: #fff; }
+  .btn-secondary:active, .btn-ghost:active { transform: scale(0.98); }
   .btn-secondary:disabled { opacity: 0.45; cursor: not-allowed; }
 
   .btn-ghost {
@@ -343,7 +329,7 @@
   }
   .card:hover {
     border-color: rgba(255,255,255,0.12);
-    box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+    box-shadow: 0 12px 32px -16px rgba(16,185,129,0.18);
   }
   .card-interactive:hover {
     transform: translateY(-2px);
@@ -394,8 +380,8 @@
 
   /* ─── Negotiation chat bubbles ───────────────────────────── */
   .bubble-buyer {
-    background: rgba(99,102,241,0.10);
-    border: 1px solid rgba(99,102,241,0.20);
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.10);
     border-radius: 16px 16px 16px 4px;
   }
   .bubble-seller {
@@ -419,7 +405,7 @@
   }
   .progress-bar-fill {
     height: 100%;
-    background: linear-gradient(90deg, #10b981, #06b6d4);
+    background: #34d399;
     border-radius: 99px;
     transition: width 0.6s ease;
   }
@@ -430,6 +416,7 @@
     border-radius: 50%; background: #10b981;
     animation: pulse-dot 1.2s ease-in-out infinite;
   }
+  .btn-primary .thinking-dots span { background: currentColor; }
   .thinking-dots span:nth-child(2) { animation-delay: 0.2s; }
   .thinking-dots span:nth-child(3) { animation-delay: 0.4s; }
 
@@ -454,8 +441,8 @@
   .agent-avatar::after {
     content: "";
     position: absolute; inset: -2px; border-radius: 14px;
-    background: linear-gradient(135deg, #10b981, #6366f1);
-    z-index: -1; opacity: 0.5;
+    background: #10b981;
+    z-index: -1; opacity: 0.35;
   }
 
   /* ─── World speech bubbles ───────────────────────────────── */

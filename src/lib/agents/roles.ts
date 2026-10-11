@@ -34,7 +34,7 @@ export const ROLE_CATALOG: RoleMeta[] = [
   {
     id: "negotiator",
     label: "Negotiator",
-    blurb: "Specialist haggler — tighter multi-turn strategy.",
+    blurb: "Specialist haggler with a tighter multi-turn strategy.",
     color: "text-violet-300",
     hex: "#a78bfa",
   },
@@ -48,7 +48,7 @@ export const ROLE_CATALOG: RoleMeta[] = [
   {
     id: "treasurer",
     label: "Treasurer",
-    blurb: "Hard budget guard — vetoes overspend risk.",
+    blurb: "Hard budget guard that vetoes overspend risk.",
     color: "text-rose-300",
     hex: "#fb7185",
   },

@@ -207,7 +207,7 @@ export default function WorldPage() {
                 <div className="w-full min-h-[480px] rounded-2xl border border-white/10 bg-zinc-950 flex items-center justify-center text-sm text-zinc-500">
                   {loading
                     ? "Loading world…"
-                    : "No world data — seed agents & listings."}
+                    : "No world data yet. Seed agents and listings first."}
                 </div>
               )}
             </div>
@@ -409,19 +409,19 @@ export default function WorldPage() {
                   <div className="rounded-lg bg-black/30 border border-white/5 px-3 py-2">
                     <dt className="text-zinc-500">Agents</dt>
                     <dd className="text-lg font-bold">
-                      {snapshot?.agents.length ?? "—"}
+                      {snapshot?.agents.length ?? "-"}
                     </dd>
                   </div>
                   <div className="rounded-lg bg-black/30 border border-white/5 px-3 py-2">
                     <dt className="text-zinc-500">Stalls</dt>
                     <dd className="text-lg font-bold">
-                      {snapshot?.stalls.length ?? "—"}
+                      {snapshot?.stalls.length ?? "-"}
                     </dd>
                   </div>
                   <div className="rounded-lg bg-black/30 border border-white/5 px-3 py-2 col-span-2">
                     <dt className="text-zinc-500">Open negotiations</dt>
                     <dd className="text-lg font-bold text-amber-300">
-                      {snapshot?.open_negotiations ?? "—"}
+                      {snapshot?.open_negotiations ?? "-"}
                     </dd>
                   </div>
                 </dl>

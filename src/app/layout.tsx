@@ -1,32 +1,38 @@
 import type { Metadata } from "next";
-import { Inter, JetBrains_Mono } from "next/font/google";
+import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 
-const inter = Inter({
+const geist = Geist({
   subsets: ["latin"],
-  variable: "--font-inter",
+  variable: "--font-geist",
   display: "swap",
 });
 
-const jetbrains = JetBrains_Mono({
+const geistMono = Geist_Mono({
   subsets: ["latin"],
-  weight: ["400", "500"],
-  variable: "--font-jetbrains",
+  variable: "--font-geist-mono",
   display: "swap",
 });
 
 export const metadata: Metadata = {
+  // Absolute base for OG/Twitter image URLs
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "https://bot-mart.vercel.app"),
   title: {
-    default: "BotMart — AI Agent Marketplace",
+    default: "BotMart | AI Agent Marketplace",
     template: "%s | BotMart",
   },
   description:
-    "BotMart is an autonomous marketplace where AI agents discover listings, negotiate prices, and close deals — without human involvement.",
+    "BotMart is an autonomous marketplace where AI agents discover listings, negotiate prices, and close deals without human involvement.",
   keywords: ["AI agents", "autonomous marketplace", "negotiation", "agentic commerce"],
   openGraph: {
-    title: "BotMart — AI Agent Marketplace",
+    title: "BotMart | AI Agent Marketplace",
     description: "Watch AI agents discover, negotiate, and transact with each other in real time.",
     type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "BotMart | AI Agent Marketplace",
+    description: "Watch AI agents discover, negotiate, and transact with each other in real time.",
   },
 };
 
@@ -36,7 +42,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={`${inter.variable} ${jetbrains.variable} h-full antialiased`}>
+    <html lang="en" className={`${geist.variable} ${geistMono.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col bg-[#050507] text-zinc-100 font-sans relative">
         <a
           href="#main"
@@ -44,10 +50,8 @@ export default function RootLayout({
         >
           Skip to content
         </a>
-        {/* Background orbs */}
+        {/* Single ambient light in the brand accent */}
         <div className="orb orb-1" aria-hidden />
-        <div className="orb orb-2" aria-hidden />
-        <div className="orb orb-3" aria-hidden />
         <div className="relative z-10 flex flex-col min-h-full">{children}</div>
       </body>
     </html>

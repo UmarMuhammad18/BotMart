@@ -11,6 +11,7 @@ import {
   ChevronRight,
 } from "lucide-react";
 import { AppHeader } from "@/components/AppHeader";
+import { Notice, type NoticeState } from "@/components/Notice";
 import { CourtPanel } from "@/components/court/CourtPanel";
 import { gbp } from "@/lib/utils";
 import {
@@ -49,6 +50,7 @@ type Negotiation = {
 export function NegotiateClient() {
   const searchParams = useSearchParams();
   const [agents, setAgents] = useState<Agent[]>([]);
+  const [notice, setNotice] = useState<NoticeState>(null);
   const [listings, setListings] = useState<Listing[]>([]);
   const [buyerId, setBuyerId] = useState("");
   const [listingId, setListingId] = useState("");
@@ -142,7 +144,7 @@ export function NegotiateClient() {
         setThinking(null);
         setNegotiation(data);
       } else {
-        alert(data.error || "Failed to start negotiation");
+        setNotice({ tone: "error", text: data.error || "The negotiation couldn't start. Try another listing." });
         setThinking(null);
       }
     } finally {
@@ -208,7 +210,7 @@ export function NegotiateClient() {
       const res = await fetch("/api/demo", { method: "POST" });
       const data = await res.json();
       if (!res.ok) {
-        alert(data.error || "Demo failed");
+        setNotice({ tone: "error", text: data.error || "The demo couldn't start. Try again in a moment." });
         return;
       }
       setNegotiation(data);
@@ -230,11 +232,12 @@ export function NegotiateClient() {
       <main id="main" className="flex flex-1 flex-col">
 
         <div className="max-w-3xl mx-auto w-full px-4 sm:px-6 py-10 flex flex-col gap-6">
+          <Notice notice={notice} onDismiss={() => setNotice(null)} />
           <div className="flex items-start justify-between gap-4 animate-fade-up">
             <div>
               <h1 className="text-3xl font-bold tracking-tight">Live Negotiation</h1>
               <p className="text-zinc-500 mt-1 text-sm">
-                Watch two AI agents negotiate — then convene a secret jury
+                Watch two AI agents negotiate, then convene a secret jury
               </p>
             </div>
             <button
@@ -243,7 +246,7 @@ export function NegotiateClient() {
               className="btn-primary shrink-0 text-sm"
               id="btn-one-click-demo-negotiate"
             >
-              <Zap size={15} className="fill-white" />
+              <Zap size={15} className="fill-current" />
               {loading ? "Loading..." : "One-click demo"}
             </button>
           </div>
@@ -281,7 +284,7 @@ export function NegotiateClient() {
                   >
                     {listings.map((l) => (
                       <option key={l.id} value={l.id}>
-                        {l.title} — {gbp(l.price)}
+                        {l.title} · {gbp(l.price)}
                       </option>
                     ))}
                   </select>
@@ -293,7 +296,7 @@ export function NegotiateClient() {
                 className="btn-primary"
                 id="btn-start-negotiation"
               >
-                <Play size={16} className="fill-white" />
+                <Play size={16} className="fill-current" />
                 {loading ? "Starting…" : "Start Negotiation"}
               </button>
             </div>
@@ -416,7 +419,7 @@ export function NegotiateClient() {
                     {running ? (
                       <RefreshCw size={16} className="animate-spin-slow" />
                     ) : (
-                      <Play size={16} className="fill-white" />
+                      <Play size={16} className="fill-current" />
                     )}
                     Run to completion
                   </button>

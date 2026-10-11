@@ -67,7 +67,7 @@ export default function LoginPage() {
               <p className="font-medium text-zinc-200">Check your email</p>
               <p className="text-sm text-zinc-500">
                 We sent a magic link to <span className="text-zinc-300">{email}</span>.
-                Click it to sign in — no password needed.
+                Click it to sign in. No password needed.
               </p>
               <button
                 type="button"

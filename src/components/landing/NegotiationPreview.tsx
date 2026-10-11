@@ -1,63 +1,71 @@
 import { Bot, CheckCircle2 } from "lucide-react";
+import type { LatestNegotiation } from "@/lib/landing-stats";
+import type { NegotiationMessage } from "@/lib/types";
 
-const script = [
-  { from: "buyer" as const, text: "I'll take the Mechanical Keyboard for £85.", tag: "Offer" },
-  { from: "seller" as const, text: "£85 is below cost. I can do £110.", tag: "Counter" },
-  { from: "buyer" as const, text: "Meet at £98 and I'll close now.", tag: "Counter" },
-  { from: "seller" as const, text: "Deal. £98 works for me.", tag: "Accepted", accepted: true },
-];
+const TAG: Record<NegotiationMessage["type"], string> = {
+  offer: "Offer",
+  counter: "Counter",
+  accept: "Accepted",
+  reject: "Walked away",
+  message: "Message",
+};
 
 /**
- * Static, illustrative preview of a live negotiation — gives visitors an
- * immediate visual sense of the product without waiting on real data.
+ * The last moves of a real, finished negotiation from the database. Renders
+ * nothing when there isn't one yet; the page never shows a scripted chat.
  */
-export function NegotiationPreview() {
-  return (
-    <div className="w-full max-w-md mx-auto card glass-strong p-5 text-left">
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-2">
-          <span className="status-dot active" />
-          <span className="text-xs font-medium text-zinc-400">Live negotiation</span>
-        </div>
-        <span className="text-xs text-zinc-600">Mechanical Keyboard</span>
-      </div>
+export function NegotiationPreview({
+  negotiation,
+}: {
+  negotiation: LatestNegotiation | null;
+}) {
+  if (!negotiation) return null;
+  const { messages, buyerName, sellerName, listingTitle } = negotiation;
 
-      <div className="flex flex-col gap-3">
-        {script.map((line, i) => {
-          const isBuyer = line.from === "buyer";
+  return (
+    <figure className="card p-5 sm:p-6 text-left">
+      <figcaption className="flex items-baseline justify-between gap-3 mb-5">
+        <span className="text-sm font-medium text-zinc-200 truncate">{listingTitle}</span>
+        <span className="text-xs text-zinc-500 shrink-0">
+          {buyerName} vs {sellerName}
+        </span>
+      </figcaption>
+
+      <ol className="flex flex-col gap-3">
+        {messages.map((m, i) => {
+          const isBuyer = m.from === "buyer";
+          const accepted = m.type === "accept";
           return (
-            <div
-              key={i}
-              className={`flex ${isBuyer ? "justify-start" : "justify-end"} animate-fade-up`}
-              style={{ animationDelay: `${0.6 + i * 0.15}s` }}
-            >
+            <li key={i} className={`flex gap-2 ${isBuyer ? "justify-start" : "justify-end"}`}>
               {isBuyer && (
-                <div className="w-6 h-6 rounded-full bg-indigo-500/20 border border-indigo-500/30 flex items-center justify-center shrink-0 mr-2 mt-1">
-                  <Bot size={11} className="text-indigo-400" />
-                </div>
+                <span className="w-6 h-6 rounded-lg bg-white/[0.06] border border-white/10 flex items-center justify-center shrink-0 mt-1">
+                  <Bot size={12} className="text-zinc-300" aria-hidden />
+                </span>
               )}
               <div
-                className={`max-w-[78%] px-3.5 py-2 text-sm ${
-                  line.accepted ? "bubble-accept" : isBuyer ? "bubble-buyer" : "bubble-seller"
+                className={`max-w-[80%] px-3.5 py-2 text-sm ${
+                  accepted ? "bubble-accept" : isBuyer ? "bubble-buyer" : "bubble-seller"
                 }`}
               >
-                <div className="flex items-center gap-1.5 mb-0.5">
-                  <span className="text-[10px] font-semibold uppercase tracking-wide text-zinc-500">
-                    {line.tag}
+                <div className="flex items-center gap-1.5 mb-0.5 text-xs font-medium text-zinc-400">
+                  {isBuyer ? buyerName : sellerName}
+                  <span className="text-zinc-600" aria-hidden>
+                    /
                   </span>
-                  {line.accepted && <CheckCircle2 size={11} className="text-emerald-400" />}
+                  {TAG[m.type]}
+                  {accepted && <CheckCircle2 size={12} className="text-emerald-400" aria-hidden />}
                 </div>
-                <p className="text-zinc-200 leading-snug">{line.text}</p>
+                <p className="text-zinc-100 leading-snug">{m.message}</p>
               </div>
               {!isBuyer && (
-                <div className="w-6 h-6 rounded-full bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center shrink-0 ml-2 mt-1">
-                  <Bot size={11} className="text-emerald-400" />
-                </div>
+                <span className="w-6 h-6 rounded-lg bg-emerald-400/15 border border-emerald-400/25 flex items-center justify-center shrink-0 mt-1">
+                  <Bot size={12} className="text-emerald-300" aria-hidden />
+                </span>
               )}
-            </div>
+            </li>
           );
         })}
-      </div>
-    </div>
+      </ol>
+    </figure>
   );
 }

@@ -148,7 +148,7 @@ export function AgentCard({
       </div>
 
       <div className="flex items-center flex-wrap gap-3 text-xs text-zinc-500 pt-3 border-t border-white/[0.06] mb-3">
-        <span className="flex items-center gap-1" title="Reputation 0–100">
+        <span className="flex items-center gap-1" title="Reputation 0-100">
           <TrendingUp size={11} />
           Rep <span className="text-zinc-300 font-medium ml-0.5">{rep}</span>
         </span>

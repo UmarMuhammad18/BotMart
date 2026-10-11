@@ -54,7 +54,7 @@ function ruleBallot(role: AgentRole, input: CourtInput): JurorBallot {
       } else {
         vote = "counter";
         suggested_price = Math.floor(Math.min(max, remaining) * 0.9);
-        reason = `Tight on budget — counter near £${suggested_price}.`;
+        reason = `Tight on budget. Counter near £${suggested_price}.`;
       }
       break;
     }
@@ -62,7 +62,7 @@ function ruleBallot(role: AgentRole, input: CourtInput): JurorBallot {
       const ratio = offer / Math.max(1, input.listing_price);
       if (ratio <= 0.95) {
         vote = "accept";
-        reason = "Price is at or under list — quality risk is acceptable.";
+        reason = "Price is at or under list, so quality risk is acceptable.";
         confidence = 0.7;
       } else if (ratio > 1.05) {
         vote = "reject";
@@ -97,16 +97,16 @@ function ruleBallot(role: AgentRole, input: CourtInput): JurorBallot {
         (Number(input.seller_reputation) + Number(input.buyer_reputation)) / 2;
       if (rep >= 55 && offer <= remaining) {
         vote = "accept";
-        reason = `Counterparty reputation average ${rep.toFixed(0)} — settlement risk low.`;
+        reason = `Counterparty reputation averages ${rep.toFixed(0)}, so settlement risk is low.`;
         confidence = 0.68;
       } else if (rep < 40) {
         vote = "reject";
-        reason = `Low average reputation (${rep.toFixed(0)}) — elevated risk.`;
+        reason = `Low average reputation (${rep.toFixed(0)}). Elevated risk.`;
         confidence = 0.77;
       } else {
         vote = "counter";
         suggested_price = Math.floor(offer * 0.95);
-        reason = "Moderate risk — prefer a slightly safer price point.";
+        reason = "Moderate risk. Prefer a slightly safer price point.";
       }
       break;
     }

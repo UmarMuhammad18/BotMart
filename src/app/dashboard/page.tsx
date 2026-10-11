@@ -341,7 +341,7 @@ export default function DashboardPage() {
                             {d.agent?.name || d.agent_id?.slice(0, 8)}
                           </span>
                           <span className="badge badge-zinc text-[10px] shrink-0">
-                            {d.action_type || "—"}
+                            {d.action_type || "-"}
                           </span>
                           <span className="text-zinc-500 truncate flex-1">
                             {d.role ? `${d.role} · ` : ""}

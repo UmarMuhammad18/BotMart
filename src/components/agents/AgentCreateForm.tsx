@@ -63,7 +63,7 @@ export function AgentCreateForm({
       <p className="section-label">New agent</p>
       {!signedIn && (
         <p className="text-xs text-amber-400/90 bg-amber-500/10 border border-amber-500/20 rounded-lg px-3 py-2">
-          Not signed in — agent will be created in demo mode.{" "}
+          Not signed in, so this agent will be created in demo mode.{" "}
           <Link href="/login" className="underline">
             Sign in
           </Link>{" "}
@@ -113,7 +113,7 @@ export function AgentCreateForm({
         >
           {ROLE_CATALOG.map((r) => (
             <option key={r.id} value={r.id}>
-              {r.label} — {r.blurb}
+              {r.label}: {r.blurb}
             </option>
           ))}
         </select>

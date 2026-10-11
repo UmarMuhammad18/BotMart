@@ -56,7 +56,7 @@ export function CourtPanel({
           </h3>
           <p className="text-xs text-zinc-500 mt-1">
             Five specialist agents vote independently. A judge aggregates the
-            verdict — no yes-man single model.
+            verdict, so no single model gets the final say.
           </p>
         </div>
         <button

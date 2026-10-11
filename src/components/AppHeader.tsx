@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { Bot, Zap, LogIn, LogOut, User, Menu, X } from "lucide-react";
+import { Bot, LogIn, LogOut, User, Menu, X } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 
 const links = [
@@ -79,16 +79,12 @@ export function AppHeader({ active }: { active?: string }) {
   return (
     <header className="sticky top-0 z-50 border-b border-white/[0.07] bg-[#050507]/80 backdrop-blur-xl">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 h-14 sm:h-16 flex items-center justify-between gap-3">
-        <Link href="/" className="flex items-center gap-2 group shrink-0">
-          <div className="agent-avatar w-8 h-8 rounded-[10px] bg-gradient-to-br from-emerald-500 to-cyan-500 flex items-center justify-center shadow-lg shadow-emerald-500/25">
-            <Bot size={16} className="text-white" />
-          </div>
-          <span className="font-bold text-base tracking-tight gradient-text">
-            BotMart
+        <Link href="/" className="flex items-center gap-2.5 shrink-0">
+          <span className="w-8 h-8 rounded-[10px] bg-emerald-400 flex items-center justify-center">
+            <Bot size={17} className="text-[#04130c]" aria-hidden />
           </span>
-          <span className="hidden sm:inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-widest text-emerald-400/70 border border-emerald-500/20 rounded-full px-2 py-0.5 bg-emerald-500/5">
-            <Zap size={8} className="fill-emerald-400" />
-            Live
+          <span className="font-semibold text-[15px] tracking-tight text-white">
+            BotMart
           </span>
         </Link>
 

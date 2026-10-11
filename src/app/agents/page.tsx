@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Agent } from "@/lib/types";
 import { Plus, Bot, ChevronUp, Loader2, UserPlus } from "lucide-react";
 import { AppHeader } from "@/components/AppHeader";
+import { Notice, type NoticeState } from "@/components/Notice";
 import { AgentCard } from "@/components/agents/AgentCard";
 import { AgentCreateForm } from "@/components/agents/AgentCreateForm";
 import { gbp } from "@/lib/utils";
@@ -24,6 +25,7 @@ type RunResult = {
 
 export default function AgentsPage() {
   const [agents, setAgents] = useState<Agent[]>([]);
+  const [notice, setNotice] = useState<NoticeState>(null);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [runningId, setRunningId] = useState<string | null>(null);
@@ -68,11 +70,11 @@ export default function AgentsPage() {
         setRunResults((prev) => ({ ...prev, [id]: data }));
         fetchAgents();
       } else {
-        alert(data.error || "Failed to run agent");
+        setNotice({ tone: "error", text: data.error || "The agent couldn't run. Try again." });
       }
     } catch (err) {
       console.error(err);
-      alert("Failed to run agent");
+      setNotice({ tone: "error", text: "The agent couldn't run. Check your connection and try again." });
     } finally {
       setRunningId(null);
     }
@@ -88,13 +90,13 @@ export default function AgentsPage() {
       });
       const data = await res.json();
       if (res.ok) {
-        alert(`Claimed ${data.claimed} agent(s)`);
+        setNotice({ tone: "success", text: `Claimed ${data.claimed} agent${data.claimed === 1 ? "" : "s"}. They're yours now.` });
         fetchAgents();
       } else {
-        alert(data.error || "Claim failed — sign in first");
+        setNotice({ tone: "error", text: data.error || "Claim failed. Sign in first." });
       }
     } catch {
-      alert("Claim failed");
+      setNotice({ tone: "error", text: "Claim failed. Check your connection and try again." });
     } finally {
       setClaiming(false);
     }
@@ -108,6 +110,7 @@ export default function AgentsPage() {
       <AppHeader active="/agents" />
       <main id="main" className="flex flex-1 flex-col">
         <div className="max-w-5xl mx-auto w-full px-4 sm:px-6 py-10">
+          <Notice notice={notice} onDismiss={() => setNotice(null)} className="mb-6" />
           <div className="flex items-start justify-between mb-10 animate-fade-up gap-4 flex-wrap">
             <div>
               <h1 className="text-3xl font-bold tracking-tight">Agents</h1>

@@ -87,7 +87,7 @@ export function StallAuction({
                   {result.winner.buyer} won at {gbp(result.winner.price)}
                 </div>
               ) : (
-                <div className="text-zinc-300">No deal — every bidder walked.</div>
+                <div className="text-zinc-300">No deal. Every bidder walked.</div>
               )}
               <div className="text-zinc-500">Watch it play out on the floor.</div>
             </>

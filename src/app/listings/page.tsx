@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Plus, Package, Search, X, Tag, Layers, ChevronRight } from "lucide-react";
 import { Agent, ListingWithSeller } from "@/lib/types";
 import { AppHeader } from "@/components/AppHeader";
+import { Notice, type NoticeState } from "@/components/Notice";
 import { gbp } from "@/lib/utils";
 
 const CATEGORIES = ["All", "electronics", "software", "data", "compute"];
@@ -71,6 +72,7 @@ function ListingCard({
 export default function ListingsPage() {
   const router = useRouter();
   const [listings, setListings] = useState<ListingWithSeller[]>([]);
+  const [notice, setNotice] = useState<NoticeState>(null);
   const [agents, setAgents] = useState<Agent[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
@@ -131,12 +133,15 @@ export default function ListingsPage() {
       if (res.ok) {
         setTitle(""); setDescription(""); setPrice(50); setCategory(""); setStock(1);
         setShowForm(false);
+        setNotice({ tone: "success", text: `Listed "${title}".` });
         fetchListings();
       } else {
         const err = await res.json();
-        alert(err.error || "Failed to create listing");
+        setNotice({ tone: "error", text: err.error || "The listing couldn't be created. Check the fields and try again." });
       }
-    } catch (err) { console.error(err); }
+    } catch {
+      setNotice({ tone: "error", text: "The listing couldn't be created. Check your connection and try again." });
+    }
     finally { setCreating(false); }
   }
 
@@ -150,7 +155,10 @@ export default function ListingsPage() {
         body: JSON.stringify({ buyer_agent_id: buyerId, goal }),
       });
       const data = await res.json();
-      if (!res.ok) { alert(data.error || "Match failed"); return; }
+      if (!res.ok) {
+        setNotice({ tone: "error", text: data.error || "Matching failed. Try a different goal." });
+        return;
+      }
       setListings(data.listings || []);
     } finally { setMatching(false); }
   }
@@ -170,6 +178,8 @@ export default function ListingsPage() {
       <AppHeader active="/listings" />
       <main id="main" className="flex flex-1 flex-col">
         <div className="max-w-5xl mx-auto w-full px-4 sm:px-6 py-10">
+
+          <Notice notice={notice} onDismiss={() => setNotice(null)} className="mb-6" />
 
           {/* Page header */}
           <div className="flex flex-wrap items-start justify-between gap-4 mb-8 animate-fade-up">
