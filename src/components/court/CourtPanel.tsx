@@ -5,9 +5,9 @@ import { Gavel, Scale, Check, X, RefreshCw } from "lucide-react";
 import type { CourtSession, JuryVote } from "@/lib/types";
 
 function voteStyle(v: JuryVote) {
-  if (v === "accept") return "text-emerald-300 bg-emerald-500/10 border-emerald-500/30";
-  if (v === "reject") return "text-rose-300 bg-rose-500/10 border-rose-500/30";
-  return "text-amber-300 bg-amber-500/10 border-amber-500/30";
+  if (v === "accept") return "text-emerald-700 bg-emerald-500/10 border-emerald-500/30";
+  if (v === "reject") return "text-rose-700 bg-rose-500/10 border-rose-500/30";
+  return "text-amber-700 bg-amber-500/10 border-amber-500/30";
 }
 
 export function CourtPanel({
@@ -51,7 +51,7 @@ export function CourtPanel({
         <div>
           <p className="section-label mb-1">Agentic court</p>
           <h3 className="font-semibold text-sm sm:text-base flex items-center gap-2">
-            <Gavel size={16} className="text-amber-300" />
+            <Gavel size={16} className="text-amber-700" />
             Secret jury ballots
           </h3>
           <p className="text-xs text-zinc-500 mt-1">
@@ -75,7 +75,7 @@ export function CourtPanel({
       </div>
 
       {error && (
-        <p className="text-xs text-rose-400 border border-rose-500/20 rounded-lg px-3 py-2">
+        <p className="text-xs text-rose-700 border border-rose-500/20 rounded-lg px-3 py-2">
           {error}
         </p>
       )}
@@ -90,19 +90,19 @@ export function CourtPanel({
         <div className="space-y-3">
           <div className="grid grid-cols-3 gap-2 text-center">
             <div className="rounded-lg border border-emerald-500/20 bg-emerald-500/5 py-2">
-              <div className="text-lg font-bold text-emerald-300">
+              <div className="text-lg font-bold text-emerald-700">
                 {session.accept_count}
               </div>
               <div className="text-[10px] text-zinc-500">Accept</div>
             </div>
             <div className="rounded-lg border border-rose-500/20 bg-rose-500/5 py-2">
-              <div className="text-lg font-bold text-rose-300">
+              <div className="text-lg font-bold text-rose-700">
                 {session.reject_count}
               </div>
               <div className="text-[10px] text-zinc-500">Reject</div>
             </div>
             <div className="rounded-lg border border-amber-500/20 bg-amber-500/5 py-2">
-              <div className="text-lg font-bold text-amber-300">
+              <div className="text-lg font-bold text-amber-700">
                 {session.counter_count}
               </div>
               <div className="text-[10px] text-zinc-500">Counter</div>
@@ -113,10 +113,10 @@ export function CourtPanel({
             {session.ballots.map((b) => (
               <li
                 key={b.role}
-                className="rounded-xl border border-white/8 bg-black/30 px-3 py-2.5"
+                className="rounded-xl border border-ink/8 bg-paper/30 px-3 py-2.5"
               >
                 <div className="flex items-center justify-between gap-2 mb-1">
-                  <span className="text-xs font-medium text-zinc-200">
+                  <span className="text-xs font-medium text-zinc-800">
                     {b.name}
                   </span>
                   <span
@@ -136,13 +136,13 @@ export function CourtPanel({
           </ul>
 
           <div className="rounded-xl border border-amber-500/25 bg-amber-500/5 px-3 py-3">
-            <p className="text-xs font-semibold text-amber-200 mb-1">
+            <p className="text-xs font-semibold text-amber-800 mb-1">
               Judge verdict: {session.judge_verdict}
               {session.recommended_price != null &&
                 session.judge_verdict === "counter" &&
                 ` · £${session.recommended_price}`}
             </p>
-            <p className="text-[11px] text-zinc-400">{session.judge_reason}</p>
+            <p className="text-[11px] text-zinc-600">{session.judge_reason}</p>
           </div>
         </div>
       )}

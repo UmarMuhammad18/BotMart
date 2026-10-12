@@ -68,7 +68,7 @@ export function ChatMessage({
     >
       {isBuyer && (
         <div className="w-7 h-7 rounded-full bg-indigo-500/20 border border-indigo-500/30 flex items-center justify-center shrink-0 mr-2 mt-1">
-          <Bot size={13} className="text-indigo-400" />
+          <Bot size={13} className="text-indigo-700" />
         </div>
       )}
 
@@ -78,24 +78,24 @@ export function ChatMessage({
             isBuyer ? "" : "justify-end"
           }`}
         >
-          <span className="font-medium text-zinc-400">
+          <span className="font-medium text-zinc-600">
             {isBuyer ? buyerName : sellerName}
           </span>
           <span
             className={`font-semibold ${
               msg.type === "accept"
-                ? "text-emerald-400"
+                ? "text-emerald-700"
                 : msg.type === "reject"
-                  ? "text-red-400"
+                  ? "text-red-700"
                   : msg.type === "offer" || msg.type === "counter"
-                    ? "text-amber-400"
-                    : "text-zinc-600"
+                    ? "text-amber-700"
+                    : "text-zinc-500"
             }`}
           >
             {msgTypeLabel(msg.type)}
           </span>
           {msg.price != null && (
-            <span className="font-mono font-bold text-white">{gbp(msg.price)}</span>
+            <span className="font-mono font-bold text-ink">{gbp(msg.price)}</span>
           )}
         </div>
 
@@ -110,7 +110,7 @@ export function ChatMessage({
         </div>
 
         <div
-          className={`flex items-center gap-1 text-[10px] text-zinc-700 ${
+          className={`flex items-center gap-1 text-[10px] text-zinc-500 ${
             isBuyer ? "" : "justify-end"
           }`}
         >
@@ -125,7 +125,7 @@ export function ChatMessage({
 
       {!isBuyer && (
         <div className="w-7 h-7 rounded-full bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center shrink-0 ml-2 mt-1">
-          <Bot size={13} className="text-emerald-400" />
+          <Bot size={13} className="text-emerald-700" />
         </div>
       )}
     </div>
@@ -138,7 +138,7 @@ export function ThinkingIndicator({ who }: { who: "buyer" | "seller" }) {
     <div className={`flex ${isBuyer ? "justify-start" : "justify-end"} animate-fade-in`}>
       {isBuyer && (
         <div className="w-7 h-7 rounded-full bg-indigo-500/20 border border-indigo-500/30 flex items-center justify-center shrink-0 mr-2">
-          <Bot size={13} className="text-indigo-400" />
+          <Bot size={13} className="text-indigo-700" />
         </div>
       )}
       <div className={`px-4 py-3 text-sm ${isBuyer ? "bubble-buyer" : "bubble-seller"}`}>
@@ -150,7 +150,7 @@ export function ThinkingIndicator({ who }: { who: "buyer" | "seller" }) {
       </div>
       {!isBuyer && (
         <div className="w-7 h-7 rounded-full bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center shrink-0 ml-2">
-          <Bot size={13} className="text-emerald-400" />
+          <Bot size={13} className="text-emerald-700" />
         </div>
       )}
     </div>

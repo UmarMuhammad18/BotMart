@@ -21,7 +21,7 @@ useGLTF.preload(MODEL);
  * Clones share geometry, so this runs on the shared GLTF scene.
  */
 const smoothed = new WeakSet<THREE.Object3D>();
-function smoothModel(scene: THREE.Object3D) {
+export function smoothModel(scene: THREE.Object3D) {
   if (smoothed.has(scene)) return;
   smoothed.add(scene);
   scene.traverse((o) => {

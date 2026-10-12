@@ -44,7 +44,7 @@ export default function LoginPage() {
       <div className="w-full max-w-md">
         <Link
           href="/"
-          className="inline-flex min-h-[44px] items-center gap-2 text-sm text-zinc-500 hover:text-zinc-300 mb-6"
+          className="inline-flex min-h-[44px] items-center gap-2 text-sm text-zinc-500 hover:text-zinc-700 mb-6"
         >
           <ArrowLeft size={14} />
           Back to BotMart
@@ -52,8 +52,8 @@ export default function LoginPage() {
 
         <div className="card p-8 space-y-6">
           <div className="flex items-center gap-3">
-            <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-emerald-500 to-cyan-500 flex items-center justify-center">
-              <Bot size={22} className="text-white" />
+            <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-emerald-600 to-cyan-600 flex items-center justify-center">
+              <Bot size={22} className="text-ink" />
             </div>
             <div>
               <h1 className="text-xl font-bold tracking-tight">Sign in</h1>
@@ -63,16 +63,16 @@ export default function LoginPage() {
 
           {sent ? (
             <div className="space-y-3 text-center py-4">
-              <CheckCircle size={36} className="mx-auto text-emerald-400" />
-              <p className="font-medium text-zinc-200">Check your email</p>
+              <CheckCircle size={36} className="mx-auto text-emerald-700" />
+              <p className="font-medium text-zinc-800">Check your email</p>
               <p className="text-sm text-zinc-500">
-                We sent a magic link to <span className="text-zinc-300">{email}</span>.
+                We sent a magic link to <span className="text-zinc-700">{email}</span>.
                 Click it to sign in. No password needed.
               </p>
               <button
                 type="button"
                 onClick={() => setSent(false)}
-                className="text-xs text-zinc-500 hover:text-zinc-300 mt-2"
+                className="text-xs text-zinc-500 hover:text-zinc-700 mt-2"
               >
                 Use a different email
               </button>
@@ -80,13 +80,13 @@ export default function LoginPage() {
           ) : (
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <label htmlFor="login-email" className="block text-xs text-zinc-400 mb-2 font-medium">
+                <label htmlFor="login-email" className="block text-xs text-zinc-600 mb-2 font-medium">
                   Email
                 </label>
                 <div className="relative">
                   <Mail
                     size={15}
-                    className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-600"
+                    className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500"
                   />
                   <input
                     id="login-email"
@@ -102,7 +102,7 @@ export default function LoginPage() {
               </div>
 
               {error && (
-                <p className="text-sm text-red-400 bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-2">
+                <p className="text-sm text-red-700 bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-2">
                   {error}
                 </p>
               )}
@@ -122,7 +122,7 @@ export default function LoginPage() {
                 )}
               </button>
 
-              <p className="text-[11px] text-zinc-600 text-center leading-relaxed">
+              <p className="text-[11px] text-zinc-500 text-center leading-relaxed">
                 Demo mode still works without signing in. Sign in to claim agents
                 and keep them private to your account.
               </p>

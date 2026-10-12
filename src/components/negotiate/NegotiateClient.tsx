@@ -256,7 +256,7 @@ export function NegotiateClient() {
               <p className="section-label">Configure negotiation</p>
               <div className="grid sm:grid-cols-2 gap-4">
                 <div>
-                  <label htmlFor="select-buyer-agent" className="block text-xs text-zinc-400 mb-2 font-medium">
+                  <label htmlFor="select-buyer-agent" className="block text-xs text-zinc-600 mb-2 font-medium">
                     Buyer Agent
                   </label>
                   <select
@@ -273,7 +273,7 @@ export function NegotiateClient() {
                   </select>
                 </div>
                 <div>
-                  <label htmlFor="select-listing" className="block text-xs text-zinc-400 mb-2 font-medium">
+                  <label htmlFor="select-listing" className="block text-xs text-zinc-600 mb-2 font-medium">
                     Listing to buy
                   </label>
                   <select
@@ -308,28 +308,28 @@ export function NegotiateClient() {
                 <div className="flex items-center gap-5 text-sm">
                   <div className="flex items-center gap-2">
                     <div className="w-7 h-7 rounded-full bg-indigo-500/20 border border-indigo-500/30 flex items-center justify-center">
-                      <Bot size={13} className="text-indigo-400" />
+                      <Bot size={13} className="text-indigo-700" />
                     </div>
                     <div>
                       <div className="font-semibold text-sm">
                         {negotiation.buyer.name}
                       </div>
-                      <div className="text-[11px] text-zinc-600">
+                      <div className="text-[11px] text-zinc-500">
                         Buyer · {gbp(negotiation.buyer.budget - negotiation.buyer.spent)}{" "}
                         left
                       </div>
                     </div>
                   </div>
-                  <div className="text-zinc-700 font-light text-lg">⇄</div>
+                  <div className="text-zinc-500 font-light text-lg">⇄</div>
                   <div className="flex items-center gap-2">
                     <div className="w-7 h-7 rounded-full bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center">
-                      <Bot size={13} className="text-emerald-400" />
+                      <Bot size={13} className="text-emerald-700" />
                     </div>
                     <div>
                       <div className="font-semibold text-sm">
                         {negotiation.seller.name}
                       </div>
-                      <div className="text-[11px] text-zinc-600">
+                      <div className="text-[11px] text-zinc-500">
                         Seller · asking {gbp(negotiation.listing.price)}
                       </div>
                     </div>
@@ -338,16 +338,16 @@ export function NegotiateClient() {
                 <StatusBadge status={negotiation.status} />
               </div>
 
-              <div className="flex items-center justify-between bg-white/[0.03] border border-white/[0.06] rounded-xl px-4 py-3 text-sm">
-                <span className="text-zinc-400">
+              <div className="flex items-center justify-between bg-ink/[0.03] border border-ink/[0.06] rounded-xl px-4 py-3 text-sm">
+                <span className="text-zinc-600">
                   Negotiating for{" "}
-                  <span className="text-white font-semibold">
+                  <span className="text-ink font-semibold">
                     {negotiation.listing.title}
                   </span>
                 </span>
-                <span className="font-mono text-zinc-400">
+                <span className="font-mono text-zinc-600">
                   Asking{" "}
-                  <span className="text-white font-bold">
+                  <span className="text-ink font-bold">
                     {gbp(negotiation.listing.price)}
                   </span>
                 </span>
@@ -368,7 +368,7 @@ export function NegotiateClient() {
                 className="card glass min-h-[320px] max-h-[500px] overflow-y-auto p-5 space-y-4"
               >
                 {negotiation.messages.length === 0 && !thinking && (
-                  <p className="text-zinc-600 text-sm text-center py-10">
+                  <p className="text-zinc-500 text-sm text-center py-10">
                     Negotiation started. Waiting for the first move…
                   </p>
                 )}
@@ -392,7 +392,7 @@ export function NegotiateClient() {
                       : "bg-red-500/10 border border-red-500/25"
                   }`}
                 >
-                  <span className="text-zinc-300 font-medium">Final price</span>
+                  <span className="text-zinc-700 font-medium">Final price</span>
                   <span className="font-mono font-bold text-xl">
                     {gbp(negotiation.current_offer)}
                   </span>

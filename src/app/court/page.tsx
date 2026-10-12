@@ -47,7 +47,7 @@ export default function CourtPage() {
           <div className="mb-8">
             <p className="section-label mb-1">Multi-agent review</p>
             <h1 className="text-2xl sm:text-3xl font-bold tracking-tight flex items-center gap-2">
-              <Gavel size={22} className="text-amber-300" />
+              <Gavel size={22} className="text-amber-700" />
               Courtroom
             </h1>
             <p className="text-sm text-zinc-500 mt-2 max-w-2xl">
@@ -65,7 +65,7 @@ export default function CourtPage() {
               {!loading && negs.length === 0 && (
                 <div className="card p-4 text-xs text-zinc-500">
                   No negotiations yet.{" "}
-                  <Link href="/negotiate" className="text-emerald-400 underline">
+                  <Link href="/negotiate" className="text-emerald-700 underline">
                     Start one
                   </Link>
                   .
@@ -80,7 +80,7 @@ export default function CourtPage() {
                       className={`w-full text-left rounded-xl border px-3 py-3 transition ${
                         selected === n.id
                           ? "border-emerald-500/40 bg-emerald-500/10"
-                          : "border-white/8 bg-black/30 hover:border-white/15"
+                          : "border-ink/8 bg-paper/30 hover:border-ink/15"
                       }`}
                     >
                       <div className="text-sm font-medium truncate">

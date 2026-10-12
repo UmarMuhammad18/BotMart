@@ -132,7 +132,7 @@ export default function WorldPage() {
             <div>
               <p className="section-label mb-1">Live floor</p>
               <h1 className="text-2xl sm:text-3xl font-bold tracking-tight flex items-center gap-2">
-                <Boxes size={22} className="text-emerald-400" />
+                <Boxes size={22} className="text-emerald-700" />
                 3D Agent World
               </h1>
               <p className="text-sm text-zinc-500 mt-1 max-w-xl">
@@ -141,7 +141,7 @@ export default function WorldPage() {
               </p>
             </div>
             <div className="flex flex-wrap gap-2">
-              <div className="flex rounded-lg border border-white/10 overflow-hidden text-xs">
+              <div className="flex rounded-lg border border-ink/10 overflow-hidden text-xs">
                 {(
                   [
                     ["overview", "Overview", Crosshair],
@@ -155,8 +155,8 @@ export default function WorldPage() {
                     onClick={() => setMode(mode)}
                     className={`px-3 py-2 inline-flex items-center gap-1.5 transition ${
                       cameraMode === mode
-                        ? "bg-emerald-500/20 text-emerald-300"
-                        : "text-zinc-400 hover:bg-white/5"
+                        ? "bg-emerald-500/20 text-emerald-700"
+                        : "text-zinc-600 hover:bg-ink/5"
                     }`}
                   >
                     <Icon size={13} />
@@ -181,7 +181,7 @@ export default function WorldPage() {
           </div>
 
           {error && (
-            <div className="mb-4 rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-200">
+            <div className="mb-4 rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-800">
               {error}
             </div>
           )}
@@ -204,7 +204,7 @@ export default function WorldPage() {
                   />
                 </>
               ) : (
-                <div className="w-full min-h-[480px] rounded-2xl border border-white/10 bg-zinc-950 flex items-center justify-center text-sm text-zinc-500">
+                <div className="w-full min-h-[480px] rounded-2xl border border-ink/10 bg-zinc-50 flex items-center justify-center text-sm text-zinc-500">
                   {loading
                     ? "Loading world…"
                     : "No world data yet. Seed agents and listings first."}
@@ -219,7 +219,7 @@ export default function WorldPage() {
                   {selection && (
                     <button
                       type="button"
-                      className="text-zinc-500 hover:text-white"
+                      className="text-zinc-500 hover:text-ink"
                       onClick={() => setSelection(null)}
                     >
                       <X size={14} />
@@ -249,14 +249,14 @@ export default function WorldPage() {
                     </div>
 
                     <div className="flex flex-wrap gap-1.5 text-[10px] uppercase tracking-wide">
-                      <span className="px-2 py-0.5 rounded-full bg-white/5 border border-white/10 text-zinc-300">
+                      <span className="px-2 py-0.5 rounded-full bg-ink/5 border border-ink/10 text-zinc-700">
                         {ROLE_BY_ID[selectedAgent.role]?.label ||
                           selectedAgent.role}
                       </span>
-                      <span className="px-2 py-0.5 rounded-full bg-white/5 border border-white/10 text-zinc-300">
+                      <span className="px-2 py-0.5 rounded-full bg-ink/5 border border-ink/10 text-zinc-700">
                         {selectedAgent.activity}
                       </span>
-                      <span className="px-2 py-0.5 rounded-full bg-white/5 border border-white/10 text-zinc-300">
+                      <span className="px-2 py-0.5 rounded-full bg-ink/5 border border-ink/10 text-zinc-700">
                         {selectedAgent.status}
                       </span>
                     </div>
@@ -268,40 +268,40 @@ export default function WorldPage() {
                     )}
 
                     {selectedAgent.goal && (
-                      <div className="rounded-lg bg-black/30 border border-white/5 px-3 py-2">
+                      <div className="rounded-lg bg-paper/30 border border-ink/5 px-3 py-2">
                         <div className="text-[10px] uppercase text-zinc-500 mb-0.5">
                           Goal
                         </div>
-                        <p className="text-xs text-zinc-200 leading-relaxed">
+                        <p className="text-xs text-zinc-800 leading-relaxed">
                           {selectedAgent.goal}
                         </p>
                       </div>
                     )}
 
                     <div className="grid grid-cols-3 gap-1.5 text-xs">
-                      <div className="rounded-lg bg-black/30 border border-white/5 px-2 py-1.5">
+                      <div className="rounded-lg bg-paper/30 border border-ink/5 px-2 py-1.5">
                         <div className="text-zinc-500 text-[10px]">Budget</div>
                         <div className="font-mono font-semibold">
                           {gbp(selectedAgent.budget)}
                         </div>
                       </div>
-                      <div className="rounded-lg bg-black/30 border border-white/5 px-2 py-1.5">
+                      <div className="rounded-lg bg-paper/30 border border-ink/5 px-2 py-1.5">
                         <div className="text-zinc-500 text-[10px]">Spent</div>
                         <div className="font-mono font-semibold">
                           {gbp(selectedAgent.spent)}
                         </div>
                       </div>
-                      <div className="rounded-lg bg-black/30 border border-white/5 px-2 py-1.5">
+                      <div className="rounded-lg bg-paper/30 border border-ink/5 px-2 py-1.5">
                         <div className="text-zinc-500 text-[10px]">Left</div>
-                        <div className="font-mono font-semibold text-emerald-300">
+                        <div className="font-mono font-semibold text-emerald-700">
                           {gbp(remaining)}
                         </div>
                       </div>
                     </div>
 
-                    <div className="text-xs text-zinc-400">
+                    <div className="text-xs text-zinc-600">
                       Reputation{" "}
-                      <span className="text-zinc-200 font-semibold">
+                      <span className="text-zinc-800 font-semibold">
                         {selectedAgent.reputation}
                       </span>
                     </div>
@@ -321,8 +321,8 @@ export default function WorldPage() {
                                 }
                                 className="w-full text-left text-xs rounded-lg px-2 py-1.5 bg-emerald-500/5 border border-emerald-500/20 hover:bg-emerald-500/10 transition"
                               >
-                                <span className="text-zinc-200">{l.title}</span>
-                                <span className="float-right font-mono text-emerald-300">
+                                <span className="text-zinc-800">{l.title}</span>
+                                <span className="float-right font-mono text-emerald-700">
                                   {gbp(l.price)}
                                 </span>
                               </button>
@@ -333,7 +333,7 @@ export default function WorldPage() {
                     )}
 
                     {agentDeals.length > 0 && (
-                      <p className="text-[11px] text-amber-300/90">
+                      <p className="text-[11px] text-amber-700/90">
                         In {agentDeals.length} open negotiation
                         {agentDeals.length > 1 ? "s" : ""} on the floor
                       </p>
@@ -366,12 +366,12 @@ export default function WorldPage() {
                 {selectedStall && (
                   <div className="space-y-2 text-sm">
                     <div className="font-semibold">{selectedStall.title}</div>
-                    <p className="text-xs text-zinc-400">
+                    <p className="text-xs text-zinc-600">
                       {snapshot?.districts?.find((d) => d.id === selectedStall.district)
                         ?.label ?? selectedStall.category ?? "General"}{" "}
                       district · stock {selectedStall.stock} · {selectedStall.status}
                     </p>
-                    <p className="text-lg font-mono font-bold text-emerald-300">
+                    <p className="text-lg font-mono font-bold text-emerald-700">
                       {gbp(selectedStall.price)}
                     </p>
                     {selectedStall.seller_name && (
@@ -406,21 +406,21 @@ export default function WorldPage() {
               <div className="card p-4">
                 <h2 className="text-sm font-semibold mb-3">Floor stats</h2>
                 <dl className="grid grid-cols-2 gap-2 text-xs">
-                  <div className="rounded-lg bg-black/30 border border-white/5 px-3 py-2">
+                  <div className="rounded-lg bg-paper/30 border border-ink/5 px-3 py-2">
                     <dt className="text-zinc-500">Agents</dt>
                     <dd className="text-lg font-bold">
                       {snapshot?.agents.length ?? "-"}
                     </dd>
                   </div>
-                  <div className="rounded-lg bg-black/30 border border-white/5 px-3 py-2">
+                  <div className="rounded-lg bg-paper/30 border border-ink/5 px-3 py-2">
                     <dt className="text-zinc-500">Stalls</dt>
                     <dd className="text-lg font-bold">
                       {snapshot?.stalls.length ?? "-"}
                     </dd>
                   </div>
-                  <div className="rounded-lg bg-black/30 border border-white/5 px-3 py-2 col-span-2">
+                  <div className="rounded-lg bg-paper/30 border border-ink/5 px-3 py-2 col-span-2">
                     <dt className="text-zinc-500">Open negotiations</dt>
-                    <dd className="text-lg font-bold text-amber-300">
+                    <dd className="text-lg font-bold text-amber-700">
                       {snapshot?.open_negotiations ?? "-"}
                     </dd>
                   </div>
@@ -441,8 +441,8 @@ export default function WorldPage() {
                         onClick={() => setSelection({ kind: "agent", id: a.id })}
                         className={`w-full flex items-center justify-between text-xs gap-2 rounded-lg px-2 min-h-[44px] sm:min-h-[36px] text-left transition ${
                           selection?.kind === "agent" && selection.id === a.id
-                            ? "bg-white/10"
-                            : "hover:bg-white/5"
+                            ? "bg-ink/10"
+                            : "hover:bg-ink/5"
                         }`}
                       >
                         <span className="truncate">
@@ -469,16 +469,16 @@ export default function WorldPage() {
                 <h2 id="world-events-heading" className="text-sm font-semibold mb-2">Events</h2>
                 <ul className="space-y-2">
                   {director.feed.map((e) => (
-                    <li key={e.id} className="text-[11px] text-zinc-400 leading-snug">
-                      <span className="text-zinc-600">
+                    <li key={e.id} className="text-[11px] text-zinc-600 leading-snug">
+                      <span className="text-zinc-500">
                         {new Date(e.at).toLocaleTimeString()}
                       </span>{" "}
                       <span
                         className={
                           e.tone === "accept"
-                            ? "text-emerald-300"
+                            ? "text-emerald-700"
                             : e.tone === "reject"
-                              ? "text-rose-300"
+                              ? "text-rose-700"
                               : undefined
                         }
                       >
@@ -488,8 +488,8 @@ export default function WorldPage() {
                   ))}
                   {director.feed.length === 0 &&
                     (snapshot?.events || []).map((e) => (
-                      <li key={e.id} className="text-[11px] text-zinc-400 leading-snug">
-                        <span className="text-zinc-600">
+                      <li key={e.id} className="text-[11px] text-zinc-600 leading-snug">
+                        <span className="text-zinc-500">
                           {new Date(e.at).toLocaleTimeString()}
                         </span>{" "}
                         {e.text}

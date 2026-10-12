@@ -26,13 +26,13 @@ export function Notice({
       role={error ? "alert" : "status"}
       className={`flex items-start gap-3 rounded-xl border px-4 py-3 text-sm ${
         error
-          ? "border-rose-400/30 bg-rose-500/[0.08] text-rose-100"
-          : "border-emerald-400/30 bg-emerald-500/[0.08] text-emerald-100"
+          ? "border-rose-400/30 bg-rose-500/[0.08] text-rose-900"
+          : "border-emerald-400/30 bg-emerald-500/[0.08] text-emerald-900"
       } ${className}`}
     >
       <Icon
         size={16}
-        className={`mt-0.5 shrink-0 ${error ? "text-rose-300" : "text-emerald-300"}`}
+        className={`mt-0.5 shrink-0 ${error ? "text-rose-700" : "text-emerald-700"}`}
         aria-hidden
       />
       <p className="flex-1">{notice.text}</p>
@@ -40,7 +40,7 @@ export function Notice({
         type="button"
         onClick={onDismiss}
         aria-label="Dismiss"
-        className="-my-2 -mr-2 inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-zinc-400 hover:bg-white/5 hover:text-white"
+        className="-my-2 -mr-2 inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-zinc-600 hover:bg-ink/5 hover:text-ink"
       >
         <X size={15} aria-hidden />
       </button>

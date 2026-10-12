@@ -198,14 +198,14 @@ export default function DashboardPage() {
                   <div className="stat-label flex items-center gap-1"><Bot size={11} /> Total agents</div>
                 </div>
                 <div className="stat-card">
-                  <div className="stat-value text-amber-400">{live.length}</div>
+                  <div className="stat-value text-amber-700">{live.length}</div>
                   <div className="stat-label flex items-center gap-1">
                     <span className="status-dot active" style={{ width: 7, height: 7 }} />
                     Live negotiations
                   </div>
                 </div>
                 <div className="stat-card">
-                  <div className="stat-value text-indigo-400">{orders.length}</div>
+                  <div className="stat-value text-indigo-700">{orders.length}</div>
                   <div className="stat-label flex items-center gap-1"><Package size={11} /> Orders</div>
                 </div>
                 <div className="stat-card">
@@ -231,7 +231,7 @@ export default function DashboardPage() {
                           style={{
                             background:
                               agent.status === "active"
-                                ? "rgba(31,191,108,0.12)"
+                                ? "rgba(46,122,52,0.12)"
                                 : agent.status === "paused"
                                 ? "rgba(245,158,11,0.12)"
                                 : "rgba(239,68,68,0.12)",
@@ -241,10 +241,10 @@ export default function DashboardPage() {
                             size={16}
                             className={
                               agent.status === "active"
-                                ? "text-emerald-400"
+                                ? "text-emerald-700"
                                 : agent.status === "paused"
-                                ? "text-amber-400"
-                                : "text-red-400"
+                                ? "text-amber-700"
+                                : "text-red-700"
                             }
                           />
                         </div>
@@ -264,7 +264,7 @@ export default function DashboardPage() {
                           <button
                             onClick={() => runAgent(agent.id)}
                             disabled={runningId === agent.id}
-                            className="text-xs px-3 min-h-[44px] sm:min-h-[36px] rounded-lg bg-emerald-500/15 text-emerald-400 hover:bg-emerald-500/25 flex items-center gap-1 transition disabled:opacity-50"
+                            className="text-xs px-3 min-h-[44px] sm:min-h-[36px] rounded-lg bg-emerald-500/15 text-emerald-700 hover:bg-emerald-500/25 flex items-center gap-1 transition disabled:opacity-50"
                             id={`btn-dash-run-${agent.id}`}
                           >
                             {runningId === agent.id ? (
@@ -278,7 +278,7 @@ export default function DashboardPage() {
                         {agent.status !== "active" && (
                           <button
                             onClick={() => setAgentStatus(agent.id, "active")}
-                            className="text-xs px-3 min-h-[44px] sm:min-h-[36px] rounded-lg bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 flex items-center gap-1 transition"
+                            className="text-xs px-3 min-h-[44px] sm:min-h-[36px] rounded-lg bg-emerald-500/10 text-emerald-700 hover:bg-emerald-500/20 flex items-center gap-1 transition"
                             id={`btn-resume-${agent.id}`}
                           >
                             <RotateCcw size={11} /> Resume
@@ -287,7 +287,7 @@ export default function DashboardPage() {
                         {agent.status !== "paused" && (
                           <button
                             onClick={() => setAgentStatus(agent.id, "paused")}
-                            className="text-xs px-3 min-h-[44px] sm:min-h-[36px] rounded-lg bg-amber-500/10 text-amber-400 hover:bg-amber-500/20 flex items-center gap-1 transition"
+                            className="text-xs px-3 min-h-[44px] sm:min-h-[36px] rounded-lg bg-amber-500/10 text-amber-700 hover:bg-amber-500/20 flex items-center gap-1 transition"
                             id={`btn-pause-${agent.id}`}
                           >
                             <Pause size={11} /> Pause
@@ -295,7 +295,7 @@ export default function DashboardPage() {
                         )}
                         <button
                           onClick={() => setAgentStatus(agent.id, "blocked")}
-                          className="text-xs px-3 min-h-[44px] sm:min-h-[36px] rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500/20 flex items-center gap-1 transition"
+                          className="text-xs px-3 min-h-[44px] sm:min-h-[36px] rounded-lg bg-red-500/10 text-red-700 hover:bg-red-500/20 flex items-center gap-1 transition"
                           id={`btn-kill-${agent.id}`}
                         >
                           <Skull size={11} /> Kill
@@ -315,29 +315,29 @@ export default function DashboardPage() {
                   )}
                 </p>
                 {decisions.length === 0 ? (
-                  <div className="card p-6 text-center text-zinc-600 text-sm">
+                  <div className="card p-6 text-center text-zinc-500 text-sm">
                     No decisions logged yet. Run an agent or complete a negotiation.
                     <br />
-                    <span className="text-xs text-zinc-700 mt-1 block">
+                    <span className="text-xs text-zinc-500 mt-1 block">
                       (Requires agent_decisions table from supabase/schema.sql)
                     </span>
                   </div>
                 ) : (
                   <div className="card overflow-hidden">
-                    <div className="max-h-72 overflow-y-auto divide-y divide-white/[0.04]">
+                    <div className="max-h-72 overflow-y-auto divide-y divide-ink/[0.04]">
                       {decisions.map((d) => (
                         <div
                           key={d.id}
-                          className="px-4 py-2.5 flex items-start gap-3 text-xs hover:bg-white/[0.02]"
+                          className="px-4 py-2.5 flex items-start gap-3 text-xs hover:bg-ink/[0.02]"
                         >
-                          <span className="text-zinc-600 font-mono shrink-0 w-16">
+                          <span className="text-zinc-500 font-mono shrink-0 w-16">
                             {new Date(d.created_at).toLocaleTimeString([], {
                               hour: "2-digit",
                               minute: "2-digit",
                               second: "2-digit",
                             })}
                           </span>
-                          <span className="text-indigo-400 font-medium shrink-0 min-w-[80px]">
+                          <span className="text-indigo-700 font-medium shrink-0 min-w-[80px]">
                             {d.agent?.name || d.agent_id?.slice(0, 8)}
                           </span>
                           <span className="badge badge-zinc text-[10px] shrink-0">
@@ -351,7 +351,7 @@ export default function DashboardPage() {
                               ? `matched ${d.payload.match_count} listings`
                               : d.source}
                           </span>
-                          <span className="text-zinc-700 shrink-0">{d.source}</span>
+                          <span className="text-zinc-500 shrink-0">{d.source}</span>
                         </div>
                       ))}
                     </div>
@@ -370,9 +370,9 @@ export default function DashboardPage() {
                   )}
                 </p>
                 {live.length === 0 ? (
-                  <div className="card p-8 text-center text-zinc-600 text-sm">
-                    No active negotiations. Use <strong className="text-zinc-400">Run agent</strong> or the{" "}
-                    <a href="/negotiate" className="text-emerald-400 hover:underline">Negotiate</a> page.
+                  <div className="card p-8 text-center text-zinc-500 text-sm">
+                    No active negotiations. Use <strong className="text-zinc-600">Run agent</strong> or the{" "}
+                    <a href="/negotiate" className="text-emerald-700 hover:underline">Negotiate</a> page.
                   </div>
                 ) : (
                   <div className="space-y-3">
@@ -381,10 +381,10 @@ export default function DashboardPage() {
                         <div className="flex items-center justify-between flex-wrap gap-2 text-sm">
                           <span className="font-medium">
                             {n.buyer.name}
-                            <span className="text-zinc-600 mx-1.5">vs</span>
+                            <span className="text-zinc-500 mx-1.5">vs</span>
                             {n.seller.name}
-                            <span className="text-zinc-600 mx-1.5">·</span>
-                            <span className="text-zinc-300">{n.listing.title}</span>
+                            <span className="text-zinc-500 mx-1.5">·</span>
+                            <span className="text-zinc-700">{n.listing.title}</span>
                           </span>
                           <NegStatusBadge status={n.status} />
                         </div>
@@ -393,14 +393,14 @@ export default function DashboardPage() {
                             <div key={i} className="flex items-start gap-2 text-xs">
                               <span
                                 className={`font-semibold shrink-0 ${
-                                  m.from === "buyer" ? "text-indigo-400" : "text-emerald-400"
+                                  m.from === "buyer" ? "text-indigo-700" : "text-emerald-700"
                                 }`}
                               >
                                 {m.from}
                               </span>
                               <span className="text-zinc-500 line-clamp-1">{m.message}</span>
                               {m.price && (
-                                <span className="shrink-0 font-mono text-zinc-300">{gbp(m.price)}</span>
+                                <span className="shrink-0 font-mono text-zinc-700">{gbp(m.price)}</span>
                               )}
                             </div>
                           ))}
@@ -420,14 +420,14 @@ export default function DashboardPage() {
                         key={n.id}
                         className="card px-4 py-3 flex items-center justify-between gap-4 text-sm"
                       >
-                        <span className="text-zinc-300 truncate">
+                        <span className="text-zinc-700 truncate">
                           {n.listing.title}
-                          <span className="text-zinc-600 mx-1.5">·</span>
+                          <span className="text-zinc-500 mx-1.5">·</span>
                           {n.buyer.name} / {n.seller.name}
                         </span>
                         <div className="flex items-center gap-3 shrink-0">
                           {n.current_offer && (
-                            <span className="font-mono text-zinc-300">{gbp(n.current_offer)}</span>
+                            <span className="font-mono text-zinc-700">{gbp(n.current_offer)}</span>
                           )}
                           <NegStatusBadge status={n.status} />
                         </div>
@@ -440,7 +440,7 @@ export default function DashboardPage() {
               <section className="animate-fade-up delay-300">
                 <p className="section-label">Orders / Fulfilment</p>
                 {orders.length === 0 ? (
-                  <div className="card p-8 text-center text-zinc-600 text-sm">
+                  <div className="card p-8 text-center text-zinc-500 text-sm">
                     No orders yet. Complete a negotiation to generate one.
                   </div>
                 ) : (
@@ -453,16 +453,16 @@ export default function DashboardPage() {
                         <div className="min-w-0">
                           <div className="text-sm font-medium truncate">
                             {order.listing?.title}
-                            <span className="text-zinc-600 mx-1.5">·</span>
-                            <span className="font-mono text-emerald-400">{gbp(order.final_price)}</span>
+                            <span className="text-zinc-500 mx-1.5">·</span>
+                            <span className="font-mono text-emerald-700">{gbp(order.final_price)}</span>
                           </div>
-                          <div className="text-xs text-zinc-600 mt-0.5 flex items-center gap-1.5">
+                          <div className="text-xs text-zinc-500 mt-0.5 flex items-center gap-1.5">
                             {order.buyer?.name} → {order.seller?.name}
                             {order.stripe_payment_intent_id && (
                               <>
                                 <span>·</span>
-                                <Zap size={10} className="text-indigo-400" />
-                                <span className="font-mono text-indigo-400 truncate max-w-[120px]">
+                                <Zap size={10} className="text-indigo-700" />
+                                <span className="font-mono text-indigo-700 truncate max-w-[120px]">
                                   {order.stripe_payment_intent_id}
                                 </span>
                               </>

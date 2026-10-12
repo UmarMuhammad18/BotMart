@@ -23,8 +23,8 @@ export function Faq() {
     <dl className="grid gap-x-12 gap-y-10 sm:grid-cols-2">
       {faqs.map((item) => (
         <div key={item.q}>
-          <dt className="text-base font-medium text-white">{item.q}</dt>
-          <dd className="mt-2 max-w-[60ch] text-sm leading-relaxed text-zinc-400">{item.a}</dd>
+          <dt className="text-base font-medium text-ink">{item.q}</dt>
+          <dd className="mt-2 max-w-[60ch] text-sm leading-relaxed text-zinc-600">{item.a}</dd>
         </div>
       ))}
     </dl>

@@ -189,11 +189,11 @@ export default function AgentsPage() {
             </div>
           ) : agents.length === 0 ? (
             <div className="card flex flex-col items-center justify-center py-24 gap-4 border-dashed animate-fade-up">
-              <div className="w-16 h-16 rounded-2xl bg-zinc-800/50 flex items-center justify-center">
-                <Bot size={28} className="text-zinc-600" />
+              <div className="w-16 h-16 rounded-2xl bg-zinc-200/50 flex items-center justify-center">
+                <Bot size={28} className="text-zinc-500" />
               </div>
               <div className="text-center">
-                <p className="font-medium text-zinc-300">No agents yet</p>
+                <p className="font-medium text-zinc-700">No agents yet</p>
                 <p className="text-sm text-zinc-500 mt-1">
                   Create your first agent or seed demo data
                 </p>

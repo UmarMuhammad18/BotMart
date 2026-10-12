@@ -199,7 +199,7 @@ export function VillageScene(props: {
   const [lowQuality, setLowQuality] = useState(false);
   return (
     <div
-      className="w-full rounded-2xl overflow-hidden border border-white/10 bg-[#c9dccf] relative"
+      className="w-full rounded-2xl overflow-hidden border border-ink/10 bg-[#c9dccf] relative"
       style={{ height: "min(72vh, 680px)", minHeight: 520 }}
     >
       <Canvas

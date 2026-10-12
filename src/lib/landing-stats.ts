@@ -10,14 +10,6 @@ export type RecentDeal = {
   createdAt: string;
 };
 
-/** A real, finished negotiation transcript for the landing preview. */
-export type LatestNegotiation = {
-  listingTitle: string;
-  buyerName: string;
-  sellerName: string;
-  messages: NegotiationMessage[];
-};
-
 /** A finished negotiation with every priced move, for the hero's price duel. */
 export type Duel = {
   listingTitle: string;
@@ -34,7 +26,6 @@ export type LandingStats = {
   dealCount: number;
   totalValue: number;
   recentDeals: RecentDeal[];
-  latestNegotiation: LatestNegotiation | null;
   duels: Duel[];
 };
 
@@ -45,7 +36,6 @@ const EMPTY_STATS: LandingStats = {
   dealCount: 0,
   totalValue: 0,
   recentDeals: [],
-  latestNegotiation: null,
   duels: [],
 };
 
@@ -121,7 +111,6 @@ export async function getLandingStats(): Promise<LandingStats> {
         n.buyer?.name !== n.seller?.name &&
         (n.messages ?? []).some((m) => m.type === "accept" && m.price)
     );
-    const neg = finished[0];
 
     // Up to four, one per listing, for the hero's price duel
     const seenListings = new Set<string>();
@@ -138,15 +127,6 @@ export async function getLandingStats(): Promise<LandingStats> {
         messages: n.messages ?? [],
       });
     }
-    const latestNegotiation: LatestNegotiation | null = neg
-      ? {
-          listingTitle: neg.listing?.title ?? "listing",
-          buyerName: neg.buyer?.name ?? "Buyer agent",
-          sellerName: neg.seller?.name ?? "Seller agent",
-          messages: (neg.messages ?? []).slice(-4),
-        }
-      : null;
-
     return {
       agentCount: agentsRes.count ?? agents.length,
       activeAgentCount: agents.filter((a) => a.status === "active").length,
@@ -154,7 +134,6 @@ export async function getLandingStats(): Promise<LandingStats> {
       dealCount: allOrders.length,
       totalValue,
       recentDeals,
-      latestNegotiation,
       duels,
     };
   } catch {

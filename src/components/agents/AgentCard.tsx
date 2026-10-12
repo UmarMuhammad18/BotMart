@@ -53,11 +53,11 @@ export function AgentCard({
       <div className="flex items-start justify-between mb-4">
         <div className="flex items-center gap-3">
           <div
-            className="agent-avatar bg-gradient-to-br from-zinc-800 to-zinc-900"
+            className="agent-avatar bg-gradient-to-br from-zinc-200 to-zinc-100"
             style={{
               background:
                 agent.status === "active"
-                  ? "linear-gradient(135deg, rgba(31,191,108,0.15), rgba(6,182,212,0.15))"
+                  ? "linear-gradient(135deg, rgba(46,122,52,0.12), rgba(6,182,212,0.15))"
                   : agent.status === "paused"
                     ? "linear-gradient(135deg, rgba(245,158,11,0.15), rgba(234,179,8,0.1))"
                     : "linear-gradient(135deg, rgba(239,68,68,0.15), rgba(220,38,38,0.1))",
@@ -67,10 +67,10 @@ export function AgentCard({
               size={18}
               className={
                 agent.status === "active"
-                  ? "text-emerald-400"
+                  ? "text-emerald-700"
                   : agent.status === "paused"
-                    ? "text-amber-400"
-                    : "text-red-400"
+                    ? "text-amber-700"
+                    : "text-red-700"
               }
             />
           </div>
@@ -110,7 +110,7 @@ export function AgentCard({
             Budget
           </span>
           <span className="font-mono">
-            <span className="text-zinc-300 font-semibold">{gbp(spent)}</span> /{" "}
+            <span className="text-zinc-700 font-semibold">{gbp(spent)}</span> /{" "}
             {gbp(budget)}
           </span>
         </div>
@@ -121,8 +121,8 @@ export function AgentCard({
               width: `${usedPct}%`,
               background:
                 usedPct > 80
-                  ? "linear-gradient(90deg, #f59e0b, #ef4444)"
-                  : "linear-gradient(90deg, #1fbf6c, #06b6d4)",
+                  ? "linear-gradient(90deg, #c08a23, #c0392b)"
+                  : "linear-gradient(90deg, #5ead4b, #2e7a34)",
             }}
           />
         </div>
@@ -147,18 +147,18 @@ export function AgentCard({
         )}
       </div>
 
-      <div className="flex items-center flex-wrap gap-3 text-xs text-zinc-500 pt-3 border-t border-white/[0.06] mb-3">
+      <div className="flex items-center flex-wrap gap-3 text-xs text-zinc-500 pt-3 border-t border-ink/[0.06] mb-3">
         <span className="flex items-center gap-1" title="Reputation 0-100">
           <TrendingUp size={11} />
-          Rep <span className="text-zinc-300 font-medium ml-0.5">{rep}</span>
+          Rep <span className="text-zinc-700 font-medium ml-0.5">{rep}</span>
         </span>
         <span className="flex items-center gap-1">
-          <CheckCircle2 size={11} className="text-emerald-500/70" />
-          <span className="text-zinc-300 font-medium">{completed}</span> won
+          <CheckCircle2 size={11} className="text-emerald-700/70" />
+          <span className="text-zinc-700 font-medium">{completed}</span> won
         </span>
         <span className="flex items-center gap-1">
-          <XCircle size={11} className="text-red-500/70" />
-          <span className="text-zinc-300 font-medium">{failed}</span> lost
+          <XCircle size={11} className="text-red-700/70" />
+          <span className="text-zinc-700 font-medium">{failed}</span> lost
         </span>
         <span className="flex items-center gap-1 ml-auto">
           <Shield size={11} />
@@ -186,25 +186,25 @@ export function AgentCard({
       </button>
 
       {lastResult && lastResult.agent.id === agent.id && (
-        <div className="mt-3 p-3 rounded-lg bg-zinc-900/80 border border-zinc-800 text-xs space-y-1.5">
+        <div className="mt-3 p-3 rounded-lg bg-zinc-100/80 border border-zinc-200 text-xs space-y-1.5">
           {lastResult.skipped_reason ? (
-            <p className="text-amber-400">{lastResult.skipped_reason}</p>
+            <p className="text-amber-700">{lastResult.skipped_reason}</p>
           ) : (
             <>
-              <p className="text-zinc-400">
+              <p className="text-zinc-600">
                 Matched {lastResult.matches.length} listing
                 {lastResult.matches.length !== 1 ? "s" : ""} · started{" "}
                 {lastResult.negotiations_started.length}
               </p>
               {lastResult.negotiations_completed.map((n) => (
-                <div key={n.id} className="flex justify-between text-zinc-300">
+                <div key={n.id} className="flex justify-between text-zinc-700">
                   <span className="truncate">{n.listing || n.id.slice(0, 8)}</span>
                   <span
                     className={
                       n.status === "accepted"
-                        ? "text-emerald-400"
+                        ? "text-emerald-700"
                         : n.status === "rejected"
-                          ? "text-red-400"
+                          ? "text-red-700"
                           : "text-zinc-500"
                     }
                   >

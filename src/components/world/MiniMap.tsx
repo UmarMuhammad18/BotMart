@@ -27,18 +27,18 @@ export function MiniMap({
   }
 
   return (
-    <div className="rounded-xl border border-white/10 bg-black/60 p-2">
+    <div className="rounded-xl border border-ink/10 bg-paper/60 p-2">
       <p className="text-[10px] uppercase tracking-wider text-zinc-500 px-1 mb-1">
         Mini-map
       </p>
       <svg
         viewBox={`0 0 ${w} ${h}`}
-        className="w-full h-auto aspect-square rounded-lg bg-[#0a1911]"
+        className="w-full h-auto aspect-square rounded-lg bg-[#a8c98e]"
       >
-        <rect x={0} y={0} width={w} height={h} fill="#0a1911" />
+        <rect x={0} y={0} width={w} height={h} fill="#a8c98e" />
         {/* ring road + market */}
-        <circle cx={OFFSET} cy={OFFSET} r={ZONES.roadRadius * SCALE} fill="none" stroke="#3a5a44" strokeWidth={ZONES.roadHalfWidth * 2 * SCALE} strokeOpacity={0.6} />
-        <circle cx={OFFSET} cy={OFFSET} r={ZONES.marketRadius * SCALE} fill="#12261b" />
+        <circle cx={OFFSET} cy={OFFSET} r={ZONES.roadRadius * SCALE} fill="none" stroke="#b59a72" strokeWidth={ZONES.roadHalfWidth * 2 * SCALE} strokeOpacity={0.9} />
+        <circle cx={OFFSET} cy={OFFSET} r={ZONES.marketRadius * SCALE} fill="#d8d0bb" />
         {/* cottages */}
         {snapshot.agents.map((a) => {
           if (!a.building) return null;
@@ -52,8 +52,8 @@ export function MiniMap({
               height={6}
               rx={1}
               transform={`rotate(${(-a.building.rot * 180) / Math.PI} ${cx} ${cy})`}
-              fill="#efe6d3"
-              fillOpacity={0.55}
+              fill="#fbf7ec"
+              fillOpacity={0.95}
             />
           );
         })}
@@ -88,7 +88,7 @@ export function MiniMap({
               width={6}
               height={6}
               rx={1}
-              fill={s.status === "sold" || s.stock <= 0 ? "#52525b" : "#1fbf6c"}
+              fill={s.status === "sold" || s.stock <= 0 ? "#8f8a7d" : "#2e7a34"}
               stroke={active ? "#fff" : "transparent"}
               strokeWidth={1}
               className="cursor-pointer"

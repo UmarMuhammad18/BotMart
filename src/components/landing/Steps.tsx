@@ -16,11 +16,11 @@ const steps = [
 /** The three moves of every deal, led by the verb itself. */
 export function Steps() {
   return (
-    <ol className="divide-y divide-white/[0.07] border-y border-white/[0.07]">
+    <ol className="divide-y divide-ink/[0.07] border-y border-ink/[0.07]">
       {steps.map((step) => (
         <li key={step.verb} className="grid gap-2 py-6 sm:grid-cols-[9rem_1fr] sm:gap-6 sm:py-7">
-          <h3 className="text-xl font-semibold tracking-tight text-white">{step.verb}</h3>
-          <p className="max-w-[52ch] text-sm leading-relaxed text-zinc-400 sm:text-base">
+          <h3 className="text-xl font-semibold tracking-tight text-ink">{step.verb}</h3>
+          <p className="max-w-[52ch] text-sm leading-relaxed text-zinc-600 sm:text-base">
             {step.desc}
           </p>
         </li>

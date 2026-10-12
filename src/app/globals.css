@@ -1,26 +1,28 @@
 @import "tailwindcss";
 
-/* ─── Design Tokens ──────────────────────────────────────── */
+/*
+ * Theme: the village. The interface borrows the 3D world's daylight palette:
+ * a sage-mist ground, plaster-light surfaces, forest-ink text, meadow green
+ * as the accent, and the market awnings' teal / terracotta / mustard as
+ * secondary tones. Every text colour clears WCAG AA on every surface.
+ */
 :root {
-  --background: #06110b;
-  --foreground: #eef6f0;
+  --background: #eef3e8;
+  --foreground: #142a1c;
 
-  /* Brand gradient */
-  --grad-start: #1fbf6c;
-  --grad-end:   #139c57;
+  /* Surfaces: plaster-light cards on sage mist */
+  --surface-0: #eef3e8;
+  --surface-1: #f9faf4;
+  --surface-2: #f4f6ee;
+  --surface-3: #e7ecdf;
+  --surface-border: rgba(20, 42, 28, 0.1);
 
-  /* Surface levels (deep pine → moss) */
-  --surface-0: #06110b;
-  --surface-1: #0a1911;
-  --surface-2: #0e2117;
-  --surface-3: #132b1e;
-  --surface-border: rgba(190,235,205,0.08);
-
-  /* Glow effects */
-  /* Tinted depth, not neon: one accent (emerald), shadows carry its hue */
-  --glow-emerald: 0 1px 0 rgba(66,216,134,0.10) inset, 0 8px 24px -12px rgba(31,191,108,0.35);
-  --glow-blue:    var(--glow-emerald);
-  --glow-amber:   0 8px 24px -12px rgba(245,158,11,0.30);
+  /* Depth: soft, green-tinted shadows (a single light from above) */
+  --shadow-card: 0 1px 2px rgba(20, 42, 28, 0.05), 0 8px 24px -12px rgba(20, 60, 32, 0.18);
+  --shadow-lift: 0 2px 4px rgba(20, 42, 28, 0.06), 0 18px 40px -18px rgba(20, 60, 32, 0.28);
+  --glow-emerald: var(--shadow-card);
+  --glow-blue: var(--shadow-card);
+  --glow-amber: var(--shadow-card);
 
   /*
    * Shape lock: controls (buttons, inputs) 12px, cards 16px, chips/badges
@@ -39,45 +41,51 @@
   --font-mono: var(--font-geist-mono), ui-monospace, monospace;
 }
 
-/*
- * Palette: shades of green. zinc becomes a sage-tinted neutral (every step
- * used for text clears 4.5:1 on all surfaces up to --surface-3), emerald
- * becomes a true green accent scale. Existing zinc-* / emerald-* classes
- * pick this up everywhere.
- */
 @theme {
-  --color-zinc-50: #f2f8f3;
-  --color-zinc-100: #e6f0e8;
-  --color-zinc-200: #d6e5da;
-  --color-zinc-300: #bfd3c4;
-  --color-zinc-400: #a9c0af;
-  --color-zinc-500: #98b09e;
-  --color-zinc-600: #8ca593;
-  --color-zinc-700: #87a08d;
-  --color-zinc-800: #1d3a2a;
-  --color-zinc-900: #12261b;
-  --color-zinc-950: #08150e;
+  /* Forest ink for text and hairlines; paper for light glass over imagery */
+  --color-ink: #142a1c;
+  --color-paper: #fbfcf7;
 
-  --color-emerald-50: #ecfdf3;
-  --color-emerald-100: #d1fae2;
-  --color-emerald-200: #a6f4c6;
-  --color-emerald-300: #74e9a5;
-  --color-emerald-400: #42d886;
-  --color-emerald-500: #1fbf6c;
-  --color-emerald-600: #139c57;
-  --color-emerald-700: #127c47;
-  --color-emerald-800: #12623b;
-  --color-emerald-900: #0f5132;
-  --color-emerald-950: #052e1a;
+  /* Village accents (from the market awnings, roofs and timber) */
+  --color-meadow: #2e7a34;
+  --color-teal: #22706a;
+  --color-terracotta: #9c4e2c;
+  --color-mustard: #835f15;
+  --color-timber: #5a3f2b;
+  --color-sky: #6fa8c9;
+
+  /* Sage-tinted neutrals, light → dark. Text uses 500 and darker. */
+  --color-zinc-50: #f6f8f2;
+  --color-zinc-100: #edf1e7;
+  --color-zinc-200: #dde5d6;
+  --color-zinc-300: #c4d0c0;
+  --color-zinc-400: #94a594;
+  --color-zinc-500: #576b5b;
+  --color-zinc-600: #4c5f50;
+  --color-zinc-700: #3c4d40;
+  --color-zinc-800: #29382d;
+  --color-zinc-900: #182a1e;
+  --color-zinc-950: #0f1d14;
+
+  /* Meadow greens, light → dark. Text uses 700+, solid fills 600. */
+  --color-emerald-50: #eef7ea;
+  --color-emerald-100: #d9eed1;
+  --color-emerald-200: #b6dea8;
+  --color-emerald-300: #8cc877;
+  --color-emerald-400: #5ead4b;
+  --color-emerald-500: #3a8f3b;
+  --color-emerald-600: #2e7a34;
+  --color-emerald-700: #24622b;
+  --color-emerald-800: #1d4e23;
+  --color-emerald-900: #173e1c;
+  --color-emerald-950: #0c2510;
 }
 
 /*
  * Base + component styles live in Tailwind layers so utilities written next
- * to them (md:hidden, px-3, text-xs…) win. Unlayered, these classes beat
- * every utility and silently ignored them.
+ * to them (md:hidden, px-3, text-xs…) win.
  */
 @layer base {
-  /* ─── Base ───────────────────────────────────────────────── */
   *, *::before, *::after { box-sizing: border-box; }
 
   @media (prefers-reduced-motion: no-preference) {
@@ -100,96 +108,78 @@
     -webkit-font-smoothing: antialiased;
   }
 
-  /* Subtle noise texture overlay */
+  /* Paper grain: keeps large light areas from feeling flat */
   body::before {
     content: "";
     position: fixed;
     inset: 0;
-    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.035'/%3E%3C/svg%3E");
     pointer-events: none;
     z-index: 0;
   }
 
-  /* ─── Scrollbar ──────────────────────────────────────────── */
   ::-webkit-scrollbar        { width: 8px; height: 8px; }
   ::-webkit-scrollbar-track  { background: transparent; }
-  ::-webkit-scrollbar-thumb  { background: rgba(255,255,255,0.12); border-radius: 99px; }
-  ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.22); }
+  ::-webkit-scrollbar-thumb  { background: rgba(20, 42, 28, 0.18); border-radius: 99px; }
+  ::-webkit-scrollbar-thumb:hover { background: rgba(20, 42, 28, 0.3); }
 
-  /* ─── Selection ─────────────────────────────────────────── */
-  ::selection { background: rgba(31,191,108,0.25); color: #fff; }
+  ::selection { background: rgba(94, 173, 75, 0.3); color: #142a1c; }
 
-  /* ─── Typography ─────────────────────────────────────────── */
   h1, h2, h3, h4, h5, h6 {
     letter-spacing: -0.02em;
     text-wrap: balance;
   }
   p { text-wrap: pretty; }
 
-  /* ─── Focus ring ─────────────────────────────────────────── */
   :focus-visible {
-    outline: 2px solid #42d886;
+    outline: 2px solid #2e7a34;
     outline-offset: 2px;
   }
 }
 
 @layer components {
-  /* ─── Utility: gradient text ─────────────────────────────── */
-  /* Kept as a class name for existing markup: now the single solid accent */
+  /* Kept as a class name for existing markup: the accent, as text */
   .gradient-text {
-    color: #42d886;
+    color: #24622b;
   }
 
-  /* ─── Utility: glass card ────────────────────────────────── */
   .glass {
-    background: rgba(255,255,255,0.03);
-    border: 1px solid rgba(255,255,255,0.07);
+    background: rgba(251, 252, 247, 0.7);
+    border: 1px solid var(--surface-border);
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
   }
-
   .glass-strong {
-    background: rgba(255,255,255,0.055);
-    border: 1px solid rgba(255,255,255,0.10);
+    background: rgba(251, 252, 247, 0.85);
+    border: 1px solid var(--surface-border);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
   }
 
-  /* ─── Utility: glow borders ──────────────────────────────── */
-  .glow-border-emerald {
-    border-color: rgba(31,191,108,0.35) !important;
-    box-shadow: var(--glow-emerald);
-  }
-  .glow-border-blue {
-    border-color: rgba(99,102,241,0.35) !important;
-    box-shadow: var(--glow-blue);
-  }
+  .glow-border-emerald { border-color: rgba(46, 122, 52, 0.35) !important; box-shadow: var(--shadow-card); }
+  .glow-border-blue { border-color: rgba(34, 112, 106, 0.35) !important; box-shadow: var(--shadow-card); }
 
-  /* ─── Animated gradient background orbs ─────────────────── */
+  /* Daylight: one soft sun-wash in the corner */
   .orb {
     position: fixed;
     border-radius: 50%;
-    filter: blur(80px);
-    opacity: 0.09;
+    filter: blur(90px);
+    opacity: 0.35;
     pointer-events: none;
     z-index: 0;
-    animation: orb-drift 18s ease-in-out infinite;
+    animation: orb-drift 22s ease-in-out infinite;
     will-change: transform;
   }
   .orb-1 {
-    width: 600px; height: 600px;
-    background: radial-gradient(circle, #1fbf6c, transparent 70%);
-    top: -200px; left: -200px;
-    animation-delay: 0s;
+    width: 640px; height: 640px;
+    background: radial-gradient(circle, #fff6d8, transparent 70%);
+    top: -260px; right: -180px;
   }
-
   @keyframes orb-drift {
     0%, 100% { transform: translate(0, 0) scale(1); }
-    33%       { transform: translate(40px, -30px) scale(1.05); }
-    66%       { transform: translate(-20px, 40px) scale(0.97); }
+    33%       { transform: translate(-30px, 20px) scale(1.04); }
+    66%       { transform: translate(20px, -10px) scale(0.98); }
   }
-
-
 
   /* ─── Animations ─────────────────────────────────────────── */
   @keyframes fade-up {
@@ -233,7 +223,6 @@
   .animate-bounce-in      { animation: bounce-in 0.4s cubic-bezier(0.34,1.56,0.64,1) both; }
   .animate-spin-slow      { animation: spin-slow 3s linear infinite; }
 
-  /* Stagger helpers */
   .delay-100 { animation-delay: 0.1s; }
   .delay-150 { animation-delay: 0.15s; }
   .delay-200 { animation-delay: 0.2s; }
@@ -241,7 +230,6 @@
   .delay-400 { animation-delay: 0.4s; }
   .delay-500 { animation-delay: 0.5s; }
 
-  /* ─── Chat message entry animation ───────────────────────── */
   .msg-enter {
     animation: msg-pop 0.35s cubic-bezier(0.34,1.56,0.64,1) both;
   }
@@ -250,81 +238,73 @@
     to   { opacity: 1; transform: scale(1) translateY(0); }
   }
 
-  /* ─── Shimmer loading skeleton ───────────────────────────── */
   .skeleton {
-    background: linear-gradient(
-      90deg,
-      rgba(255,255,255,0.04) 25%,
-      rgba(255,255,255,0.09) 50%,
-      rgba(255,255,255,0.04) 75%
-    );
+    background: linear-gradient(90deg, rgba(20,42,28,0.05) 25%, rgba(20,42,28,0.1) 50%, rgba(20,42,28,0.05) 75%);
     background-size: 200% 100%;
     animation: shimmer 1.6s infinite;
     border-radius: 8px;
   }
 
-  /* ─── Status dot pulse ───────────────────────────────────── */
   .status-dot {
     width: 8px; height: 8px;
     border-radius: 50%;
     display: inline-block;
   }
-  .status-dot.active  { background: #1fbf6c; animation: pulse-dot 2s ease infinite; }
-  .status-dot.paused  { background: #f59e0b; }
-  .status-dot.blocked { background: #ef4444; }
+  .status-dot.active  { background: #3a8f3b; animation: pulse-dot 2s ease infinite; }
+  .status-dot.paused  { background: #c08a23; }
+  .status-dot.blocked { background: #c0392b; }
 
-  /* ─── Premium button styles ──────────────────────────────── */
+  /* ─── Buttons ────────────────────────────────────────────── */
   .btn-primary {
     display: inline-flex; align-items: center; gap: 8px;
     min-height: 44px;
-    /* Dark ink on emerald: white on #1fbf6c is only 2.5:1 */
-    background: #42d886;
-    color: #052e1a; font-weight: 600;
+    background: #2e7a34;
+    color: #fbfcf7; font-weight: 600;
     padding: 10px 20px; border-radius: 12px;
     border: none; cursor: pointer;
     transition: background-color 0.2s ease, transform 0.15s ease, box-shadow 0.2s ease;
-    box-shadow: inset 0 1px 0 rgba(255,255,255,0.35), 0 8px 20px -10px rgba(31,191,108,0.55);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.18), 0 10px 24px -12px rgba(36, 98, 43, 0.6);
   }
-  .btn-primary:hover { background: #74e9a5; }
+  .btn-primary:hover { background: #24622b; }
   .btn-primary:active { transform: scale(0.98); }
-  .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+  .btn-primary:disabled { opacity: 0.55; cursor: not-allowed; transform: none; }
 
   .btn-secondary {
     display: inline-flex; align-items: center; gap: 8px;
     min-height: 44px;
-    background: rgba(255,255,255,0.06); color: #e4e4e7;
+    background: #f9faf4; color: #142a1c;
     font-weight: 500; padding: 10px 20px; border-radius: 12px;
-    border: 1px solid rgba(255,255,255,0.1); cursor: pointer;
+    border: 1px solid rgba(20, 42, 28, 0.14); cursor: pointer;
+    box-shadow: 0 1px 2px rgba(20, 42, 28, 0.06);
     transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease, transform 0.15s ease;
   }
-  .btn-secondary:hover { background: rgba(255,255,255,0.10); border-color: rgba(255,255,255,0.18); color: #fff; }
+  .btn-secondary:hover { background: #ffffff; border-color: rgba(20, 42, 28, 0.26); }
   .btn-secondary:active, .btn-ghost:active { transform: scale(0.98); }
-  .btn-secondary:disabled { opacity: 0.45; cursor: not-allowed; }
+  .btn-secondary:disabled { opacity: 0.5; cursor: not-allowed; }
 
   .btn-ghost {
     display: inline-flex; align-items: center; gap: 8px;
     min-height: 44px;
-    background: transparent; color: #a1a1aa;
+    background: transparent; color: #3c4d40;
     font-weight: 500; padding: 10px 16px; border-radius: 10px;
-    border: 1px solid rgba(255,255,255,0.07); cursor: pointer;
+    border: 1px solid rgba(20, 42, 28, 0.1); cursor: pointer;
     transition: all 0.2s ease;
   }
-  .btn-ghost:hover { background: rgba(255,255,255,0.05); color: #fff; border-color: rgba(255,255,255,0.12); }
+  .btn-ghost:hover { background: rgba(20, 42, 28, 0.05); color: #142a1c; border-color: rgba(20, 42, 28, 0.18); }
 
   /* ─── Card ───────────────────────────────────────────────── */
   .card {
-    background: var(--surface-2);
+    background: var(--surface-1);
     border: 1px solid var(--surface-border);
     border-radius: 16px;
+    box-shadow: var(--shadow-card);
     transition: border-color 0.2s, box-shadow 0.2s, transform 0.2s;
   }
   .card:hover {
-    border-color: rgba(255,255,255,0.12);
-    box-shadow: 0 12px 32px -16px rgba(31,191,108,0.18);
+    border-color: rgba(20, 42, 28, 0.16);
+    box-shadow: var(--shadow-lift);
   }
-  .card-interactive:hover {
-    transform: translateY(-2px);
-  }
+  .card-interactive:hover { transform: translateY(-2px); }
 
   /* ─── Badge ──────────────────────────────────────────────── */
   .badge {
@@ -332,108 +312,94 @@
     font-size: 11px; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase;
     padding: 3px 10px; border-radius: 99px;
   }
-  .badge-emerald { background: rgba(31,191,108,0.12); color: #42d886; border: 1px solid rgba(31,191,108,0.2); }
-  .badge-amber   { background: rgba(245,158,11,0.12);  color: #fbbf24; border: 1px solid rgba(245,158,11,0.2); }
-  .badge-red     { background: rgba(239,68,68,0.12);   color: #f87171; border: 1px solid rgba(239,68,68,0.2); }
-  .badge-purple  { background: rgba(139,92,246,0.12);  color: #a78bfa; border: 1px solid rgba(139,92,246,0.2); }
-  .badge-blue    { background: rgba(99,102,241,0.12);  color: #818cf8; border: 1px solid rgba(99,102,241,0.2); }
-  .badge-zinc    { background: rgba(113,113,122,0.15); color: #a1a1aa; border: 1px solid rgba(113,113,122,0.2); }
+  .badge-emerald { background: #e3f1dc; color: #1d4e23; border: 1px solid #c3e0b6; }
+  .badge-amber   { background: #f6ecd2; color: #6e4f10; border: 1px solid #e6d3a3; }
+  .badge-red     { background: #f6e0dc; color: #8a2f22; border: 1px solid #ebc2ba; }
+  .badge-purple  { background: #ece4f0; color: #5b3d6e; border: 1px solid #d8c8e2; }
+  .badge-blue    { background: #dfeef0; color: #1d5b56; border: 1px solid #bcdcdf; }
+  .badge-zinc    { background: #edf1e7; color: #3c4d40; border: 1px solid #dde5d6; }
 
   /* ─── Input ──────────────────────────────────────────────── */
   .input {
     width: 100%;
-    background: var(--surface-1);
-    border: 1px solid rgba(255,255,255,0.09);
+    background: #fbfcf7;
+    border: 1px solid rgba(20, 42, 28, 0.16);
     border-radius: 10px;
     padding: 10px 14px;
-    color: #f4f4f5; font-size: 14px;
+    color: #142a1c; font-size: 14px;
     transition: border-color 0.2s, box-shadow 0.2s;
     outline: none;
   }
-  .input:focus {
-    border-color: rgba(31,191,108,0.6);
-  }
+  .input:focus { border-color: rgba(46, 122, 52, 0.6); }
   .input:focus-visible {
-    outline: 2px solid #42d886;
+    outline: 2px solid #2e7a34;
     outline-offset: 1px;
-    box-shadow: 0 0 0 4px rgba(31,191,108,0.15);
+    box-shadow: 0 0 0 4px rgba(46, 122, 52, 0.15);
   }
-  .input::placeholder { color: #8b8b95; }
-
+  .input::placeholder { color: #576b5b; }
   select.input { cursor: pointer; }
 
-  /* ─── Section header ─────────────────────────────────────── */
   .section-label {
     font-size: 11px; font-weight: 700; letter-spacing: 0.12em;
-    text-transform: uppercase; color: #8b8b95;
+    text-transform: uppercase; color: #576b5b;
     margin-bottom: 14px;
   }
 
   /* ─── Negotiation chat bubbles ───────────────────────────── */
   .bubble-buyer {
-    background: rgba(255,255,255,0.04);
-    border: 1px solid rgba(255,255,255,0.10);
+    background: #fbfcf7;
+    border: 1px solid rgba(20, 42, 28, 0.12);
     border-radius: 16px 16px 16px 4px;
   }
   .bubble-seller {
-    background: rgba(31,191,108,0.09);
-    border: 1px solid rgba(31,191,108,0.18);
+    background: #e7f2e1;
+    border: 1px solid #c8e2bd;
     border-radius: 16px 16px 4px 16px;
   }
   .bubble-accept {
-    background: rgba(31,191,108,0.15) !important;
-    border-color: rgba(31,191,108,0.35) !important;
-    box-shadow: var(--glow-emerald);
+    background: #d9eed1 !important;
+    border-color: #9fd18e !important;
   }
   .bubble-reject {
-    background: rgba(239,68,68,0.10) !important;
-    border-color: rgba(239,68,68,0.25) !important;
+    background: #f6e0dc !important;
+    border-color: #ebc2ba !important;
   }
 
-  /* ─── Progress bar ───────────────────────────────────────── */
   .progress-bar {
-    height: 4px; background: rgba(255,255,255,0.07); border-radius: 99px; overflow: hidden;
+    height: 4px; background: rgba(20, 42, 28, 0.08); border-radius: 99px; overflow: hidden;
   }
   .progress-bar-fill {
     height: 100%;
-    background: #42d886;
+    background: #3a8f3b;
     border-radius: 99px;
     transition: width 0.6s ease;
   }
 
-  /* ─── Thinking spinner ───────────────────────────────────── */
   .thinking-dots span {
     display: inline-block; width: 5px; height: 5px;
-    border-radius: 50%; background: #1fbf6c;
+    border-radius: 50%; background: #3a8f3b;
     animation: pulse-dot 1.2s ease-in-out infinite;
   }
   .btn-primary .thinking-dots span { background: currentColor; }
   .thinking-dots span:nth-child(2) { animation-delay: 0.2s; }
   .thinking-dots span:nth-child(3) { animation-delay: 0.4s; }
 
-  /* ─── Stat card ──────────────────────────────────────────── */
   .stat-card {
-    background: var(--surface-2);
+    background: var(--surface-1);
     border: 1px solid var(--surface-border);
     border-radius: 14px;
     padding: 20px;
+    box-shadow: var(--shadow-card);
     transition: border-color 0.2s;
   }
-  .stat-card:hover { border-color: rgba(255,255,255,0.12); }
+  .stat-card:hover { border-color: rgba(20, 42, 28, 0.16); }
   .stat-value { font-size: 28px; font-weight: 700; letter-spacing: -0.03em; line-height: 1; }
-  .stat-label { font-size: 12px; color: #a1a1aa; margin-top: 4px; }
+  .stat-label { font-size: 12px; color: #4c5f50; margin-top: 4px; }
 
-  /* ─── Agent avatar ring ──────────────────────────────────── */
   .agent-avatar {
     width: 42px; height: 42px; border-radius: 12px;
     display: flex; align-items: center; justify-content: center;
     position: relative;
-  }
-  .agent-avatar::after {
-    content: "";
-    position: absolute; inset: -2px; border-radius: 14px;
-    background: #1fbf6c;
-    z-index: -1; opacity: 0.35;
   }
 
   /* ─── Landing hero ──────────────────────────────────────── */
@@ -450,6 +416,13 @@
     from { opacity: 0; transform: translateY(18px) scale(0.98); }
     to   { opacity: 1; transform: none; }
   }
+  /* The hero bot's speech bubble */
+  .bot-say { animation: bot-say 0.35s cubic-bezier(0.34, 1.4, 0.64, 1) both; transform-origin: 20% 100%; }
+  @keyframes bot-say {
+    from { opacity: 0; transform: translateY(8px) scale(0.92); }
+    to   { opacity: 1; transform: none; }
+  }
+
   /* Price duel: segments draw in, labels fade, the handshake bursts */
   .duel-draw {
     stroke-dasharray: 1;
@@ -476,16 +449,6 @@
   @keyframes duel-ring {
     from { transform: scale(0.3); opacity: 1; }
     to   { transform: scale(3); opacity: 0; }
-  }
-
-  /* Border that lights up under the pointer (1px padding = the border) */
-  .hero-spotlight {
-    --spot-x: 70%;
-    --spot-y: 20%;
-    background:
-      radial-gradient(420px circle at var(--spot-x) var(--spot-y), rgba(66,216,134, 0.55), transparent 60%),
-      rgba(255, 255, 255, 0.09);
-    box-shadow: 0 30px 80px -40px rgba(31,191,108, 0.35);
   }
 
   /* ─── World speech bubbles ───────────────────────────────── */

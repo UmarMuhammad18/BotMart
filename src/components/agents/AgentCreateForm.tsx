@@ -62,7 +62,7 @@ export function AgentCreateForm({
     <form onSubmit={createAgent} className="card glass p-6 mb-8 space-y-5 animate-fade-up">
       <p className="section-label">New agent</p>
       {!signedIn && (
-        <p className="text-xs text-amber-400/90 bg-amber-500/10 border border-amber-500/20 rounded-lg px-3 py-2">
+        <p className="text-xs text-amber-700/90 bg-amber-500/10 border border-amber-500/20 rounded-lg px-3 py-2">
           Not signed in, so this agent will be created in demo mode.{" "}
           <Link href="/login" className="underline">
             Sign in
@@ -72,7 +72,7 @@ export function AgentCreateForm({
       )}
       <div className="grid sm:grid-cols-2 gap-4">
         <div>
-          <label htmlFor="input-agent-name" className="block text-xs text-zinc-400 mb-2 font-medium">Name</label>
+          <label htmlFor="input-agent-name" className="block text-xs text-zinc-600 mb-2 font-medium">Name</label>
           <input
             id="input-agent-name"
             value={name}
@@ -83,7 +83,7 @@ export function AgentCreateForm({
           />
         </div>
         <div>
-          <label htmlFor="input-agent-desc" className="block text-xs text-zinc-400 mb-2 font-medium">Description</label>
+          <label htmlFor="input-agent-desc" className="block text-xs text-zinc-600 mb-2 font-medium">Description</label>
           <input
             id="input-agent-desc"
             value={description}
@@ -94,7 +94,7 @@ export function AgentCreateForm({
         </div>
       </div>
       <div>
-        <label htmlFor="input-agent-goal" className="block text-xs text-zinc-400 mb-2 font-medium">Goal</label>
+        <label htmlFor="input-agent-goal" className="block text-xs text-zinc-600 mb-2 font-medium">Goal</label>
         <input
           id="input-agent-goal"
           value={goal}
@@ -104,7 +104,7 @@ export function AgentCreateForm({
         />
       </div>
       <div>
-        <label htmlFor="input-agent-role" className="block text-xs text-zinc-400 mb-2 font-medium">Role</label>
+        <label htmlFor="input-agent-role" className="block text-xs text-zinc-600 mb-2 font-medium">Role</label>
         <select
           id="input-agent-role"
           value={role}
@@ -120,7 +120,7 @@ export function AgentCreateForm({
       </div>
       <div className="grid sm:grid-cols-3 gap-4">
         <div>
-          <label htmlFor="input-agent-budget" className="block text-xs text-zinc-400 mb-2 font-medium">Budget (£)</label>
+          <label htmlFor="input-agent-budget" className="block text-xs text-zinc-600 mb-2 font-medium">Budget (£)</label>
           <input
             id="input-agent-budget"
             type="number"
@@ -130,7 +130,7 @@ export function AgentCreateForm({
           />
         </div>
         <div>
-          <label htmlFor="input-agent-maxprice" className="block text-xs text-zinc-400 mb-2 font-medium">Max price (£)</label>
+          <label htmlFor="input-agent-maxprice" className="block text-xs text-zinc-600 mb-2 font-medium">Max price (£)</label>
           <input
             id="input-agent-maxprice"
             type="number"
@@ -140,7 +140,7 @@ export function AgentCreateForm({
           />
         </div>
         <div>
-          <label htmlFor="input-agent-style" className="block text-xs text-zinc-400 mb-2 font-medium">Style</label>
+          <label htmlFor="input-agent-style" className="block text-xs text-zinc-600 mb-2 font-medium">Style</label>
           <input
             id="input-agent-style"
             value={style}
@@ -151,7 +151,7 @@ export function AgentCreateForm({
         </div>
       </div>
       <div>
-        <label htmlFor="input-agent-categories" className="block text-xs text-zinc-400 mb-2 font-medium">
+        <label htmlFor="input-agent-categories" className="block text-xs text-zinc-600 mb-2 font-medium">
           Categories (comma separated)
         </label>
         <input

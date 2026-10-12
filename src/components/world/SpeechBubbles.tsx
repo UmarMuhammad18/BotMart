@@ -16,18 +16,18 @@ import type { BubbleTone, WorldDirector } from "@/lib/world/director";
 export type BubbleRegistry = RefObject<Map<string, HTMLDivElement>>;
 
 const TONE_STYLE: Record<BubbleTone, string> = {
-  offer: "border-sky-400/60 bg-sky-950/90 text-sky-100",
-  counter: "border-amber-400/60 bg-amber-950/90 text-amber-100",
-  accept: "border-emerald-400/70 bg-emerald-950/90 text-emerald-100",
-  reject: "border-rose-400/60 bg-rose-950/90 text-rose-100",
-  info: "border-white/15 bg-zinc-900/90 text-zinc-200",
+  offer: "border-sky-500/50 bg-paper/95 text-ink",
+  counter: "border-amber-500/60 bg-[#fdf6e3]/95 text-ink",
+  accept: "border-emerald-500/70 bg-[#e7f4e0]/95 text-ink",
+  reject: "border-rose-500/60 bg-[#fbeceb]/95 text-ink",
+  info: "border-ink/15 bg-zinc-100/90 text-zinc-800",
 };
 const LEADER: Record<BubbleTone, string> = {
   offer: "bg-sky-400/60",
   counter: "bg-amber-400/60",
   accept: "bg-emerald-400/70",
   reject: "bg-rose-400/60",
-  info: "bg-white/25",
+  info: "bg-ink/25",
 };
 
 /** Height above the floor the bubble points at (just over the name tag). */

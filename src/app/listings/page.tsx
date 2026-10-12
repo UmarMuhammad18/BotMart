@@ -38,7 +38,7 @@ function ListingCard({
         </div>
         <div className="text-right shrink-0">
           <div className="text-2xl font-bold font-mono">{gbp(listing.price)}</div>
-          <div className="text-xs text-zinc-600 mt-0.5 flex items-center justify-end gap-1">
+          <div className="text-xs text-zinc-500 mt-0.5 flex items-center justify-end gap-1">
             <Layers size={10} />
             {listing.stock} in stock
           </div>
@@ -46,11 +46,11 @@ function ListingCard({
       </div>
 
       {/* Bottom row */}
-      <div className="flex items-center justify-between pt-3 border-t border-white/[0.06]">
+      <div className="flex items-center justify-between pt-3 border-t border-ink/[0.06]">
         <div className="text-xs text-zinc-500 flex items-center gap-1">
           <Tag size={11} />
           Sold by{" "}
-          <span className="text-zinc-300 font-medium ml-0.5">
+          <span className="text-zinc-700 font-medium ml-0.5">
             {listing.seller?.name ?? "Unknown"}
           </span>
         </div>
@@ -58,7 +58,7 @@ function ListingCard({
           type="button"
           onClick={() => onNegotiate(listing.id)}
           aria-label={`Negotiate for ${listing.title}`}
-          className="inline-flex min-h-[44px] items-center gap-1.5 px-2 -mr-2 text-xs font-semibold text-emerald-400 hover:text-emerald-300 transition group"
+          className="inline-flex min-h-[44px] items-center gap-1.5 px-2 -mr-2 text-xs font-semibold text-emerald-700 hover:text-emerald-700 transition group"
           id={`btn-negotiate-${listing.id}`}
         >
           Negotiate
@@ -192,7 +192,7 @@ export default function ListingsPage() {
             <div className="flex gap-2 shrink-0">
               <button
                 onClick={() => { setShowIntent(!showIntent); setShowForm(false); }}
-                className={`btn-ghost text-sm ${showIntent ? "text-white border-white/20" : ""}`}
+                className={`btn-ghost text-sm ${showIntent ? "text-ink border-ink/20" : ""}`}
                 id="btn-create-intent"
               >
                 <Search size={15} />
@@ -212,7 +212,7 @@ export default function ListingsPage() {
           {/* Search bar */}
           <form role="search" onSubmit={handleSearch} className="flex flex-wrap gap-2 mb-6 animate-fade-up delay-100">
             <div className="relative basis-full sm:basis-auto sm:flex-1">
-              <Search size={14} aria-hidden className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-600 pointer-events-none" />
+              <Search size={14} aria-hidden className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500 pointer-events-none" />
               <input
                 id="input-search-listings"
                 type="search"
@@ -249,8 +249,8 @@ export default function ListingsPage() {
                 }}
                 className={`text-xs font-medium capitalize px-4 min-h-[44px] sm:min-h-[36px] rounded-full border transition ${
                   activeCategory === cat
-                    ? "bg-emerald-500/15 border-emerald-500/30 text-emerald-300"
-                    : "bg-white/[0.03] border-white/[0.08] text-zinc-500 hover:text-zinc-300 hover:border-white/15"
+                    ? "bg-emerald-500/15 border-emerald-500/30 text-emerald-700"
+                    : "bg-ink/[0.03] border-ink/[0.08] text-zinc-500 hover:text-zinc-700 hover:border-ink/15"
                 }`}
               >
                 {cat}
@@ -266,7 +266,7 @@ export default function ListingsPage() {
             >
               <div className="flex items-center justify-between">
                 <p className="section-label">AI-powered matching</p>
-                <button type="button" onClick={() => setShowIntent(false)} className="text-zinc-600 hover:text-zinc-400">
+                <button type="button" onClick={() => setShowIntent(false)} className="text-zinc-500 hover:text-zinc-600">
                   <X size={16} />
                 </button>
               </div>
@@ -275,7 +275,7 @@ export default function ListingsPage() {
               </p>
               <div className="grid sm:grid-cols-2 gap-4">
                 <div>
-                  <label htmlFor="select-intent-buyer" className="block text-xs text-zinc-400 mb-2 font-medium">Buyer agent</label>
+                  <label htmlFor="select-intent-buyer" className="block text-xs text-zinc-600 mb-2 font-medium">Buyer agent</label>
                   <select
                     id="select-intent-buyer"
                     value={buyerId}
@@ -290,7 +290,7 @@ export default function ListingsPage() {
                   </select>
                 </div>
                 <div>
-                  <label htmlFor="input-intent-goal" className="block text-xs text-zinc-400 mb-2 font-medium">Natural language goal</label>
+                  <label htmlFor="input-intent-goal" className="block text-xs text-zinc-600 mb-2 font-medium">Natural language goal</label>
                   <input
                     id="input-intent-goal"
                     value={goal}
@@ -319,12 +319,12 @@ export default function ListingsPage() {
             >
               <div className="flex items-center justify-between">
                 <p className="section-label">New listing</p>
-                <button type="button" onClick={() => setShowForm(false)} className="text-zinc-600 hover:text-zinc-400">
+                <button type="button" onClick={() => setShowForm(false)} className="text-zinc-500 hover:text-zinc-600">
                   <X size={16} />
                 </button>
               </div>
               <div>
-                <label htmlFor="select-seller-agent" className="block text-xs text-zinc-400 mb-2 font-medium">Seller Agent</label>
+                <label htmlFor="select-seller-agent" className="block text-xs text-zinc-600 mb-2 font-medium">Seller Agent</label>
                 <select id="select-seller-agent" value={sellerId} onChange={(e) => setSellerId(e.target.value)} required className="input">
                   {agents.map((a) => (
                     <option key={a.id} value={a.id}>{a.name} ({gbp(a.budget)} budget)</option>
@@ -333,29 +333,29 @@ export default function ListingsPage() {
               </div>
               <div className="grid sm:grid-cols-2 gap-4">
                 <div>
-                  <label htmlFor="input-listing-title" className="block text-xs text-zinc-400 mb-2 font-medium">Title</label>
+                  <label htmlFor="input-listing-title" className="block text-xs text-zinc-600 mb-2 font-medium">Title</label>
                   <input id="input-listing-title" value={title} onChange={(e) => setTitle(e.target.value)}
                     required placeholder="e.g. Premium Wireless Headphones" className="input" />
                 </div>
                 <div>
-                  <label htmlFor="input-listing-desc" className="block text-xs text-zinc-400 mb-2 font-medium">Description</label>
+                  <label htmlFor="input-listing-desc" className="block text-xs text-zinc-600 mb-2 font-medium">Description</label>
                   <input id="input-listing-desc" value={description} onChange={(e) => setDescription(e.target.value)}
                     placeholder="Brief description" className="input" />
                 </div>
               </div>
               <div className="grid grid-cols-3 gap-4">
                 <div>
-                  <label htmlFor="input-listing-price" className="block text-xs text-zinc-400 mb-2 font-medium">Price (£)</label>
+                  <label htmlFor="input-listing-price" className="block text-xs text-zinc-600 mb-2 font-medium">Price (£)</label>
                   <input id="input-listing-price" type="number" value={price}
                     onChange={(e) => setPrice(Number(e.target.value))} required className="input" />
                 </div>
                 <div>
-                  <label htmlFor="input-listing-category" className="block text-xs text-zinc-400 mb-2 font-medium">Category</label>
+                  <label htmlFor="input-listing-category" className="block text-xs text-zinc-600 mb-2 font-medium">Category</label>
                   <input id="input-listing-category" value={category} onChange={(e) => setCategory(e.target.value)}
                     placeholder="electronics" className="input" />
                 </div>
                 <div>
-                  <label htmlFor="input-listing-stock" className="block text-xs text-zinc-400 mb-2 font-medium">Stock</label>
+                  <label htmlFor="input-listing-stock" className="block text-xs text-zinc-600 mb-2 font-medium">Stock</label>
                   <input id="input-listing-stock" type="number" value={stock}
                     onChange={(e) => setStock(Number(e.target.value))} className="input" />
                 </div>
@@ -381,11 +381,11 @@ export default function ListingsPage() {
             </div>
           ) : listings.length === 0 ? (
             <div className="card flex flex-col items-center justify-center py-24 gap-4 border-dashed animate-fade-up">
-              <div className="w-16 h-16 rounded-2xl bg-zinc-800/50 flex items-center justify-center">
-                <Package size={28} className="text-zinc-600" />
+              <div className="w-16 h-16 rounded-2xl bg-zinc-200/50 flex items-center justify-center">
+                <Package size={28} className="text-zinc-500" />
               </div>
               <div className="text-center">
-                <p className="font-medium text-zinc-300">No listings found</p>
+                <p className="font-medium text-zinc-700">No listings found</p>
                 <p className="text-sm text-zinc-500 mt-1">Try seeding demo data or create a new listing</p>
               </div>
             </div>

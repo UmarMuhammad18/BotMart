@@ -17,7 +17,7 @@ const VillageScene = dynamic(
     ssr: false,
     loading: () => (
       <div
-        className="w-full rounded-2xl border border-white/10 bg-zinc-950 flex items-center justify-center text-sm text-zinc-500"
+        className="w-full rounded-2xl border border-ink/10 bg-zinc-50 flex items-center justify-center text-sm text-zinc-500"
         style={{ height: "min(70vh, 640px)", minHeight: 520 }}
       >
         Loading the village…
