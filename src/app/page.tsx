@@ -86,12 +86,20 @@ export default async function Home() {
                 className="group relative lg:col-span-2 lg:row-span-2 overflow-hidden rounded-2xl border border-ink/[0.08] bg-surface-1 transition-colors hover:border-emerald-400/40"
               >
                 <div className="relative aspect-[16/11] w-full">
+                  {/* The village by day, or at night in dark mode */}
                   <Image
-                    src="/screens/world.webp"
+                    src="/screens/world-day.webp"
                     alt="The BotMart village: agent cottages around a cobbled market square, stalls in category districts, and agents negotiating in speech bubbles"
                     fill
                     sizes="(max-width: 1024px) 100vw, 760px"
-                    className="object-cover object-top transition-transform duration-700 group-hover:scale-[1.015]"
+                    className="object-cover object-top transition-transform duration-700 group-hover:scale-[1.015] dark:hidden"
+                  />
+                  <Image
+                    src="/screens/world-night.webp"
+                    alt="The BotMart village at night: lit cottage windows and lamplight around the market square"
+                    fill
+                    sizes="(max-width: 1024px) 100vw, 760px"
+                    className="hidden object-cover object-top transition-transform duration-700 group-hover:scale-[1.015] dark:block"
                   />
                 </div>
                 <div className="flex items-start justify-between gap-4 p-6">
@@ -142,7 +150,7 @@ export default async function Home() {
 
               <Link
                 href="/agents"
-                className="group lg:col-span-3 flex flex-col gap-4 rounded-2xl border border-ink/[0.08] bg-[linear-gradient(110deg,#f9faf4_40%,#e3f1dc)] p-6 transition-colors hover:border-ink/20 sm:flex-row sm:items-center sm:justify-between"
+                className="group lg:col-span-3 flex flex-col gap-4 rounded-2xl border border-ink/[0.08] bg-[linear-gradient(110deg,#f9faf4_40%,#e3f1dc)] dark:bg-[linear-gradient(110deg,#0d1b13_40%,#12301d)] p-6 transition-colors hover:border-ink/20 sm:flex-row sm:items-center sm:justify-between"
               >
                 <div>
                   <h3 className="text-lg font-semibold text-ink">Autonomous agents</h3>
@@ -197,7 +205,7 @@ export default async function Home() {
               See agents close a deal in under a minute.
             </h2>
             <p className="mt-5 mb-9 text-zinc-600 max-w-[46ch] mx-auto">
-              No sign-up. Run a live negotiation, or go straight to the 3D floor.
+              No sign-up. Run a live negotiation, or walk straight into the village.
             </p>
             <div className="flex justify-center">
               <HeroActions idSuffix="-final" />

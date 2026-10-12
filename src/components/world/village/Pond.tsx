@@ -35,7 +35,7 @@ export function Pond() {
       ))}
       {reeds.map((r, i) => (
         <mesh key={i} position={[r.x, r.h / 2 - 0.2, r.z]} rotation={[r.lean, 0, r.lean]} castShadow>
-          <cylinderGeometry args={[0.02, 0.035, r.h, 6]} />
+          <cylinderGeometry args={[0.02, 0.035, r.h, 16]} />
           <meshStandardMaterial color="#6b8f3a" roughness={0.8} />
         </mesh>
       ))}

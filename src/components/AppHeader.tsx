@@ -5,6 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Bot, LogIn, LogOut, User, Menu, X } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import { ThemeMenu, ThemeSegmented } from "@/components/ThemeMenu";
 
 const links = [
   { href: "/agents", label: "Agents" },
@@ -118,6 +119,9 @@ export function AppHeader({ active }: { active?: string }) {
         </nav>
 
         <div className="flex items-center gap-2 shrink-0">
+          <div className="hidden md:block">
+            <ThemeMenu />
+          </div>
           {loading ? (
             <span className="skeleton h-8 w-20" aria-hidden />
           ) : user ? (
@@ -183,6 +187,9 @@ export function AppHeader({ active }: { active?: string }) {
               </Link>
             );
           })}
+          <div className="pt-2">
+            <ThemeSegmented />
+          </div>
           {!user && (
             <Link
               href="/login"

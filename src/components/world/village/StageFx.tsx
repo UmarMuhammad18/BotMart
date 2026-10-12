@@ -174,7 +174,7 @@ function DealBurst({
           }}
           rotation={[Math.PI / 2, 0, 0]}
         >
-          <cylinderGeometry args={[0.1, 0.1, 0.03, 16]} />
+          <cylinderGeometry args={[0.1, 0.1, 0.03, 48]} />
           <meshStandardMaterial
             color="#fbbf24"
             emissive="#f59e0b"

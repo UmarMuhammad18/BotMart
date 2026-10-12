@@ -1,12 +1,13 @@
 "use client";
 
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
-import { Environment, Lightformer, RoundedBox, Text, useAnimations, useGLTF } from "@react-three/drei";
+import { Environment, Lightformer, RoundedBox, Sparkles, Text, useAnimations, useGLTF } from "@react-three/drei";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
 import { clone as cloneSkinned } from "three/examples/jsm/utils/SkeletonUtils.js";
 import { smoothModel } from "@/components/world/village/RobotAgent";
 import { fbm, seeded } from "@/lib/world/terrain";
+import { useResolvedTheme } from "@/lib/theme";
 
 /** "RobotExpressive" by Tomás Laulhé, CC0 (see public/models/CREDITS.md). */
 const MODEL = "/models/robot.glb";
@@ -252,11 +253,11 @@ function Bot({
 
 const windUniform = { value: 0 };
 
-function Island() {
+function Island({ night }: { night: boolean }) {
   const tufts = useRef<THREE.InstancedMesh>(null);
   const { top, underside, blade, bladeMat } = useMemo(() => {
     // Grass top: a soft dome with colour variation
-    const top = new THREE.CylinderGeometry(2.35, 2.2, 0.32, 96, 6);
+    const top = new THREE.CylinderGeometry(2.35, 2.2, 0.32, 160, 8);
     const pos = top.attributes.position as THREE.BufferAttribute;
     const colors = new Float32Array(pos.count * 3);
     const c = new THREE.Color();
@@ -277,7 +278,7 @@ function Island() {
       const r = 2.2 * Math.pow(1 - tt, 0.75) + 0.05;
       profile.push(new THREE.Vector2(r, -tt * 1.9));
     }
-    const underside = new THREE.LatheGeometry(profile, 96);
+    const underside = new THREE.LatheGeometry(profile, 160);
     const up = underside.attributes.position as THREE.BufferAttribute;
     const v = new THREE.Vector3();
     for (let i = 0; i < up.count; i++) {
@@ -363,18 +364,18 @@ function Island() {
       {flowers.map(([x, z, c], i) => (
         <group key={i} position={[x, 0.22, z]}>
           <mesh position={[0, 0.16, 0]}>
-            <cylinderGeometry args={[0.012, 0.015, 0.32, 6]} />
+            <cylinderGeometry args={[0.012, 0.015, 0.32, 16]} />
             <meshStandardMaterial color="#4f7f30" />
           </mesh>
           <mesh position={[0, 0.34, 0]}>
-            <sphereGeometry args={[0.07, 16, 12]} />
+            <sphereGeometry args={[0.07, 48, 32]} />
             <meshStandardMaterial color={c} roughness={0.6} />
           </mesh>
         </group>
       ))}
       {/* The bot's desktop station, as in the village */}
       <group position={[-1.25, 0.2, -0.85]} rotation={[0, 0.55, 0]}>
-        <RoundedBox args={[1.15, 0.06, 0.55]} radius={0.02} smoothness={2} position={[0, 0.62, 0]} castShadow receiveShadow>
+        <RoundedBox args={[1.15, 0.06, 0.55]} radius={0.02} smoothness={4} position={[0, 0.62, 0]} castShadow receiveShadow>
           <meshStandardMaterial color="#a57b52" roughness={0.6} />
         </RoundedBox>
         {[-0.5, 0.5].map((x) => (
@@ -383,12 +384,12 @@ function Island() {
             <meshStandardMaterial color="#7b5a3c" roughness={0.7} />
           </mesh>
         ))}
-        <RoundedBox args={[0.78, 0.48, 0.04]} radius={0.02} smoothness={2} position={[0, 1.0, -0.08]} castShadow>
+        <RoundedBox args={[0.78, 0.48, 0.04]} radius={0.02} smoothness={4} position={[0, 1.0, -0.08]} castShadow>
           <meshStandardMaterial color="#14191d" roughness={0.35} metalness={0.4} />
         </RoundedBox>
         <mesh position={[0, 1.0, -0.055]}>
           <planeGeometry args={[0.7, 0.4]} />
-          <meshStandardMaterial color="#0f2416" emissive="#3a8f3b" emissiveIntensity={0.55} />
+          <meshStandardMaterial color="#0f2416" emissive="#3a8f3b" emissiveIntensity={night ? 1.4 : 0.55} />
         </mesh>
         <Text position={[0, 1.0, -0.05]} fontSize={0.07} anchorX="center" anchorY="middle" color="#eafff1">
           {"DEAL £45 ✓"}
@@ -416,6 +417,7 @@ export default function HeroBotScene({
   const pointer = useRef<PointerState>({ x: 0, y: 0, lastMove: 0, speed: 0, active: false });
   const wrap = useRef<HTMLDivElement>(null);
   const [visible, setVisible] = useState(true);
+  const night = useResolvedTheme() === "dark";
 
   // Track the pointer across the whole page, not just the canvas
   useEffect(() => {
@@ -463,13 +465,14 @@ export default function HeroBotScene({
         gl={{ alpha: true, antialias: true, toneMapping: THREE.ACESFilmicToneMapping, toneMappingExposure: 1.05 }}
         onCreated={({ camera }) => camera.lookAt(0, 1.0, 0)}
       >
-        <hemisphereLight args={["#eaf6ff", "#5f8f3e", 0.9]} />
+        {/* Day: warm sun and soft sky. Night: moonlight, a glowing desk, fireflies */}
+        <hemisphereLight args={night ? ["#6d86c4", "#142418", 0.55] : ["#eaf6ff", "#5f8f3e", 0.9]} />
         <directionalLight
-          position={[4.5, 8, 5]}
-          intensity={2.3}
-          color="#fff1d6"
+          position={night ? [-4, 7.5, 4.5] : [4.5, 8, 5]}
+          intensity={night ? 1.25 : 2.3}
+          color={night ? "#b7c9ff" : "#fff1d6"}
           castShadow
-          shadow-mapSize={[1024, 1024]}
+          shadow-mapSize={[2048, 2048]}
           shadow-camera-left={-4}
           shadow-camera-right={4}
           shadow-camera-top={4}
@@ -477,13 +480,25 @@ export default function HeroBotScene({
           shadow-bias={-0.0005}
           shadow-normalBias={0.03}
         />
-        <Environment resolution={64} frames={1}>
-          <Lightformer intensity={2.2} position={[0, 6, -6]} scale={[14, 6, 1]} color="#ffffff" />
-          <Lightformer intensity={1.2} position={[-6, 2, 3]} scale={[6, 4, 1]} color="#e3f4d6" />
-          <Lightformer intensity={0.8} position={[6, 1, 2]} scale={[6, 3, 1]} color="#fff2d6" />
-        </Environment>
+        {night ? (
+          <>
+            <Environment key="night" resolution={64} frames={1}>
+              <Lightformer intensity={0.9} position={[0, 6, -6]} scale={[14, 6, 1]} color="#8ea6e6" />
+              <Lightformer intensity={0.5} position={[-6, 2, 3]} scale={[6, 4, 1]} color="#6f86c8" />
+              <Lightformer intensity={0.6} position={[6, 1, 2]} scale={[6, 3, 1]} color="#ffcf94" />
+            </Environment>
+            <pointLight position={[-1.05, 1.45, -0.45]} color="#7fe08a" intensity={3} distance={4} decay={1.8} />
+            <Sparkles count={46} scale={[5.5, 2.4, 4.5]} position={[0, 1.4, 0]} size={4} speed={still ? 0 : 0.35} noise={0.6} color="#eaff9c" opacity={0.9} />
+          </>
+        ) : (
+          <Environment key="day" resolution={64} frames={1}>
+            <Lightformer intensity={2.2} position={[0, 6, -6]} scale={[14, 6, 1]} color="#ffffff" />
+            <Lightformer intensity={1.2} position={[-6, 2, 3]} scale={[6, 4, 1]} color="#e3f4d6" />
+            <Lightformer intensity={0.8} position={[6, 1, 2]} scale={[6, 3, 1]} color="#fff2d6" />
+          </Environment>
+        )}
         <group position={[0, 0.15, 0]}>
-          <Island />
+          <Island night={night} />
           <group position={[0.15, 0.22, 0.25]}>
             <Bot pointer={pointer} cue={cue} onPoke={onPoke} still={still} />
           </group>

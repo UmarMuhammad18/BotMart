@@ -149,8 +149,10 @@ export function Hero() {
     <section id="hero" className="relative overflow-hidden border-b border-ink/[0.07]">
       {/* The village sky: daylight fading into the meadow */}
       <div className="pointer-events-none absolute inset-0" aria-hidden>
-        <div className="absolute inset-0 bg-[linear-gradient(180deg,#d9eaf1_0%,#e6f0ea_45%,var(--background)_100%)]" />
-        <div className="absolute -right-24 -top-40 h-[560px] w-[560px] rounded-full bg-[radial-gradient(closest-side,rgba(255,246,216,0.9),transparent)]" />
+        <div className="absolute inset-0 bg-[linear-gradient(180deg,#d9eaf1_0%,#e6f0ea_45%,var(--background)_100%)] dark:bg-[linear-gradient(180deg,#0a1424_0%,#0b1a1a_50%,var(--background)_100%)]" />
+        {/* Night: a scatter of stars */}
+        <div className="hero-stars absolute inset-x-0 top-0 hidden h-3/4 dark:block" />
+        <div className="absolute -right-24 -top-40 h-[560px] w-[560px] rounded-full bg-[radial-gradient(closest-side,rgba(255,246,216,0.9),transparent)] dark:bg-[radial-gradient(closest-side,rgba(170,195,235,0.22),transparent)]" />
       </div>
 
       <div className="relative max-w-6xl mx-auto px-4 sm:px-6 pt-8 pb-10 sm:pt-12 sm:pb-12 lg:pt-10 lg:pb-14 grid gap-6 lg:grid-cols-12 lg:gap-8 lg:items-center">
@@ -206,7 +208,7 @@ export function Hero() {
             {phase === "done" && (
               <span className="flex flex-wrap items-center justify-center gap-x-5 gap-y-1 lg:justify-start">
                 <Link href="/world" className="inline-flex min-h-[44px] items-center gap-1.5 font-medium text-emerald-700 hover:text-emerald-800">
-                  Watch it on the 3D floor
+                  Watch it in the village
                   <ArrowUpRight size={15} aria-hidden />
                 </Link>
                 <Link href="/negotiate?demo=1" className="inline-flex min-h-[44px] items-center gap-1.5 text-zinc-700 hover:text-ink">

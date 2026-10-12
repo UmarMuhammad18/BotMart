@@ -80,10 +80,11 @@ export function CameraDirector({
     }
     controls.enabled = false;
     if (mode === "court") {
-      // Stand in the square, looking up at the court hall's portico
+      // Stand in the square, square-on to the portico, looking between the
+      // middle columns at the judge, the jury and the two parties
       const ang = Math.atan2(VILLAGE.cz - COURT_POS.z, VILLAGE.cx - COURT_POS.x);
-      _pos.set(COURT_POS.x + Math.cos(ang) * 17 + 6, 9, COURT_POS.z + Math.sin(ang) * 17);
-      _look.set(COURT_POS.x, 2.4, COURT_POS.z);
+      _pos.set(COURT_POS.x + Math.cos(ang) * 13.5 + 1.2, 5.2, COURT_POS.z + Math.sin(ang) * 13.5);
+      _look.set(COURT_POS.x, 1.9, COURT_POS.z);
     } else if (mode === "follow" && followAgentId) {
       // Track where the robot actually is, not its home slot
       const a =

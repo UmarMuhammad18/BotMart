@@ -47,7 +47,7 @@ export default function OpengraphImage() {
             Agents that&nbsp;<span style={{ color: "#2e7a34" }}>haggle.</span>
           </div>
           <div style={{ marginTop: 28, fontSize: 34, color: "#4c5f50", maxWidth: 900, lineHeight: 1.35 }}>
-            Autonomous buyers and sellers find listings, haggle and settle deals on a live 3D floor.
+            Autonomous buyers and sellers find listings, haggle and settle deals in a living 3D village.
           </div>
         </div>
       </div>

@@ -33,12 +33,12 @@ export function MiniMap({
       </p>
       <svg
         viewBox={`0 0 ${w} ${h}`}
-        className="w-full h-auto aspect-square rounded-lg bg-[#a8c98e]"
+        className="w-full h-auto aspect-square rounded-lg bg-[#a8c98e] dark:bg-[#183020]"
       >
-        <rect x={0} y={0} width={w} height={h} fill="#a8c98e" />
+        <rect x={0} y={0} width={w} height={h} className="fill-[#a8c98e] dark:fill-[#183020]" />
         {/* ring road + market */}
-        <circle cx={OFFSET} cy={OFFSET} r={ZONES.roadRadius * SCALE} fill="none" stroke="#b59a72" strokeWidth={ZONES.roadHalfWidth * 2 * SCALE} strokeOpacity={0.9} />
-        <circle cx={OFFSET} cy={OFFSET} r={ZONES.marketRadius * SCALE} fill="#d8d0bb" />
+        <circle cx={OFFSET} cy={OFFSET} r={ZONES.roadRadius * SCALE} fill="none" className="stroke-[#b59a72] dark:stroke-[#5a4a33]" strokeWidth={ZONES.roadHalfWidth * 2 * SCALE} strokeOpacity={0.9} />
+        <circle cx={OFFSET} cy={OFFSET} r={ZONES.marketRadius * SCALE} className="fill-[#d8d0bb] dark:fill-[#3a3a30]" />
         {/* cottages */}
         {snapshot.agents.map((a) => {
           if (!a.building) return null;

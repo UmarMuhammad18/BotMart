@@ -8,6 +8,8 @@ import type { District } from "@/lib/world/districts";
 import { VILLAGE } from "@/lib/world/districts";
 import { ZONES, seeded } from "@/lib/world/terrain";
 import { ProductMesh } from "@/components/world/ProductMesh";
+import { CourtGrounds, CourtInterior, flutedColumnGeometry } from "./Court";
+import { useNight } from "./night";
 
 const WOOD = "#9a7350";
 const WOOD_DARK = "#6b4b32";
@@ -43,6 +45,50 @@ export function cobblestones() {
   cobbleTex.colorSpace = THREE.SRGBColorSpace;
   cobbleTex.anisotropy = 8;
   return cobbleTex;
+}
+
+/** Height map matching cobblestones(): domed stones, sunken joints. */
+let cobbleBumpTex: THREE.CanvasTexture | null = null;
+function cobbleBump() {
+  if (cobbleBumpTex) return cobbleBumpTex;
+  const c = document.createElement("canvas");
+  c.width = c.height = 512;
+  const ctx = c.getContext("2d")!;
+  ctx.fillStyle = "#000";
+  ctx.fillRect(0, 0, 512, 512);
+  const rand = seeded(31); // same sequence as the colour map, so stones line up
+  for (let row = 0; row < 16; row++) {
+    for (let col = 0; col < 16; col++) {
+      const x = col * 32 + (row % 2) * 16 + (rand() - 0.5) * 4;
+      const y = row * 32 + (rand() - 0.5) * 4;
+      rand();
+      const w = 28 + (rand() - 0.5) * 3;
+      const h = 28 + (rand() - 0.5) * 3;
+      const grad = ctx.createRadialGradient(x + 2 + w / 2, y + 2 + h / 2, 2, x + 2 + w / 2, y + 2 + h / 2, w * 0.62);
+      grad.addColorStop(0, "#fff");
+      grad.addColorStop(0.7, "#bbb");
+      grad.addColorStop(1, "#555");
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      ctx.roundRect(x + 2, y + 2, w, h, 9);
+      ctx.fill();
+    }
+  }
+  cobbleBumpTex = new THREE.CanvasTexture(c);
+  cobbleBumpTex.wrapS = cobbleBumpTex.wrapT = THREE.RepeatWrapping;
+  cobbleBumpTex.anisotropy = 8;
+  return cobbleBumpTex;
+}
+
+/** Colour and bump maps for a cobbled area, tiled `rx` × `ry` times. */
+export function cobbleMaps(rx: number, ry: number) {
+  const map = cobblestones().clone();
+  const bump = cobbleBump().clone();
+  for (const t of [map, bump]) {
+    t.repeat.set(rx, ry);
+    t.needsUpdate = true;
+  }
+  return { map, bump };
 }
 
 const awningCache = new Map<string, THREE.CanvasTexture>();
@@ -108,7 +154,7 @@ export function Stall({
       <RoundedBox args={[2.2, 0.86, 1.15]} radius={0.05} smoothness={3} position={[0, 0.43, 0]} castShadow receiveShadow>
         <meshStandardMaterial color={WOOD} roughness={0.75} />
       </RoundedBox>
-      <RoundedBox args={[2.36, 0.08, 1.3]} radius={0.03} smoothness={2} position={[0, 0.9, 0]} castShadow receiveShadow>
+      <RoundedBox args={[2.36, 0.08, 1.3]} radius={0.03} smoothness={4} position={[0, 0.9, 0]} castShadow receiveShadow>
         <meshStandardMaterial color="#b88d63" roughness={0.6} />
       </RoundedBox>
       {/* Plank lines on the front */}
@@ -123,7 +169,7 @@ export function Stall({
       {[-1, 1].flatMap((sx) =>
         [-1, 1].map((sz) => (
           <mesh key={`${sx}${sz}`} position={[sx * 1.12, 1.15, sz * 0.6]} castShadow>
-            <cylinderGeometry args={[0.045, 0.055, 2.3, 12]} />
+            <cylinderGeometry args={[0.045, 0.055, 2.3, 48]} />
             <meshStandardMaterial color={WOOD_DARK} roughness={0.8} />
           </mesh>
         ))
@@ -146,7 +192,7 @@ export function Stall({
           key={i}
           args={[0.42, 0.34, 0.42]}
           radius={0.03}
-          smoothness={2}
+          smoothness={4}
           position={[1.45, 0.17 + (i === 2 ? 0.34 : 0), -0.25 + (i % 2) * 0.48]}
           rotation={[0, i * 0.4, 0]}
           castShadow
@@ -190,10 +236,7 @@ export function Plazas({ districts }: { districts: District[] }) {
     () =>
       new Map(
         districts.map((d) => {
-          const t = cobblestones().clone();
-          t.repeat.set(d.w / 2.6, d.d / 2.6);
-          t.needsUpdate = true;
-          return [d.id, t] as const;
+          return [d.id, cobbleMaps(d.w / 2.6, d.d / 2.6)] as const;
         })
       ),
     [districts]
@@ -206,7 +249,7 @@ export function Plazas({ districts }: { districts: District[] }) {
           <group key={d.id} position={[d.x, 0, d.z]}>
             <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.02, 0]} receiveShadow>
               <planeGeometry args={[d.w, d.d]} />
-              <meshStandardMaterial map={t} roughness={0.9} polygonOffset polygonOffsetFactor={-2} />
+              <meshStandardMaterial map={t.map} bumpMap={t.bump} bumpScale={2.2} roughness={0.9} polygonOffset polygonOffsetFactor={-2} />
             </mesh>
             {/* Kerb in the district colour */}
             {(
@@ -225,10 +268,10 @@ export function Plazas({ districts }: { districts: District[] }) {
             {/* Signpost */}
             <group position={[-d.w / 2 + 0.4, 0, -d.d / 2 - 0.5]}>
               <mesh position={[0, 1.1, 0]} castShadow>
-                <cylinderGeometry args={[0.07, 0.08, 2.2, 12]} />
+                <cylinderGeometry args={[0.07, 0.08, 2.2, 48]} />
                 <meshStandardMaterial color={WOOD_DARK} roughness={0.85} />
               </mesh>
-              <RoundedBox args={[2.2, 0.5, 0.08]} radius={0.05} smoothness={2} position={[1.05, 1.95, 0]} castShadow>
+              <RoundedBox args={[2.2, 0.5, 0.08]} radius={0.05} smoothness={4} position={[1.05, 1.95, 0]} castShadow>
                 <meshStandardMaterial color="#7d5a3e" roughness={0.8} />
               </RoundedBox>
               <Text position={[1.05, 1.95, 0.05]} fontSize={0.24} letterSpacing={0.08} anchorX="center" anchorY="middle" color="#fff6e3">
@@ -246,7 +289,26 @@ export function Plazas({ districts }: { districts: District[] }) {
   );
 }
 
+/** Soft radial glow texture for light pools on the ground at night. */
+let glowTex: THREE.CanvasTexture | null = null;
+function glowTexture() {
+  if (glowTex) return glowTex;
+  const c = document.createElement("canvas");
+  c.width = c.height = 128;
+  const ctx = c.getContext("2d")!;
+  const g = ctx.createRadialGradient(64, 64, 0, 64, 64, 64);
+  g.addColorStop(0, "rgba(255,200,130,0.85)");
+  g.addColorStop(0.4, "rgba(255,190,120,0.35)");
+  g.addColorStop(1, "rgba(255,180,110,0)");
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, 128, 128);
+  glowTex = new THREE.CanvasTexture(c);
+  glowTex.colorSpace = THREE.SRGBColorSpace;
+  return glowTex;
+}
+
 export function Lamps() {
+  const { night } = useNight();
   const posts = useMemo(() => {
     const out: { x: number; z: number }[] = [];
     const n = 20;
@@ -262,7 +324,7 @@ export function Lamps() {
       {posts.map((p, i) => (
         <group key={i} position={[p.x, 0, p.z]}>
           <mesh position={[0, 1.35, 0]} castShadow>
-            <cylinderGeometry args={[0.05, 0.08, 2.7, 12]} />
+            <cylinderGeometry args={[0.05, 0.08, 2.7, 48]} />
             <meshStandardMaterial color="#2d3530" metalness={0.6} roughness={0.45} />
           </mesh>
           <mesh position={[0, 2.82, 0]}>
@@ -270,9 +332,15 @@ export function Lamps() {
             <meshStandardMaterial color="#2d3530" metalness={0.6} roughness={0.45} />
           </mesh>
           <mesh position={[0, 2.66, 0]}>
-            <sphereGeometry args={[0.13, 18, 14]} />
-            <meshStandardMaterial color="#ffd89a" emissive="#ffc46b" emissiveIntensity={2.2} toneMapped={false} />
+            <sphereGeometry args={[0.13, 48, 32]} />
+            <meshStandardMaterial color="#ffd89a" emissive="#ffc46b" emissiveIntensity={night ? 7 : 2.2} toneMapped={false} />
           </mesh>
+          {night && (
+            <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.05, 0]} renderOrder={2}>
+              <planeGeometry args={[4.6, 4.6]} />
+              <meshBasicMaterial map={glowTexture()} transparent opacity={0.75} depthWrite={false} blending={THREE.AdditiveBlending} toneMapped={false} />
+            </mesh>
+          )}
         </group>
       ))}
     </>
@@ -282,6 +350,8 @@ export function Lamps() {
 /* ── Court hall ─────────────────────────────────────────────────────────── */
 
 export function CourtHall({ x, z }: { x: number; z: number }) {
+  const shaft = useMemo(() => flutedColumnGeometry(3.4, 0.26), []);
+  const { night } = useNight();
   const rot = Math.atan2(VILLAGE.cx - x, VILLAGE.cz - z);
   const pediment = useMemo(() => {
     const s = new THREE.Shape();
@@ -289,7 +359,7 @@ export function CourtHall({ x, z }: { x: number; z: number }) {
     s.lineTo(4.4, 0);
     s.lineTo(0, 1.6);
     s.closePath();
-    const g = new THREE.ExtrudeGeometry(s, { depth: 6.6, bevelEnabled: true, bevelSize: 0.06, bevelThickness: 0.06, bevelSegments: 2 });
+    const g = new THREE.ExtrudeGeometry(s, { depth: 6.6, bevelEnabled: true, bevelSize: 0.06, bevelThickness: 0.06, bevelSegments: 6 });
     g.translate(0, 0, -3.3);
     return g;
   }, []);
@@ -297,28 +367,30 @@ export function CourtHall({ x, z }: { x: number; z: number }) {
     <group position={[x, 0, z]} rotation={[0, rot, 0]}>
       {/* Steps */}
       {[0, 1, 2].map((i) => (
-        <RoundedBox key={i} args={[9.2 - i * 0.5, 0.22, 7.6 - i * 0.5]} radius={0.04} smoothness={2} position={[0, 0.11 + i * 0.22, 0]} castShadow receiveShadow>
+        <RoundedBox key={i} args={[9.2 - i * 0.5, 0.22, 7.6 - i * 0.5]} radius={0.04} smoothness={4} position={[0, 0.11 + i * 0.22, 0]} castShadow receiveShadow>
           <meshStandardMaterial color="#c2baa6" roughness={0.8} />
         </RoundedBox>
       ))}
-      {/* Inner hall */}
-      <RoundedBox args={[6.6, 3.2, 4.4]} radius={0.06} smoothness={2} position={[0, 0.66 + 1.6, -0.7]} castShadow receiveShadow>
-        <meshStandardMaterial color="#d6cdb8" roughness={0.85} />
-      </RoundedBox>
+      {/* The hall itself is open to the portico: bench, jury, parties */}
+      <CourtInterior night={night} />
+      <CourtGrounds />
       {/* Columns */}
       {[-3.4, -2.04, -0.68, 0.68, 2.04, 3.4].map((cx) => (
         <group key={cx} position={[cx, 0.66, 2.75]}>
-          <mesh position={[0, 1.7, 0]} castShadow>
-            <cylinderGeometry args={[0.24, 0.28, 3.4, 28]} />
+          <mesh geometry={shaft} position={[0, 1.7, 0]} castShadow receiveShadow>
             <meshStandardMaterial color="#ddd4bf" roughness={0.7} />
           </mesh>
-          <RoundedBox args={[0.7, 0.18, 0.7]} radius={0.03} smoothness={2} position={[0, 3.45, 0]} castShadow>
+          <mesh position={[0, 0.06, 0]} castShadow receiveShadow>
+            <cylinderGeometry args={[0.36, 0.38, 0.12, 64]} />
+            <meshStandardMaterial color="#d1c7b1" roughness={0.75} />
+          </mesh>
+          <RoundedBox args={[0.7, 0.18, 0.7]} radius={0.03} smoothness={4} position={[0, 3.45, 0]} castShadow>
             <meshStandardMaterial color="#d1c7b1" roughness={0.75} />
           </RoundedBox>
         </group>
       ))}
       {/* Entablature + copper roof */}
-      <RoundedBox args={[8.8, 0.45, 6.6]} radius={0.05} smoothness={2} position={[0, 4.35, 0]} castShadow receiveShadow>
+      <RoundedBox args={[8.8, 0.45, 6.6]} radius={0.05} smoothness={4} position={[0, 4.35, 0]} castShadow receiveShadow>
         <meshStandardMaterial color="#d1c7b1" roughness={0.75} />
       </RoundedBox>
       <mesh geometry={pediment} position={[0, 4.58, 0]} castShadow receiveShadow>

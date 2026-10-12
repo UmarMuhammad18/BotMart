@@ -96,7 +96,7 @@ export function WorldOverlay({
           ) : replaying ? (
             "Staging the next negotiation…"
           ) : (
-            "Floor is quiet. Run buyers from Agents, or replay recent deals."
+            "The market is quiet. Run buyers from Agents, or replay recent deals."
           )}
         </div>
       </div>

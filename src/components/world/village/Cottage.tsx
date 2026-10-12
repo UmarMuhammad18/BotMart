@@ -3,6 +3,7 @@
 import { RoundedBox, Text } from "@react-three/drei";
 import { useMemo } from "react";
 import * as THREE from "three";
+import { useNight } from "./night";
 
 /** Roof tones per role: natural materials, nudged toward the role colour. */
 const ROOF: Record<string, string> = {
@@ -34,11 +35,12 @@ function gableGeometry(width: number, height: number, depth: number) {
 }
 
 function Window({ position, rotation = 0 }: { position: [number, number, number]; rotation?: number }) {
+  const { night } = useNight();
   return (
     <group position={position} rotation={[0, rotation, 0]}>
       <mesh position={[0, 0, 0.01]}>
         <planeGeometry args={[0.74, 0.86]} />
-        <meshStandardMaterial color={WINDOW} emissive={WINDOW} emissiveIntensity={1.4} toneMapped={false} />
+        <meshStandardMaterial color={WINDOW} emissive={WINDOW} emissiveIntensity={night ? 3.2 : 1.4} toneMapped={false} />
       </mesh>
       {/* frame + mullions */}
       {[
@@ -85,6 +87,7 @@ export function Cottage({
   onSelect: () => void;
 }) {
   const gable = useMemo(() => gableGeometry(4.5, 1.75, 0.2), []);
+  const { night, lights } = useNight();
   const roof = roofFor(role);
   const W = 4.6; // wall width (x)
   const D = 3.9; // wall depth (z)
@@ -152,22 +155,22 @@ export function Cottage({
       ))}
       {/* Ridge cap */}
       <mesh position={[0, base + H + 1.78, 0]} rotation={[Math.PI / 2, 0, 0]} castShadow>
-        <cylinderGeometry args={[0.13, 0.13, D + 0.95, 16]} />
+        <cylinderGeometry args={[0.13, 0.13, D + 0.95, 48]} />
         <meshStandardMaterial color={new THREE.Color(roof).offsetHSL(0, 0, -0.08)} roughness={0.7} />
       </mesh>
 
       {/* Chimney */}
-      <RoundedBox args={[0.55, 1.5, 0.55]} radius={0.05} smoothness={2} position={[-1.15, base + H + 1.45, -0.7]} castShadow>
+      <RoundedBox args={[0.55, 1.5, 0.55]} radius={0.05} smoothness={4} position={[-1.15, base + H + 1.45, -0.7]} castShadow>
         <meshStandardMaterial color={STONE} roughness={0.9} />
       </RoundedBox>
 
       {/* Front: door between two lit windows */}
       <group position={[0, base, D / 2 + 0.02]}>
-        <RoundedBox args={[0.95, 1.75, 0.1]} radius={0.04} smoothness={2} position={[0, 0.88, 0.02]} castShadow>
+        <RoundedBox args={[0.95, 1.75, 0.1]} radius={0.04} smoothness={4} position={[0, 0.88, 0.02]} castShadow>
           <meshStandardMaterial color="#6b4a32" roughness={0.75} />
         </RoundedBox>
         <mesh position={[0.3, 0.9, 0.09]}>
-          <sphereGeometry args={[0.045, 16, 12]} />
+          <sphereGeometry args={[0.045, 48, 32]} />
           <meshStandardMaterial color="#d6b56c" metalness={0.8} roughness={0.3} />
         </mesh>
         <Window position={[-1.45, 1.35, 0]} />
@@ -177,13 +180,13 @@ export function Cottage({
       <Window position={[-(W / 2 + 0.02), base + 1.35, 0]} rotation={-Math.PI / 2} />
 
       {/* Porch deck */}
-      <RoundedBox args={[W + 0.2, 0.14, 1.9]} radius={0.04} smoothness={2} position={[0, 0.07, D / 2 + 1.15]} receiveShadow castShadow>
+      <RoundedBox args={[W + 0.2, 0.14, 1.9]} radius={0.04} smoothness={4} position={[0, 0.07, D / 2 + 1.15]} receiveShadow castShadow>
         <meshStandardMaterial color="#8a6748" roughness={0.85} />
       </RoundedBox>
 
       {/* Desktop station: desk, monitor (screen faces the square), keyboard */}
       <group position={[0, 0.14, D / 2 + 0.75]}>
-        <RoundedBox args={[1.6, 0.08, 0.7]} radius={0.03} smoothness={2} position={[0, 0.78, 0]} castShadow receiveShadow>
+        <RoundedBox args={[1.6, 0.08, 0.7]} radius={0.03} smoothness={4} position={[0, 0.78, 0]} castShadow receiveShadow>
           <meshStandardMaterial color="#a57b52" roughness={0.6} />
         </RoundedBox>
         {[-0.7, 0.7].map((lx) => (
@@ -194,14 +197,14 @@ export function Cottage({
         ))}
         <group position={[0, 0.82, -0.12]}>
           <mesh position={[0, 0.06, 0]} castShadow>
-            <cylinderGeometry args={[0.12, 0.16, 0.04, 24]} />
+            <cylinderGeometry args={[0.12, 0.16, 0.04, 64]} />
             <meshStandardMaterial color="#20262b" metalness={0.6} roughness={0.35} />
           </mesh>
           <mesh position={[0, 0.25, 0]}>
             <boxGeometry args={[0.05, 0.36, 0.05]} />
             <meshStandardMaterial color="#20262b" metalness={0.6} roughness={0.35} />
           </mesh>
-          <RoundedBox args={[1.05, 0.64, 0.05]} radius={0.025} smoothness={2} position={[0, 0.66, 0]} castShadow>
+          <RoundedBox args={[1.05, 0.64, 0.05]} radius={0.025} smoothness={4} position={[0, 0.66, 0]} castShadow>
             <meshStandardMaterial color="#14191d" metalness={0.4} roughness={0.35} />
           </RoundedBox>
           <mesh position={[0, 0.66, 0.03]}>
@@ -220,7 +223,7 @@ export function Cottage({
             {screenText}
           </Text>
         </group>
-        <RoundedBox args={[0.62, 0.03, 0.2]} radius={0.01} smoothness={2} position={[0, 0.84, 0.18]}>
+        <RoundedBox args={[0.62, 0.03, 0.2]} radius={0.01} smoothness={4} position={[0, 0.84, 0.18]}>
           <meshStandardMaterial color="#2a3036" roughness={0.5} />
         </RoundedBox>
       </group>
@@ -228,26 +231,29 @@ export function Cottage({
       {/* Name sign on a post, by the path */}
       <group position={[W / 2 + 0.55, 0, D / 2 + 1.9]}>
         <mesh position={[0, 0.7, 0]} castShadow>
-          <cylinderGeometry args={[0.06, 0.07, 1.4, 12]} />
+          <cylinderGeometry args={[0.06, 0.07, 1.4, 48]} />
           <meshStandardMaterial color={TIMBER} roughness={0.85} />
         </mesh>
-        <RoundedBox args={[1.6, 0.42, 0.08]} radius={0.04} smoothness={2} position={[0, 1.35, 0]} castShadow>
+        <RoundedBox args={[1.6, 0.42, 0.08]} radius={0.04} smoothness={4} position={[0, 1.35, 0]} castShadow>
           <meshStandardMaterial color="#7d5a3e" roughness={0.8} />
         </RoundedBox>
         <Text position={[0, 1.35, 0.05]} fontSize={0.19} anchorX="center" anchorY="middle" color="#fff6e3" maxWidth={1.45}>
           {name}
         </Text>
         <mesh position={[0, 1.62, 0.02]}>
-          <sphereGeometry args={[0.07, 16, 12]} />
+          <sphereGeometry args={[0.07, 48, 32]} />
           <meshStandardMaterial color={accent} emissive={accent} emissiveIntensity={1.5} toneMapped={false} />
         </mesh>
       </group>
 
       {/* Porch lantern */}
       <mesh position={[-1.25, base + 2.05, D / 2 + 0.16]}>
-        <sphereGeometry args={[0.11, 16, 12]} />
-        <meshStandardMaterial color={WINDOW} emissive={WINDOW} emissiveIntensity={2.4} toneMapped={false} />
+        <sphereGeometry args={[0.11, 48, 32]} />
+        <meshStandardMaterial color={WINDOW} emissive={WINDOW} emissiveIntensity={night ? 6 : 2.4} toneMapped={false} />
       </mesh>
+      {night && lights && (
+        <pointLight position={[-1.25, base + 1.9, D / 2 + 0.6]} color="#ffc98a" intensity={7} distance={7} decay={1.7} />
+      )}
 
       {selected && (
         <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.03, 0]}>

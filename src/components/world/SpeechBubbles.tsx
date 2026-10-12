@@ -17,9 +17,9 @@ export type BubbleRegistry = RefObject<Map<string, HTMLDivElement>>;
 
 const TONE_STYLE: Record<BubbleTone, string> = {
   offer: "border-sky-500/50 bg-paper/95 text-ink",
-  counter: "border-amber-500/60 bg-[#fdf6e3]/95 text-ink",
-  accept: "border-emerald-500/70 bg-[#e7f4e0]/95 text-ink",
-  reject: "border-rose-500/60 bg-[#fbeceb]/95 text-ink",
+  counter: "border-amber-500/60 bg-[#fdf6e3]/95 dark:bg-[#2a2210]/95 text-ink",
+  accept: "border-emerald-500/70 bg-[#e7f4e0]/95 dark:bg-[#12301d]/95 text-ink",
+  reject: "border-rose-500/60 bg-[#fbeceb]/95 dark:bg-[#331713]/95 text-ink",
   info: "border-ink/15 bg-zinc-100/90 text-zinc-800",
 };
 const LEADER: Record<BubbleTone, string> = {

@@ -95,7 +95,6 @@ export default function ListingsPage() {
 
   useEffect(() => {
     Promise.all([fetchListings(), fetchAgents()]);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   async function fetchListings(params?: { q?: string; maxPrice?: string; category?: string }) {

@@ -41,7 +41,7 @@ export function HeroBot({
     <div className="relative mx-auto aspect-[5/6] w-full max-w-[520px] sm:aspect-square lg:mr-0">
       {/* Daylight behind the island */}
       <div
-        className="absolute inset-[6%] rounded-full bg-[radial-gradient(closest-side,#fff6d8_0%,rgba(255,246,216,0.4)_45%,transparent_72%)]"
+        className="absolute inset-[6%] rounded-full bg-[radial-gradient(closest-side,#fff6d8_0%,rgba(255,246,216,0.4)_45%,transparent_72%)] dark:bg-[radial-gradient(closest-side,rgba(150,180,230,0.18)_0%,rgba(150,180,230,0.06)_45%,transparent_72%)]"
         aria-hidden
       />
       <div

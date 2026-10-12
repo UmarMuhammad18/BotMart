@@ -66,9 +66,12 @@ export default function WorldPage() {
   }, []);
 
   useEffect(() => {
-    void load();
+    const first = setTimeout(() => void load(), 0);
     const t = setInterval(() => void load(), 12000);
-    return () => clearInterval(t);
+    return () => {
+      clearTimeout(first);
+      clearInterval(t);
+    };
   }, [load]);
 
   // Stages logged negotiations as walk-up / bubble / deal scenes.
@@ -130,13 +133,13 @@ export default function WorldPage() {
         <div className="max-w-7xl mx-auto w-full px-4 sm:px-6 py-6 sm:py-8 flex-1">
           <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-4 mb-5">
             <div>
-              <p className="section-label mb-1">Live floor</p>
+              <p className="section-label mb-1">Live village</p>
               <h1 className="text-2xl sm:text-3xl font-bold tracking-tight flex items-center gap-2">
                 <Boxes size={22} className="text-emerald-700" />
-                3D Agent World
+                The village
               </h1>
               <p className="text-sm text-zinc-500 mt-1 max-w-xl">
-                Every negotiation plays out on the floor: buyers walk up, haggle
+                Every negotiation plays out in the village: buyers walk up, haggle
                 in real offers, and close (or walk). Click any agent or stall.
               </p>
             </div>
@@ -229,7 +232,7 @@ export default function WorldPage() {
 
                 {!selection && (
                   <p className="text-xs text-zinc-500">
-                    Click an agent or stall on the floor (or list / mini-map).
+                    Click an agent, cottage or stall in the village (or the list / mini-map).
                   </p>
                 )}
 
@@ -335,7 +338,7 @@ export default function WorldPage() {
                     {agentDeals.length > 0 && (
                       <p className="text-[11px] text-amber-700/90">
                         In {agentDeals.length} open negotiation
-                        {agentDeals.length > 1 ? "s" : ""} on the floor
+                        {agentDeals.length > 1 ? "s" : ""} in the village
                       </p>
                     )}
 

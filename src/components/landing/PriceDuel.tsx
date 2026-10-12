@@ -16,8 +16,9 @@ export type DuelData = {
 const W = 600;
 const H = 400;
 const BOX = { width: W, height: H, padX: 56, padTop: 54, padBottom: 44 };
-const BUYER = "#5a7012"; // olive: the offer climbing
-const SELLER = "#2e7a34"; // meadow: the ask falling
+/** Theme-aware (see --duel-* in globals.css): olive offer, meadow ask. */
+const BUYER = "var(--duel-buyer)";
+const SELLER = "var(--duel-seller)";
 
 const money = (n: number) => `£${Math.round(n)}`;
 
@@ -122,11 +123,11 @@ export function PriceDuel({
           x2={W - BOX.padX + 12}
           y1={g.seller[0].y}
           y2={g.seller[0].y}
-          stroke={SELLER}
+          style={{ stroke: SELLER }}
           strokeOpacity="0.25"
           strokeDasharray="3 6"
         />
-        <text x={W - BOX.padX + 12} y={g.seller[0].y - 8} textAnchor="end" className="font-mono text-[12px]" fill={SELLER} fillOpacity="0.7">
+        <text x={W - BOX.padX + 12} y={g.seller[0].y - 8} textAnchor="end" className="font-mono text-[12px]" style={{ fill: SELLER }} fillOpacity="0.7">
           asking {money(duel.askPrice)}
         </text>
 
@@ -140,7 +141,7 @@ export function PriceDuel({
                 key={`${duel.key}-${side}-${i}`}
                 d={segmentPath(pts[i], p)}
                 fill="none"
-                stroke={color}
+                style={{ stroke: color }}
                 strokeWidth={3}
                 strokeLinecap="round"
                 pathLength={1}
@@ -166,15 +167,15 @@ export function PriceDuel({
           [sellerHead, buyerHead].map((h) =>
             h ? (
               <g key={`${duel.key}-head-${h.side}-${h.step}`} className="duel-fade">
-                <circle cx={h.x} cy={h.y} r={6} fill={h.side === "buyer" ? BUYER : SELLER} />
-                <circle cx={h.x} cy={h.y} r={13} fill="none" stroke={h.side === "buyer" ? BUYER : SELLER} strokeOpacity="0.35" className="duel-ping" />
+                <circle cx={h.x} cy={h.y} r={6} style={{ fill: h.side === "buyer" ? BUYER : SELLER }} />
+                <circle cx={h.x} cy={h.y} r={13} fill="none" style={{ stroke: h.side === "buyer" ? BUYER : SELLER }} strokeOpacity="0.35" className="duel-ping" />
                 <text
                   // Near the y-axis, sit to the right of the point so the tick labels stay clear
                   x={h.x < BOX.padX + 60 ? h.x + 18 : h.x}
                   y={h.side === "seller" ? h.y - 16 : h.y + 30}
                   textAnchor={h.x < BOX.padX + 60 ? "start" : h.x > W - 140 ? "end" : "middle"}
                   className="font-semibold tabular-nums text-[22px]"
-                  fill={h.side === "buyer" ? BUYER : SELLER}
+                  style={{ fill: h.side === "buyer" ? BUYER : SELLER }}
                 >
                   {money(h.price)}
                 </text>
@@ -186,8 +187,8 @@ export function PriceDuel({
         {dealt && (
           <g key={`${duel.key}-deal`} className="duel-after-draw">
             <circle cx={dealt.x} cy={dealt.y} r={70} fill="url(#duel-burst)" className="duel-burst" />
-            <circle cx={dealt.x} cy={dealt.y} r={9} fill="#2e7a34" filter="url(#duel-glow)" />
-            <circle cx={dealt.x} cy={dealt.y} r={24} fill="none" stroke="#3a8f3b" strokeWidth={2} className="duel-ring" />
+            <circle cx={dealt.x} cy={dealt.y} r={9} style={{ fill: SELLER }} filter="url(#duel-glow)" />
+            <circle cx={dealt.x} cy={dealt.y} r={24} fill="none" style={{ stroke: SELLER }} strokeWidth={2} className="duel-ring" />
             <text x={dealt.x - 20} y={dealt.y - 34} textAnchor="end" className="duel-fade fill-ink text-[44px] font-semibold tabular-nums tracking-tight">
               {money(dealt.price)}
             </text>

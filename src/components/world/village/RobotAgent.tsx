@@ -7,18 +7,21 @@ import * as THREE from "three";
 import { clone as cloneSkinned } from "three/examples/jsm/utils/SkeletonUtils.js";
 import { mergeVertices } from "three/examples/jsm/utils/BufferGeometryUtils.js";
 import { ROLE_BY_ID } from "@/lib/agents/roles";
+import { phongSubdivide } from "@/lib/world/subdivide";
 import type { WorldAgent, WorldStall } from "@/lib/types";
 import type { WorldDirector } from "@/lib/world/director";
 import { wanderTarget } from "@/components/world/busyMotion";
 
 /** "RobotExpressive" by Tomás Laulhé, CC0 (see public/models/CREDITS.md). */
-const MODEL = "/models/robot.glb";
+export const MODEL = "/models/robot.glb";
 useGLTF.preload(MODEL);
 
 /**
- * The source model is flat-shaded (unwelded triangles). Weld each mesh's
- * vertices once and recompute normals so the robots read smooth, not faceted.
- * Clones share geometry, so this runs on the shared GLTF scene.
+ * The source model is flat-shaded and low poly (~3k triangles). Weld each
+ * mesh's vertices, then run two passes of Phong tessellation (~52k triangles,
+ * skin weights and facial morphs carried along) so the robots read smooth
+ * and rounded without losing volume. Clones share geometry, so this runs
+ * once on the GLTF scene.
  */
 const smoothed = new WeakSet<THREE.Object3D>();
 export function smoothModel(scene: THREE.Object3D) {
@@ -27,15 +30,38 @@ export function smoothModel(scene: THREE.Object3D) {
   scene.traverse((o) => {
     const mesh = o as THREE.Mesh;
     if (!mesh.isMesh) return;
-    const welded = mergeVertices(mesh.geometry.clone().deleteAttribute("normal"), 1e-4);
-    welded.computeVertexNormals();
-    mesh.geometry = welded;
+    const source = mesh.geometry.clone().deleteAttribute("normal");
+    delete source.morphAttributes.normal;
+    const welded = mergeVertices(source, 1e-4);
+    mesh.geometry = phongSubdivide(welded, 2);
     const mat = mesh.material as THREE.MeshStandardMaterial;
     if (mat.flatShading) {
       mat.flatShading = false;
       mat.needsUpdate = true;
     }
   });
+}
+
+/** A smoothed, skinned copy of the robot tinted `color`, with the scale that makes it `height` tall. */
+export function robotCopy(scene: THREE.Object3D, color: string, height: number) {
+  smoothModel(scene);
+  const copy = cloneSkinned(scene) as THREE.Group;
+  const tint = new THREE.Color(color);
+  copy.traverse((o) => {
+    const mesh = o as THREE.Mesh;
+    if (!mesh.isMesh) return;
+    mesh.castShadow = true;
+    mesh.receiveShadow = true;
+    const mat = (mesh.material as THREE.MeshStandardMaterial).clone();
+    if (mat.name === "Main") {
+      mat.color = tint.clone().lerp(new THREE.Color("#ffffff"), 0.12);
+      mat.roughness = 0.42;
+      mat.metalness = 0.15;
+    }
+    mesh.material = mat;
+  });
+  const box = new THREE.Box3().setFromObject(scene);
+  return { model: copy, scale: height / Math.max(0.001, box.max.y - box.min.y) };
 }
 
 /** Rendered height of an agent in world units. */
@@ -174,26 +200,7 @@ export function RobotAgent({
   const color = ROLE_BY_ID[agent.role]?.hex || "#94a3b8";
 
   // Own skinned copy per agent, tinted by role, scaled to HEIGHT
-  const { model, scale } = useMemo(() => {
-    smoothModel(scene);
-    const copy = cloneSkinned(scene) as THREE.Group;
-    const tint = new THREE.Color(color);
-    copy.traverse((o) => {
-      const mesh = o as THREE.Mesh;
-      if (!mesh.isMesh) return;
-      mesh.castShadow = true;
-      mesh.receiveShadow = true;
-      const mat = (mesh.material as THREE.MeshStandardMaterial).clone();
-      if (mat.name === "Main") {
-        mat.color = tint.clone().lerp(new THREE.Color("#ffffff"), 0.12);
-        mat.roughness = 0.42;
-        mat.metalness = 0.15;
-      }
-      mesh.material = mat;
-    });
-    const box = new THREE.Box3().setFromObject(scene);
-    return { model: copy, scale: HEIGHT / Math.max(0.001, box.max.y - box.min.y) };
-  }, [scene, color]);
+  const { model, scale } = useMemo(() => robotCopy(scene, color, HEIGHT), [scene, color]);
 
   const { actions } = useAnimations(animations, root);
 
@@ -238,7 +245,7 @@ export function RobotAgent({
           {short}
         </Text>
         <mesh position={[0, -0.07, 0]}>
-          <circleGeometry args={[0.05, 16]} />
+          <circleGeometry args={[0.05, 48]} />
           <meshBasicMaterial color={color} toneMapped={false} />
         </mesh>
       </Billboard>

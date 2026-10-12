@@ -85,9 +85,13 @@ export default function DashboardPage() {
   }
 
   useEffect(() => {
-    load();
+    // First load on the next tick, not synchronously inside the effect
+    const first = setTimeout(() => load(), 0);
     const t = setInterval(() => load(true), 5000);
-    return () => clearInterval(t);
+    return () => {
+      clearTimeout(first);
+      clearInterval(t);
+    };
   }, []);
 
   async function setAgentStatus(id: string, status: string) {
@@ -287,7 +291,7 @@ export default function DashboardPage() {
                         {agent.status !== "paused" && (
                           <button
                             onClick={() => setAgentStatus(agent.id, "paused")}
-                            className="text-xs px-3 min-h-[44px] sm:min-h-[36px] rounded-lg bg-amber-500/10 text-amber-700 hover:bg-amber-500/20 flex items-center gap-1 transition"
+                            className="text-xs px-3 min-h-[44px] sm:min-h-[36px] rounded-lg bg-amber-500/10 text-amber-800 hover:bg-amber-500/20 flex items-center gap-1 transition"
                             id={`btn-pause-${agent.id}`}
                           >
                             <Pause size={11} /> Pause

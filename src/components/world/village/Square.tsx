@@ -5,21 +5,19 @@ import { useLayoutEffect, useMemo, useRef } from "react";
 import * as THREE from "three";
 import { VILLAGE } from "@/lib/world/districts";
 import { seeded, ZONES } from "@/lib/world/terrain";
-import { cobblestones } from "./Market";
+import { cobbleMaps } from "./Market";
 
 /** The market square: cobbles up to the road, a fountain, barrels, bunting. */
 export function MarketSquare() {
   const tex = useMemo(() => {
-    const t = cobblestones().clone();
-    t.repeat.set((ZONES.marketRadius * 2) / 2.2, (ZONES.marketRadius * 2) / 2.2);
-    t.needsUpdate = true;
-    return t;
+    const r = (ZONES.marketRadius * 2) / 2.2;
+    return cobbleMaps(r, r);
   }, []);
   return (
     <group position={[VILLAGE.cx, 0, VILLAGE.cz]}>
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.012, 0]} receiveShadow>
         <circleGeometry args={[ZONES.marketRadius, 128]} />
-        <meshStandardMaterial map={tex} color="#e6dcc4" roughness={0.92} polygonOffset polygonOffsetFactor={-1} />
+        <meshStandardMaterial map={tex.map} bumpMap={tex.bump} bumpScale={2.2} color="#e6dcc4" roughness={0.92} polygonOffset polygonOffsetFactor={-1} />
       </mesh>
       {/* Kerb stones at the edge of the square */}
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.03, 0]} receiveShadow>
@@ -45,7 +43,7 @@ function Fountain() {
         <meshPhysicalMaterial color="#3f8f8a" roughness={0.06} metalness={0.1} clearcoat={1} clearcoatRoughness={0.05} envMapIntensity={1.4} />
       </mesh>
       <mesh position={[0, 1.15, 0]} castShadow>
-        <cylinderGeometry args={[0.22, 0.32, 1.3, 32]} />
+        <cylinderGeometry args={[0.22, 0.32, 1.3, 64]} />
         <meshStandardMaterial color={stone} roughness={0.8} />
       </mesh>
       <mesh position={[0, 1.82, 0]} castShadow receiveShadow>
@@ -78,7 +76,7 @@ function Barrels() {
       {spots.map((b, i) => (
         <group key={i} position={[b.x, 0, b.z]} rotation={[0, b.rot, 0]}>
           <mesh position={[0, 0.42, 0]} castShadow receiveShadow>
-            <cylinderGeometry args={[0.3, 0.3, 0.84, 28]} />
+            <cylinderGeometry args={[0.3, 0.3, 0.84, 64]} />
             <meshStandardMaterial color="#8b6342" roughness={0.75} />
           </mesh>
           {[0.14, 0.7].map((y) => (

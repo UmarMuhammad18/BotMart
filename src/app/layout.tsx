@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import { THEME_SCRIPT } from "@/lib/theme-script";
 
 const geist = Geist({
   subsets: ["latin"],
@@ -42,15 +43,19 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={`${geist.variable} ${geistMono.variable} h-full antialiased`}>
+    // suppressHydrationWarning: THEME_SCRIPT sets the `dark` class before React hydrates
+    <html lang="en" className={`${geist.variable} ${geistMono.variable} h-full antialiased`} suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }} />
+      </head>
       <body className="min-h-full flex flex-col bg-background text-zinc-900 font-sans relative">
         <a
           href="#main"
-          className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-3 focus:z-[100] focus:rounded-lg focus:bg-emerald-600 focus:px-4 focus:py-2.5 focus:text-sm focus:font-semibold focus:text-ink"
+          className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-3 focus:z-[100] focus:rounded-lg focus:bg-emerald-600 focus:px-4 focus:py-2.5 focus:text-sm focus:font-semibold focus:text-paper"
         >
           Skip to content
         </a>
-        {/* Single ambient light in the brand accent */}
+        {/* Soft sun-wash by day, moon-wash at night */}
         <div className="orb orb-1" aria-hidden />
         <div className="relative z-10 flex flex-col min-h-full">{children}</div>
       </body>

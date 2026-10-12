@@ -19,7 +19,7 @@ import {
 } from "@/lib/world/terrain";
 
 const SIZE = 200;
-const SEGMENTS = 240;
+const SEGMENTS = 320;
 const _m = new THREE.Matrix4();
 const _q = new THREE.Quaternion();
 const _s = new THREE.Vector3();
@@ -164,7 +164,7 @@ export function Grass({ homes, count }: { homes: Footprint[]; count: number }) {
 /** Smooth, slightly lumpy canopy blob (high detail, not low poly). */
 function canopyGeometry() {
   // Polyhedra are non-indexed (flat normals): weld vertices so shading is smooth
-  const g = mergeVertices(new THREE.IcosahedronGeometry(1, 4).deleteAttribute("normal").deleteAttribute("uv"));
+  const g = mergeVertices(new THREE.IcosahedronGeometry(1, 6).deleteAttribute("normal").deleteAttribute("uv"));
   const pos = g.attributes.position as THREE.BufferAttribute;
   const v = new THREE.Vector3();
   for (let i = 0; i < pos.count; i++) {
@@ -178,7 +178,7 @@ function canopyGeometry() {
 }
 
 function rockGeometry() {
-  const g = mergeVertices(new THREE.DodecahedronGeometry(1, 2).deleteAttribute("normal").deleteAttribute("uv"));
+  const g = mergeVertices(new THREE.DodecahedronGeometry(1, 4).deleteAttribute("normal").deleteAttribute("uv"));
   const pos = g.attributes.position as THREE.BufferAttribute;
   const v = new THREE.Vector3();
   for (let i = 0; i < pos.count; i++) {
@@ -231,9 +231,9 @@ export function Trees({ homes }: { homes: Footprint[] }) {
 
   const geo = useMemo(
     () => ({
-      trunk: new THREE.CylinderGeometry(0.16, 0.28, 2.6, 14, 3).translate(0, 1.3, 0),
+      trunk: new THREE.CylinderGeometry(0.16, 0.28, 2.6, 32, 6).translate(0, 1.3, 0),
       crown: canopyGeometry(),
-      cone: new THREE.ConeGeometry(1, 1.9, 28, 2).translate(0, 0.95, 0),
+      cone: new THREE.ConeGeometry(1, 1.9, 64, 4).translate(0, 0.95, 0),
     }),
     []
   );
@@ -307,7 +307,7 @@ export function Undergrowth({ homes }: { homes: Footprint[] }) {
   const flowers = useRef<THREE.InstancedMesh>(null);
   const rocks = useRef<THREE.InstancedMesh>(null);
   const geo = useMemo(
-    () => ({ bush: canopyGeometry(), flower: new THREE.IcosahedronGeometry(1, 2), rock: rockGeometry() }),
+    () => ({ bush: canopyGeometry(), flower: new THREE.IcosahedronGeometry(1, 3), rock: rockGeometry() }),
     []
   );
   const counts = { bush: 140, flower: 1100, rock: 46 };

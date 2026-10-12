@@ -74,30 +74,34 @@ export function NegotiateClient() {
 
   useEffect(() => {
     if (bootstrapped.current) return;
-    const demo = searchParams.get("demo");
-    const start = searchParams.get("start");
+    // Hand-off from the hero demo or a listing: pick it up on the next tick
+    const t = setTimeout(() => {
+      const demo = searchParams.get("demo");
+      const start = searchParams.get("start");
 
-    if (demo === "1") {
-      const raw = sessionStorage.getItem("botmart-demo-neg");
-      if (raw) {
-        bootstrapped.current = true;
-        const neg = JSON.parse(raw) as Negotiation;
-        setNegotiation(neg);
-        sessionStorage.removeItem("botmart-demo-neg");
-        setTimeout(() => void autoRunNegotiation(neg), 600);
+      if (demo === "1") {
+        const raw = sessionStorage.getItem("botmart-demo-neg");
+        if (raw) {
+          bootstrapped.current = true;
+          const neg = JSON.parse(raw) as Negotiation;
+          setNegotiation(neg);
+          sessionStorage.removeItem("botmart-demo-neg");
+          setTimeout(() => void autoRunNegotiation(neg), 600);
+        }
       }
-    }
-    if (start === "1") {
-      const raw = sessionStorage.getItem("botmart-start");
-      if (raw) {
-        bootstrapped.current = true;
-        const parsed = JSON.parse(raw) as { buyerId: string; listingId: string };
-        setBuyerId(parsed.buyerId);
-        setListingId(parsed.listingId);
-        sessionStorage.removeItem("botmart-start");
-        void startNegotiation(parsed.buyerId, parsed.listingId);
+      if (start === "1") {
+        const raw = sessionStorage.getItem("botmart-start");
+        if (raw) {
+          bootstrapped.current = true;
+          const parsed = JSON.parse(raw) as { buyerId: string; listingId: string };
+          setBuyerId(parsed.buyerId);
+          setListingId(parsed.listingId);
+          sessionStorage.removeItem("botmart-start");
+          void startNegotiation(parsed.buyerId, parsed.listingId);
+        }
       }
-    }
+    }, 0);
+    return () => clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams]);
 

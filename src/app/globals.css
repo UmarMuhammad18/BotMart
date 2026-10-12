@@ -24,6 +24,10 @@
   --glow-blue: var(--shadow-card);
   --glow-amber: var(--shadow-card);
 
+  /* Price duel lines: olive offer, meadow ask */
+  --duel-buyer: #5a7012;
+  --duel-seller: #2e7a34;
+
   /*
    * Shape lock: controls (buttons, inputs) 12px, cards 16px, chips/badges
    * full pill. Keep new components on this scale.
@@ -416,6 +420,21 @@
     from { opacity: 0; transform: translateY(18px) scale(0.98); }
     to   { opacity: 1; transform: none; }
   }
+  /* Night sky behind the hero (dark theme only) */
+  .hero-stars {
+    background-image:
+      radial-gradient(1.2px 1.2px at 12% 18%, rgba(255,255,255,0.9), transparent 60%),
+      radial-gradient(1px 1px at 28% 42%, rgba(255,255,255,0.7), transparent 60%),
+      radial-gradient(1.4px 1.4px at 44% 12%, rgba(255,255,255,0.85), transparent 60%),
+      radial-gradient(1px 1px at 58% 30%, rgba(255,255,255,0.6), transparent 60%),
+      radial-gradient(1.2px 1.2px at 71% 9%, rgba(255,255,255,0.9), transparent 60%),
+      radial-gradient(1px 1px at 83% 36%, rgba(255,255,255,0.7), transparent 60%),
+      radial-gradient(1.3px 1.3px at 92% 16%, rgba(255,255,255,0.8), transparent 60%),
+      radial-gradient(1px 1px at 6% 48%, rgba(255,255,255,0.5), transparent 60%),
+      radial-gradient(1px 1px at 36% 24%, rgba(255,255,255,0.6), transparent 60%),
+      radial-gradient(1px 1px at 64% 52%, rgba(255,255,255,0.45), transparent 60%);
+    mask-image: linear-gradient(to bottom, black, transparent);
+  }
   /* The hero bot's speech bubble */
   .bot-say { animation: bot-say 0.35s cubic-bezier(0.34, 1.4, 0.64, 1) both; transform-origin: 20% 100%; }
   @keyframes bot-say {
@@ -460,6 +479,155 @@
     from { opacity: 0; transform: translateY(6px) scale(0.85); }
     to { opacity: 1; transform: none; }
   }
+}
+
+/*
+ * Dark theme: the village at night. Toggled by the .dark class on <html>
+ * (set before first paint from the saved choice or the OS preference).
+ * Token values flip so every existing utility follows; text stays AA.
+ */
+@custom-variant dark (&:where(.dark, .dark *));
+
+:root.dark {
+  color-scheme: dark;
+  --background: #07110b;
+  --foreground: #e6efe8;
+  --surface-0: #07110b;
+  --surface-1: #0d1b13;
+  --surface-2: #112218;
+  --surface-3: #172b20;
+  --surface-border: rgba(214, 236, 220, 0.1);
+  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.4), 0 10px 28px -14px rgba(0, 0, 0, 0.6);
+  --shadow-lift: 0 2px 4px rgba(0, 0, 0, 0.45), 0 20px 44px -18px rgba(0, 0, 0, 0.7);
+  --duel-buyer: #c9dc7a;
+  --duel-seller: #6fd08a;
+
+  --color-ink: #e6efe8;
+  --color-paper: #0d1b13;
+  --color-meadow: #6cc27c;
+  --color-teal: #62bdb2;
+  --color-terracotta: #e39a72;
+  --color-mustard: #d8b45c;
+  --color-timber: #c49a74;
+
+  /* Sage neutrals, reversed: text steps (500+) become light */
+  --color-zinc-50: #0b1710;
+  --color-zinc-100: #12221a;
+  --color-zinc-200: #1b3024;
+  --color-zinc-300: #284234;
+  --color-zinc-400: #5f7766;
+  --color-zinc-500: #94a898;
+  --color-zinc-600: #a8b9ac;
+  --color-zinc-700: #bccbbf;
+  --color-zinc-800: #d2ded5;
+  --color-zinc-900: #e3ece5;
+  --color-zinc-950: #f2f7f3;
+
+  /* Night greens: fills stay mid-green, text steps (600+) glow lighter */
+  --color-emerald-50: #0e2316;
+  --color-emerald-100: #12301d;
+  --color-emerald-200: #1a4429;
+  --color-emerald-300: #276b3b;
+  --color-emerald-400: #3a9a52;
+  --color-emerald-500: #4fae63;
+  --color-emerald-600: #55b46c;
+  --color-emerald-700: #8fd9a0;
+  --color-emerald-800: #b5ebc1;
+  --color-emerald-900: #d3f4da;
+  --color-emerald-950: #eafaee;
+
+  --color-amber-700: oklch(87.9% 0.169 91.605);
+  --color-amber-800: oklch(92.4% 0.12 95.746);
+  --color-amber-900: oklch(96.2% 0.059 95.617);
+  --color-blue-700: oklch(80.9% 0.105 251.813);
+  --color-blue-800: oklch(88.2% 0.059 254.128);
+  --color-blue-900: oklch(93.2% 0.032 255.585);
+  --color-cyan-700: oklch(86.5% 0.127 207.078);
+  --color-cyan-800: oklch(91.7% 0.08 205.041);
+  --color-cyan-900: oklch(95.6% 0.045 203.388);
+  --color-green-700: oklch(87.1% 0.15 154.449);
+  --color-green-800: oklch(92.5% 0.084 155.995);
+  --color-green-900: oklch(96.2% 0.044 156.743);
+  --color-indigo-700: oklch(78.5% 0.115 274.713);
+  --color-indigo-800: oklch(87% 0.065 274.039);
+  --color-indigo-900: oklch(93% 0.034 272.788);
+  --color-lime-700: oklch(89.7% 0.196 126.665);
+  --color-lime-800: oklch(93.8% 0.127 124.321);
+  --color-lime-900: oklch(96.7% 0.067 122.328);
+  --color-orange-700: oklch(83.7% 0.128 66.29);
+  --color-orange-800: oklch(90.1% 0.076 70.697);
+  --color-orange-900: oklch(95.4% 0.038 75.164);
+  --color-pink-700: oklch(82.3% 0.12 346.018);
+  --color-pink-800: oklch(89.9% 0.061 343.231);
+  --color-pink-900: oklch(94.8% 0.028 342.258);
+  --color-purple-700: oklch(82.7% 0.119 306.383);
+  --color-purple-800: oklch(90.2% 0.063 306.703);
+  --color-purple-900: oklch(94.6% 0.033 307.174);
+  --color-red-700: oklch(80.8% 0.114 19.571);
+  --color-red-800: oklch(88.5% 0.062 18.334);
+  --color-red-900: oklch(93.6% 0.032 17.717);
+  --color-rose-700: oklch(81% 0.117 11.638);
+  --color-rose-800: oklch(89.2% 0.058 10.001);
+  --color-rose-900: oklch(94.1% 0.03 12.58);
+  --color-sky-700: oklch(82.8% 0.111 230.318);
+  --color-sky-800: oklch(90.1% 0.058 230.902);
+  --color-sky-900: oklch(95.1% 0.026 236.824);
+  --color-teal-700: oklch(85.5% 0.138 181.071);
+  --color-teal-800: oklch(91% 0.096 180.426);
+  --color-teal-900: oklch(95.3% 0.051 180.801);
+  --color-violet-700: oklch(81.1% 0.111 293.571);
+  --color-violet-800: oklch(89.4% 0.057 293.283);
+  --color-violet-900: oklch(94.3% 0.029 294.588);
+  --color-yellow-700: oklch(90.5% 0.182 98.111);
+  --color-yellow-800: oklch(94.5% 0.129 101.54);
+  --color-yellow-900: oklch(97.3% 0.071 103.193);
+}
+
+@layer base {
+  :root.dark ::-webkit-scrollbar-thumb { background: rgba(214, 236, 220, 0.16); }
+  :root.dark ::-webkit-scrollbar-thumb:hover { background: rgba(214, 236, 220, 0.28); }
+  :root.dark ::selection { background: rgba(85, 180, 108, 0.35); color: #e6efe8; }
+  :root.dark :focus-visible { outline-color: #8fd9a0; }
+}
+
+@layer components {
+  .dark .gradient-text { color: #8fd9a0; }
+  .dark .glass { background: rgba(13, 27, 19, 0.7); }
+  .dark .glass-strong { background: rgba(13, 27, 19, 0.85); }
+  /* A cool moon-wash instead of the sun */
+  .dark .orb-1 { background: radial-gradient(circle, rgba(140, 170, 220, 0.5), transparent 70%); opacity: 0.18; }
+
+  .dark .skeleton { background: linear-gradient(90deg, rgba(214,236,220,0.05) 25%, rgba(214,236,220,0.1) 50%, rgba(214,236,220,0.05) 75%); background-size: 200% 100%; }
+
+  .dark .btn-primary { background: #4fae63; color: #0b1a10; box-shadow: inset 0 1px 0 rgba(255,255,255,0.18), 0 10px 24px -12px rgba(0,0,0,0.7); }
+  .dark .btn-primary:hover { background: #63c077; }
+  .dark .btn-secondary { background: #112218; color: #e6efe8; border-color: rgba(214,236,220,0.14); box-shadow: none; }
+  .dark .btn-secondary:hover { background: #172b20; border-color: rgba(214,236,220,0.26); }
+  .dark .btn-ghost { color: #bccbbf; border-color: rgba(214,236,220,0.1); }
+  .dark .btn-ghost:hover { background: rgba(214,236,220,0.06); color: #e6efe8; border-color: rgba(214,236,220,0.18); }
+
+  .dark .card:hover, .dark .stat-card:hover { border-color: rgba(214,236,220,0.18); }
+
+  .dark .badge-emerald { background: #12301d; color: #b5ebc1; border-color: #1f4a2c; }
+  .dark .badge-amber   { background: #2e2410; color: #f2d58f; border-color: #4a3a17; }
+  .dark .badge-red     { background: #331713; color: #f3b4a9; border-color: #52241d; }
+  .dark .badge-purple  { background: #251a2d; color: #d9c2ea; border-color: #3b2a48; }
+  .dark .badge-blue    { background: #10282a; color: #a7dbd6; border-color: #1c4245; }
+  .dark .badge-zinc    { background: #12221a; color: #bccbbf; border-color: #1b3024; }
+
+  .dark .input { background: #0b1710; color: #e6efe8; border-color: rgba(214,236,220,0.16); }
+  .dark .input::placeholder { color: #94a898; }
+  .dark .input:focus-visible { outline-color: #8fd9a0; box-shadow: 0 0 0 4px rgba(85,180,108,0.2); }
+  .dark .section-label { color: #94a898; }
+  .dark .stat-label { color: #a8b9ac; }
+
+  .dark .bubble-buyer { background: #112218; border-color: rgba(214,236,220,0.12); }
+  .dark .bubble-seller { background: #12301d; border-color: #1f4a2c; }
+  .dark .bubble-accept { background: #1a4429 !important; border-color: #2f7a46 !important; }
+  .dark .bubble-reject { background: #331713 !important; border-color: #52241d !important; }
+
+  .dark .progress-bar { background: rgba(214,236,220,0.1); }
+  .dark .progress-bar-fill, .dark .thinking-dots span, .dark .status-dot.active { background: #55b46c; }
 }
 
 @media (prefers-reduced-motion: reduce) {
