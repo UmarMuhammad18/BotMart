@@ -5,18 +5,20 @@ import type { NegotiationMessage, WorldBeat } from "@/lib/types";
 const RECENT_NEGOTIATIONS = 14;
 
 /**
- * GET /api/world/events[?since=ISO]
+ * GET /api/world/events[?since=ISO][&negotiation=id]
  * World "beats", oldest first.
  *
  * Negotiation beats come from negotiations.messages (the source of truth);
  * ambient beats (match / repricing / court) come from agent_decisions when
  * that table exists. `since` is exclusive. Without it, returns the most
- * recent negotiations whenever they happened, for replay.
+ * recent negotiations whenever they happened, for replay. `negotiation`
+ * returns just that one (shared replay links).
  */
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const since = searchParams.get("since");
+    const only = searchParams.get("negotiation");
     const supabase = createAdminClient();
 
     let negQuery = supabase
@@ -25,6 +27,7 @@ export async function GET(request: Request) {
       .order("updated_at", { ascending: false })
       .limit(since ? 50 : RECENT_NEGOTIATIONS);
     if (since) negQuery = negQuery.gt("updated_at", since);
+    if (only) negQuery = negQuery.eq("id", only);
 
     const { data: negs, error } = await negQuery;
     if (error) return NextResponse.json({ beats: [], error: error.message });
@@ -57,26 +60,30 @@ export async function GET(request: Request) {
       const { data: decisions } = await supabase
         .from("agent_decisions")
         .select("id, agent_id, action_type, payload, created_at")
-        .is("negotiation_id", null)
+        // Ambient beats, plus court rulings (logged against a negotiation)
+        .or("negotiation_id.is.null,action_type.eq.court")
         .gt("created_at", since)
         .order("created_at", { ascending: false })
         .limit(50);
 
       for (const d of decisions || []) {
         const payload = (d.payload || {}) as Record<string, unknown>;
-        const price = payload.price ?? payload.new_price ?? null;
+        const price = payload.price ?? payload.recommended_price ?? payload.new_price ?? null;
+        const court = d.action_type === "court";
+        const votes = payload.votes as { accept?: number; reject?: number; counter?: number } | undefined;
+        const tally = votes ? ` (${votes.accept ?? 0} accept, ${votes.counter ?? 0} counter, ${votes.reject ?? 0} reject)` : "";
         beats.push({
           id: d.id,
           at: d.created_at,
           agent_id: d.agent_id,
           negotiation_id: null,
-          buyer_id: null,
-          seller_id: null,
+          buyer_id: court ? ((payload.buyer_id as string | undefined) ?? null) : null,
+          seller_id: court ? ((payload.seller_id as string | undefined) ?? null) : null,
           listing_id: (payload.listing_id as string | undefined) ?? null,
           role: null,
           type: d.action_type || "message",
           price: price == null ? null : Number(price),
-          message: String(payload.message ?? ""),
+          message: court ? `${verdictLabel(payload.verdict)}${tally}` : String(payload.message ?? ""),
         });
       }
     }
@@ -87,4 +94,10 @@ export async function GET(request: Request) {
     console.error("[world/events]", err);
     return NextResponse.json({ beats: [], error: "Failed to load events" });
   }
+}
+
+function verdictLabel(v: unknown) {
+  if (v === "accept") return "The court finds the deal fair";
+  if (v === "reject") return "The court throws the deal out";
+  return "The court orders a counter-offer";
 }

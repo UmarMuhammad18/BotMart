@@ -4,18 +4,22 @@ import { runNextTurn, startNegotiation } from "@/lib/agents/session";
 import { assertCanControlAgent } from "@/lib/auth";
 import { LIMITS, rateLimit, tooManyRequests } from "@/lib/rate-limit";
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
     const supabase = createAdminClient();
-    const { data, error } = await supabase
+    const id = new URL(request.url).searchParams.get("id");
+    let query = supabase
       .from("negotiations")
       .select(`
         *,
-        buyer:agents!buyer_agent_id (id, name, budget, spent, status),
+        buyer:agents!buyer_agent_id (id, name, budget, spent, status, owner_id),
         seller:agents!seller_agent_id (id, name, budget, spent, status),
         listing:listings (id, title, price)
       `)
       .order("created_at", { ascending: false });
+    // ?id= fetches one (shared replay links, approval links)
+    query = id ? query.eq("id", id) : query.limit(200);
+    const { data, error } = await query;
 
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 500 });
@@ -73,7 +77,7 @@ export async function POST(request: Request) {
         );
       }
       const result = await runNextTurn(supabase, negotiation_id);
-      if ("error" in result && result.error) {
+      if ("error" in result) {
         return NextResponse.json(
           { error: result.error },
           { status: result.status }

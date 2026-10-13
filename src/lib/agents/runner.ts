@@ -137,7 +137,7 @@ export async function runBuyerAgent(
       safety < 14
     ) {
       const turn = await runNextTurn(supabase, negId);
-      if ("error" in turn && turn.error) break;
+      if ("error" in turn) break;
       if (!turn.data) break;
       current = turn.data;
       safety++;

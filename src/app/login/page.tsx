@@ -5,6 +5,12 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { Bot, Mail, ArrowLeft, Loader2, CheckCircle } from "lucide-react";
 
+/** Where to land after the magic link: ?next=/start etc, same-site paths only. */
+function nextPath() {
+  const next = new URLSearchParams(window.location.search).get("next") || "/agents";
+  return /^\/(?![/\\])/.test(next) ? next : "/agents";
+}
+
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
@@ -23,7 +29,7 @@ export default function LoginPage() {
       const { error: authError } = await supabase.auth.signInWithOtp({
         email: email.trim(),
         options: {
-          emailRedirectTo: `${origin}/auth/callback?next=/agents`,
+          emailRedirectTo: `${origin}/auth/callback?next=${encodeURIComponent(nextPath())}`,
         },
       });
 

@@ -33,6 +33,12 @@ export function StatusBadge({ status }: { status: string }) {
     );
   if (status === "escalated")
     return <span className="badge badge-purple">Escalated</span>;
+  if (status === "awaiting_approval")
+    return (
+      <span className="badge badge-amber">
+        <Clock size={11} /> Waiting for owner
+      </span>
+    );
   return null;
 }
 

@@ -48,6 +48,24 @@ export const COURT_POS = {
   z: VILLAGE.cz + Math.sin(VILLAGE.courtAngle) * VILLAGE.ringRadius,
 };
 
+/** The court hall's y-rotation: its portico faces the square. */
+export const COURT_ROT = Math.atan2(VILLAGE.cx - COURT_POS.x, VILLAGE.cz - COURT_POS.z);
+
+/**
+ * Where the two parties to a court case stand: at the foot of the steps,
+ * either side of centre, facing the hall. `side` -1 = buyer, 1 = seller.
+ */
+export function courtSpot(side: -1 | 1) {
+  const lx = side * 1.3;
+  const lz = 4.7;
+  const c = Math.cos(COURT_ROT);
+  const s = Math.sin(COURT_ROT);
+  const x = COURT_POS.x + lx * c + lz * s;
+  const z = COURT_POS.z - lx * s + lz * c;
+  // Face the hall's centre
+  return { x, z, faceX: COURT_POS.x + lx * c, faceZ: COURT_POS.z - lx * s };
+}
+
 export type Building = { x: number; z: number; rot: number };
 
 export type DistrictLayout = {

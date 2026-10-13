@@ -5,7 +5,9 @@ import { NextResponse } from "next/server";
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url);
   const code = searchParams.get("code");
-  const next = searchParams.get("next") ?? "/agents";
+  // Only same-site paths: "/x" yes; "//evil.com", "@evil.com", "https://…" no
+  const requested = searchParams.get("next") ?? "/agents";
+  const next = /^\/(?![/\\])/.test(requested) ? requested : "/agents";
 
   if (code) {
     const cookieStore = await cookies();

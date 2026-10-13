@@ -1,4 +1,5 @@
 import type { WorldBeat } from "@/lib/types";
+import { courtSpot } from "@/lib/world/districts";
 
 /**
  * WorldDirector turns the agent decision log into staged scenes for the 3D
@@ -8,6 +9,9 @@ import type { WorldBeat } from "@/lib/types";
  *   approach → buyer + seller walk to the stall
  *   talk     → each offer / counter shows as a speech bubble
  *   outro    → deal burst (accept) or walk-away (reject), then both go home
+ *
+ * Court rulings get their own scene: both parties walk to the court steps,
+ * make their case, and the verdict appears over the buyer.
  *
  * Pure TypeScript with an explicit clock (`tick(dtMs)`), so it is renderer
  * agnostic and unit-testable. The scene reads it every frame; React
@@ -78,6 +82,21 @@ type Scene = {
 
 type Ambient = { bubble: Bubble; endsAt: number };
 
+type CourtPhase = "pending" | "walk" | "hearing" | "verdict";
+
+type CourtCase = {
+  id: string;
+  buyerId: string;
+  sellerId: string;
+  text: string;
+  phase: CourtPhase;
+  phaseEndsAt: number;
+  bubble: Bubble | null;
+};
+
+/** Sounds and other one-off effects the page can react to. */
+export type Cue = "step" | "deal" | "walk" | "gavel";
+
 const APPROACH_MS = 2600;
 const BEAT_MS = 2300;
 const OUTRO_MS = 2600;
@@ -86,6 +105,9 @@ const BURST_MS = 3200;
 /** Live negotiation with no new beat for this long is closed out. */
 const LIVE_IDLE_MS = 30000;
 const MAX_CONCURRENT = 3;
+const COURT_WALK_MS = 4200;
+const COURT_HEARING_MS = 2600;
+const COURT_VERDICT_MS = 5200;
 const FEED_MAX = 40;
 
 const TERMINAL = new Set(["accept", "reject", "escalated"]);
@@ -113,6 +135,7 @@ export class WorldDirector {
   private sim = 0;
   private scenes: Scene[] = [];
   private ambient = new Map<string, Ambient>();
+  private courts: CourtCase[] = [];
   private bursts: Burst[] = [];
   private feedLines: FeedLine[] = [];
   private seen = new Set<string>();
@@ -124,8 +147,20 @@ export class WorldDirector {
 
   constructor(
     private stage: StageLookup,
-    private hooks: { onLiveSceneEnd?: () => void } = {}
+    private hooks: { onLiveSceneEnd?: () => void; onCue?: (cue: Cue) => void } = {}
   ) {}
+
+  setOnCue(fn: (cue: Cue) => void) {
+    this.hooks.onCue = fn;
+  }
+
+  private cue(c: Cue) {
+    try {
+      this.hooks.onCue?.(c);
+    } catch {
+      // effects must never break staging
+    }
+  }
 
   setStage(stage: StageLookup) {
     this.stage = stage;
@@ -211,6 +246,7 @@ export class WorldDirector {
 
   private reset() {
     this.scenes = [];
+    this.courts = [];
     this.ambient.clear();
     this.bursts = [];
     this.buffered = [];
@@ -258,7 +294,22 @@ export class WorldDirector {
       return;
     }
 
-    // Ambient beat (match, repricing, court…): short bubble + feed line
+    // A court ruling between two agents: stage it at the court hall
+    if (beat.type === "court" && beat.buyer_id && beat.seller_id && beat.buyer_id !== beat.seller_id) {
+      this.log(beat, live);
+      this.courts.push({
+        id: beat.id,
+        buyerId: beat.buyer_id,
+        sellerId: beat.seller_id,
+        text: beat.message ? `⚖ ${beat.message.length > 84 ? beat.message.slice(0, 82) + "…" : beat.message}` : "⚖ Verdict in",
+        phase: "pending",
+        phaseEndsAt: 0,
+        bubble: null,
+      });
+      return;
+    }
+
+    // Ambient beat (match, repricing…): short bubble + feed line
     this.log(beat, live);
     const text = this.ambientText(beat);
     if (text && !this.isBusy(beat.agent_id)) {
@@ -297,6 +348,7 @@ export class WorldDirector {
     for (const scene of [...this.scenes]) {
       if (this.advance(scene)) dirty = true;
     }
+    if (this.advanceCourt()) dirty = true;
 
     if (this.mode === "replay" && this.scenes.length === 0 && this.replayTotal > 0) {
       // Replay finished → drop into live with whatever arrived meanwhile
@@ -318,6 +370,7 @@ export class WorldDirector {
         return false;
       scene.phase = "approach";
       scene.phaseEndsAt = t + APPROACH_MS;
+      this.cue("step");
       this.ambient.delete(scene.buyerId);
       this.ambient.delete(scene.sellerId);
       return true;
@@ -361,6 +414,7 @@ export class WorldDirector {
           tone: deal ? "deal" : "walk",
           bornAt: t,
         });
+        this.cue(deal ? "deal" : "walk");
       }
       scene.phase = "outro";
       scene.phaseEndsAt = t + OUTRO_MS;
@@ -375,18 +429,62 @@ export class WorldDirector {
   }
 
   private isBusy(agentId: string, except?: Scene) {
-    return this.scenes.some(
-      (s) =>
-        s !== except &&
-        s.phase !== "pending" &&
-        (s.buyerId === agentId || s.sellerId === agentId)
+    return (
+      this.scenes.some(
+        (s) =>
+          s !== except &&
+          s.phase !== "pending" &&
+          (s.buyerId === agentId || s.sellerId === agentId)
+      ) ||
+      this.courts.some((c) => c.phase !== "pending" && (c.buyerId === agentId || c.sellerId === agentId))
     );
+  }
+
+  /** One courthouse: cases are heard one at a time, in order. */
+  private advanceCourt(): boolean {
+    const c = this.courts[0];
+    if (!c) return false;
+    const t = this.sim;
+    if (c.phase === "pending") {
+      const busy = (id: string) =>
+        this.scenes.some((s) => s.phase !== "pending" && (s.buyerId === id || s.sellerId === id));
+      if (busy(c.buyerId) || busy(c.sellerId)) return false;
+      c.phase = "walk";
+      c.phaseEndsAt = t + COURT_WALK_MS;
+      this.ambient.delete(c.buyerId);
+      this.ambient.delete(c.sellerId);
+      this.cue("step");
+      return true;
+    }
+    if (t < c.phaseEndsAt) return false;
+    if (c.phase === "walk") {
+      c.phase = "hearing";
+      c.phaseEndsAt = t + COURT_HEARING_MS;
+      c.bubble = { key: `${c.id}:case`, agentId: c.sellerId, text: "Your honour, the price was fair.", tone: "info", price: null };
+      return true;
+    }
+    if (c.phase === "hearing") {
+      c.phase = "verdict";
+      c.phaseEndsAt = t + COURT_VERDICT_MS;
+      c.bubble = { key: `${c.id}:verdict`, agentId: c.buyerId, text: c.text, tone: "info", price: null };
+      this.cue("gavel");
+      return true;
+    }
+    this.courts.shift();
+    return true;
+  }
+
+  private courtCaseFor(agentId: string) {
+    const c = this.courts[0];
+    return c && c.phase !== "pending" && (c.buyerId === agentId || c.sellerId === agentId) ? c : null;
   }
 
   // ── output ───────────────────────────────────────────────
 
   /** Where an agent should stand, or null to roam freely near home. */
   placementFor(agentId: string): Placement | null {
+    const court = this.courtCaseFor(agentId);
+    if (court) return courtSpot(court.buyerId === agentId ? -1 : 1);
     for (const s of this.scenes) {
       if (s.phase === "pending") continue;
       const isBuyer = s.buyerId === agentId;
@@ -428,6 +526,8 @@ export class WorldDirector {
   }
 
   bubbleFor(agentId: string): Bubble | null {
+    const court = this.courtCaseFor(agentId);
+    if (court?.bubble?.agentId === agentId) return court.bubble;
     for (const s of this.scenes) {
       if (s.bubble?.agentId === agentId && s.phase !== "pending") return s.bubble;
     }
@@ -438,6 +538,11 @@ export class WorldDirector {
   get bubbles(): Bubble[] {
     const out: Bubble[] = [];
     const seen = new Set<string>();
+    const court = this.courts[0];
+    if (court?.bubble && court.phase !== "pending") {
+      seen.add(court.bubble.agentId);
+      out.push(court.bubble);
+    }
     for (const s of this.scenes) {
       if (s.phase === "pending" || !s.bubble || seen.has(s.bubble.agentId)) continue;
       seen.add(s.bubble.agentId);
@@ -490,6 +595,10 @@ export class WorldDirector {
   /** Short line for the "now playing" ticker. */
   get nowPlaying(): string | null {
     const s = this.scenes.find((x) => x.phase !== "pending");
+    const court = this.courts[0];
+    if (!s && court && court.phase !== "pending") {
+      return `Court · ${this.stage.agentName(court.buyerId)} v ${this.stage.agentName(court.sellerId)}`;
+    }
     if (!s) return null;
     const stall = this.stage.stall(s.stallId);
     const prices = s.beats

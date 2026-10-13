@@ -36,9 +36,9 @@ const STONE_DARK = new THREE.Color("#8d846f");
 
 /* ── Ground ─────────────────────────────────────────────────────────────── */
 
-export function Terrain({ homes }: { homes: Footprint[] }) {
+export function Terrain({ homes, segments = SEGMENTS }: { homes: Footprint[]; segments?: number }) {
   const geometry = useMemo(() => {
-    const g = new THREE.PlaneGeometry(SIZE, SIZE, SEGMENTS, SEGMENTS);
+    const g = new THREE.PlaneGeometry(SIZE, SIZE, segments, segments);
     g.rotateX(-Math.PI / 2);
     g.translate(VILLAGE.cx, 0, VILLAGE.cz);
     const pos = g.attributes.position as THREE.BufferAttribute;
@@ -70,7 +70,7 @@ export function Terrain({ homes }: { homes: Footprint[] }) {
     g.setAttribute("color", new THREE.BufferAttribute(colors, 3));
     g.computeVertexNormals();
     return g;
-  }, [homes]);
+  }, [homes, segments]);
 
   return (
     <mesh geometry={geometry} receiveShadow>

@@ -1,6 +1,26 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { SEED_AGENTS, SEED_LISTINGS } from "@/lib/seed-data";
 import { DEMO_OWNER_FILTER } from "@/lib/auth";
+import { resolveApproval } from "@/lib/agents/session";
+
+/** Approvals nobody answered in this long are declined, so stale deals do not linger. */
+const APPROVAL_TTL_HOURS = 48;
+
+export async function expireApprovals(supabase: SupabaseClient) {
+  const cutoff = new Date(Date.now() - APPROVAL_TTL_HOURS * 3_600_000).toISOString();
+  const { data } = await supabase
+    .from("negotiations")
+    .select("id")
+    .eq("status", "awaiting_approval")
+    .lt("updated_at", cutoff)
+    .limit(100);
+  let expired = 0;
+  for (const n of data || []) {
+    const r = await resolveApproval(supabase, n.id as string, "decline");
+    if (!("error" in r)) expired += 1;
+  }
+  return expired;
+}
 
 /**
  * Nightly reset of the shared demo village, so the one-click demo can't

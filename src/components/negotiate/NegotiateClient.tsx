@@ -9,6 +9,9 @@ import {
   Zap,
   RefreshCw,
   ChevronRight,
+  Check,
+  X,
+  Link2,
 } from "lucide-react";
 import { AppHeader } from "@/components/AppHeader";
 import { Notice, type NoticeState } from "@/components/Notice";
@@ -20,7 +23,7 @@ import {
   ThinkingIndicator,
 } from "@/components/negotiate/NegotiateChat";
 
-type Agent = { id: string; name: string; budget: number; spent: number };
+type Agent = { id: string; name: string; budget: number; spent: number; owner_id?: string | null };
 
 type Listing = {
   id: string;
@@ -60,6 +63,56 @@ export function NegotiateClient() {
   const [thinking, setThinking] = useState<"buyer" | "seller" | null>(null);
   const chatRef = useRef<HTMLDivElement>(null);
   const bootstrapped = useRef(false);
+  const [me, setMe] = useState<string | null>(null);
+  const [answering, setAnswering] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  useEffect(() => {
+    let live = true;
+    fetch("/api/auth/me")
+      .then((r) => r.json())
+      .then((d) => live && setMe(d.user?.id ?? null))
+      .catch(() => {});
+    return () => {
+      live = false;
+    };
+  }, []);
+
+  async function answerApproval(decision: "approve" | "decline") {
+    if (!negotiation) return;
+    setAnswering(true);
+    try {
+      const res = await fetch(`/api/negotiations/${negotiation.id}/approval`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ decision }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setNotice({ tone: "error", text: data.error || "Couldn't answer that request." });
+        return;
+      }
+      setNegotiation(data);
+      setNotice({
+        tone: "success",
+        text: decision === "approve" ? `Bought for ${gbp(Number(data.current_offer))}.` : "Declined. Your agent walked away.",
+      });
+    } finally {
+      setAnswering(false);
+    }
+  }
+
+  async function copyReplay() {
+    if (!negotiation) return;
+    const url = `${window.location.origin}/world?replay=${negotiation.id}`;
+    try {
+      await navigator.clipboard.writeText(url);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      window.open(url, "_blank");
+    }
+  }
 
   useEffect(() => {
     if (chatRef.current) {
@@ -78,6 +131,18 @@ export function NegotiateClient() {
     const t = setTimeout(() => {
       const demo = searchParams.get("demo");
       const start = searchParams.get("start");
+      const id = searchParams.get("id");
+
+      // ?id= opens one negotiation (approval emails, notifications, shares)
+      if (id && /^[0-9a-f-]{36}$/i.test(id)) {
+        bootstrapped.current = true;
+        void fetch(`/api/negotiations?id=${id}`)
+          .then((r) => r.json())
+          .then((rows) => {
+            if (Array.isArray(rows) && rows[0]) setNegotiation(rows[0] as Negotiation);
+          });
+        return;
+      }
 
       if (demo === "1") {
         const raw = sessionStorage.getItem("botmart-demo-neg");
@@ -428,6 +493,32 @@ export function NegotiateClient() {
                     Run to completion
                   </button>
                 </div>
+              )}
+
+              {negotiation.status === "awaiting_approval" && (
+                <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-5 py-4 text-sm">
+                  <p className="font-medium text-ink">
+                    {negotiation.buyer.name} agreed {gbp(Number(negotiation.current_offer))} and is waiting for its owner.
+                  </p>
+                  {me && negotiation.buyer.owner_id === me ? (
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      <button type="button" disabled={answering} onClick={() => void answerApproval("approve")} className="btn-primary text-sm">
+                        <Check size={15} aria-hidden /> Approve purchase
+                      </button>
+                      <button type="button" disabled={answering} onClick={() => void answerApproval("decline")} className="btn-secondary text-sm">
+                        <X size={15} aria-hidden /> Decline
+                      </button>
+                    </div>
+                  ) : (
+                    <p className="mt-1 text-zinc-600">Only the agent&apos;s owner can approve it.</p>
+                  )}
+                </div>
+              )}
+
+              {!isLive && negotiation.messages.length > 0 && (
+                <button type="button" onClick={() => void copyReplay()} className="btn-secondary text-sm self-start">
+                  <Link2 size={15} aria-hidden /> {copied ? "Replay link copied" : "Share a replay in the village"}
+                </button>
               )}
 
               <CourtPanel negotiationId={negotiation.id} />

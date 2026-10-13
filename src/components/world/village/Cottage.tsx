@@ -1,7 +1,8 @@
 "use client";
 
-import { RoundedBox, Text } from "@react-three/drei";
-import { useMemo } from "react";
+import { RoundedBox, Sparkles, Text } from "@react-three/drei";
+import { useFrame } from "@react-three/fiber";
+import { useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
 import { useNight } from "./night";
 
@@ -65,6 +66,16 @@ function Window({ position, rotation = 0 }: { position: [number, number, number]
  * On the porch: the agent's desktop station, its screen showing what the
  * agent is doing. The agent's idle spot is just in front of the desk.
  */
+const BUILD_SECONDS = 2.6;
+
+/** Grow a cottage out of the ground: overshoot a touch, then settle. */
+function raise(g: THREE.Group, t: number) {
+  const k = Math.min(1, Math.max(0, t));
+  const c = 1.70158;
+  const back = 1 + (c + 1) * Math.pow(k - 1, 3) + c * Math.pow(k - 1, 2); // easeOutBack
+  g.scale.set(0.92 + 0.08 * k, Math.max(0.001, back), 0.92 + 0.08 * k);
+}
+
 export function Cottage({
   x,
   z,
@@ -75,6 +86,7 @@ export function Cottage({
   screenText,
   selected,
   onSelect,
+  building = false,
 }: {
   x: number;
   z: number;
@@ -85,8 +97,25 @@ export function Cottage({
   screenText: string;
   selected: boolean;
   onSelect: () => void;
+  /** A newly created agent's home: rises out of the ground with a puff of dust. */
+  building?: boolean;
 }) {
   const gable = useMemo(() => gableGeometry(4.5, 1.75, 0.2), []);
+  const rise = useRef<THREE.Group>(null);
+  const started = useRef<number | null>(null);
+  useFrame(({ clock }) => {
+    if (!building || !rise.current) return;
+    if (started.current === null) started.current = clock.getElapsedTime();
+    raise(rise.current, (clock.getElapsedTime() - started.current) / BUILD_SECONDS);
+  });
+  // Starts flat if it's being built; a stable value so re-renders don't reset it
+  const [initialScale] = useState<[number, number, number]>(() => (building ? [1, 0.001, 1] : [1, 1, 1]));
+  const [dust, setDust] = useState(building);
+  useEffect(() => {
+    if (!building) return;
+    const t = setTimeout(() => setDust(false), (BUILD_SECONDS + 1.5) * 1000);
+    return () => clearTimeout(t);
+  }, [building]);
   const { night, lights } = useNight();
   const roof = roofFor(role);
   const W = 4.6; // wall width (x)
@@ -105,6 +134,10 @@ export function Cottage({
         onSelect();
       }}
     >
+      {dust && (
+        <Sparkles count={60} scale={[6, 2.5, 5.5]} position={[0, 1.1, 0]} size={7} speed={0.8} color="#d9cdb0" opacity={0.8} noise={1.2} />
+      )}
+      <group ref={rise} scale={initialScale}>
       {/* Stone footing */}
       <RoundedBox args={[W + 0.5, base, D + 0.5]} radius={0.08} smoothness={3} position={[0, base / 2, 0]} castShadow receiveShadow>
         <meshStandardMaterial color={STONE} roughness={0.9} />
@@ -255,6 +288,7 @@ export function Cottage({
         <pointLight position={[-1.25, base + 1.9, D / 2 + 0.6]} color="#ffc98a" intensity={7} distance={7} decay={1.7} />
       )}
 
+      </group>
       {selected && (
         <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.03, 0]}>
           <ringGeometry args={[3.7, 3.85, 64]} />

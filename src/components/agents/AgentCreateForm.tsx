@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { Zap } from "lucide-react";
 import { ROLE_CATALOG } from "@/lib/agents/roles";
+import { PERSONALITIES } from "@/lib/agents/personality";
 import type { AgentRole } from "@/lib/types";
 
 export function AgentCreateForm({
@@ -21,13 +22,16 @@ export function AgentCreateForm({
   const [budget, setBudget] = useState(1000);
   const [maxPrice, setMaxPrice] = useState(100);
   const [categories, setCategories] = useState("electronics");
-  const [style, setStyle] = useState("thrifty");
+  const [style, setStyle] = useState("balanced");
+  const [approve, setApprove] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [role, setRole] = useState<AgentRole>("buyer");
   const [creating, setCreating] = useState(false);
 
   async function createAgent(e: React.FormEvent) {
     e.preventDefault();
     setCreating(true);
+    setError(null);
     try {
       const res = await fetch("/api/agents", {
         method: "POST",
@@ -45,11 +49,15 @@ export function AgentCreateForm({
               .map((c) => c.trim())
               .filter(Boolean),
             style,
+            require_approval: signedIn && role === "buyer" ? approve : false,
           },
         }),
       });
       if (res.ok) {
         onCreated();
+      } else {
+        const data = await res.json().catch(() => ({}));
+        setError(data.error || "Couldn't create the agent.");
       }
     } catch (err) {
       console.error(err);
@@ -140,14 +148,19 @@ export function AgentCreateForm({
           />
         </div>
         <div>
-          <label htmlFor="input-agent-style" className="block text-xs text-zinc-600 mb-2 font-medium">Style</label>
-          <input
+          <label htmlFor="input-agent-style" className="block text-xs text-zinc-600 mb-2 font-medium">Personality</label>
+          <select
             id="input-agent-style"
             value={style}
             onChange={(e) => setStyle(e.target.value)}
-            placeholder="thrifty"
             className="input"
-          />
+          >
+            {PERSONALITIES.map((p) => (
+              <option key={p.id} value={p.id}>
+                {p.label}: {p.blurb}
+              </option>
+            ))}
+          </select>
         </div>
       </div>
       <div>
@@ -162,6 +175,17 @@ export function AgentCreateForm({
           className="input"
         />
       </div>
+      {signedIn && role === "buyer" && (
+        <label className="flex items-center gap-2 text-sm text-zinc-700">
+          <input type="checkbox" checked={approve} onChange={(e) => setApprove(e.target.checked)} className="h-4 w-4 accent-emerald-600" />
+          Ask me before it buys anything
+        </label>
+      )}
+      {error && (
+        <p role="alert" className="rounded-lg border border-terracotta/30 bg-terracotta/10 px-3 py-2 text-sm text-terracotta">
+          {error}
+        </p>
+      )}
       <div className="flex gap-3 pt-1">
         <button
           id="btn-create-agent"

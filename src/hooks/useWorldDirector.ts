@@ -13,8 +13,11 @@ const EMPTY_STAGE: StageLookup = { stall: () => undefined, agentName: () => "An 
  */
 const OVERLAP_MS = 30000;
 
-export async function fetchBeats(since?: string): Promise<WorldBeat[]> {
-  const qs = since ? `?since=${encodeURIComponent(since)}` : "";
+export async function fetchBeats(since?: string, negotiation?: string): Promise<WorldBeat[]> {
+  const params = new URLSearchParams();
+  if (since) params.set("since", since);
+  if (negotiation) params.set("negotiation", negotiation);
+  const qs = params.size ? `?${params}` : "";
   const res = await fetch(`/api/world/events${qs}`);
   if (!res.ok) return [];
   const data = await res.json();
@@ -23,13 +26,15 @@ export async function fetchBeats(since?: string): Promise<WorldBeat[]> {
 
 /**
  * Owns the WorldDirector for the /world page:
- * - on mount, replays the most recent negotiations
+ * - on mount, replays the most recent negotiations (or just `replayId`,
+ *   for a shared replay link)
  * - then streams new beats (Supabase Realtime nudge + polling fallback)
  * - calls onLiveSceneEnd so the page can refresh budgets / stock
  */
 export function useWorldDirector(
   snapshot: WorldSnapshot | null,
-  onLiveSceneEnd: () => void
+  onLiveSceneEnd: () => void,
+  replayId: string | null = null
 ) {
   const stage = useMemo<StageLookup>(() => {
     const stalls = new Map((snapshot?.stalls || []).map((s) => [s.id, s]));
@@ -75,7 +80,7 @@ export function useWorldDirector(
     };
 
     void (async () => {
-      const history = await fetchBeats();
+      const history = await fetchBeats(undefined, replayId ?? undefined);
       if (cancelled) return;
       cursor = new Date().toISOString();
       advance(history);
@@ -106,7 +111,7 @@ export function useWorldDirector(
       clearInterval(timer);
       if (supabase && channel) void supabase.removeChannel(channel);
     };
-  }, [director, hasSnapshot]);
+  }, [director, hasSnapshot, replayId]);
 
   // Re-render on discrete director changes (bubbles, scenes, mode)
   useSyncExternalStore(director.subscribe, director.getVersion, director.getVersion);

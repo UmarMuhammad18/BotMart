@@ -24,6 +24,14 @@ useGLTF.preload(MODEL);
  * once on the GLTF scene.
  */
 const smoothed = new WeakSet<THREE.Object3D>();
+let detailPasses = 2;
+/**
+ * Tessellation passes for robots (2 = ~52k triangles, 1 = ~13k for light
+ * devices). Takes effect for models not yet smoothed, so set it early.
+ */
+export function setRobotDetail(passes: number) {
+  detailPasses = Math.max(0, Math.min(2, Math.round(passes)));
+}
 export function smoothModel(scene: THREE.Object3D) {
   if (smoothed.has(scene)) return;
   smoothed.add(scene);
@@ -33,7 +41,7 @@ export function smoothModel(scene: THREE.Object3D) {
     const source = mesh.geometry.clone().deleteAttribute("normal");
     delete source.morphAttributes.normal;
     const welded = mergeVertices(source, 1e-4);
-    mesh.geometry = phongSubdivide(welded, 2);
+    mesh.geometry = detailPasses > 0 ? phongSubdivide(welded, detailPasses) : welded;
     const mat = mesh.material as THREE.MeshStandardMaterial;
     if (mat.flatShading) {
       mat.flatShading = false;

@@ -14,6 +14,21 @@ import { StallAuction } from "@/components/world/StallAuction";
 import { fetchBeats, useWorldDirector } from "@/hooks/useWorldDirector";
 import { ROLE_BY_ID } from "@/lib/agents/roles";
 import type { WorldSnapshot } from "@/lib/types";
+import { useResolvedTheme } from "@/lib/theme";
+import {
+  detectTier,
+  loadSettings,
+  readDevice,
+  resolveSky,
+  saveSettings,
+  type QualityTier,
+  type WorldOptions,
+  type WorldSettings,
+} from "@/lib/world/options";
+import { VillageSound } from "@/lib/world/sound";
+import { WorldSettingsMenu } from "@/components/world/WorldSettingsMenu";
+import { AgentProfile } from "@/components/world/AgentProfile";
+import { WelcomeBanner } from "@/components/world/WelcomeBanner";
 import {
   RefreshCw,
   Boxes,
@@ -23,16 +38,56 @@ import {
   Gavel,
   X,
   Laptop,
+  Link2,
 } from "lucide-react";
 import { gbp } from "@/lib/utils";
 
+/** A query parameter, read once on the client (the canvas is client-only anyway). */
+function param(name: string) {
+  return typeof window === "undefined" ? null : new URLSearchParams(window.location.search).get(name);
+}
+
 export default function WorldPage() {
+  // ?welcome=<agent> after onboarding, ?replay=<negotiation> from a shared link
+  const [welcomeId] = useState(() => param("welcome"));
+  const [replayId] = useState(() => param("replay"));
   const [snapshot, setSnapshot] = useState<WorldSnapshot | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-  const [selection, setSelection] = useState<WorldSelection>(null);
-  const [cameraMode, setCameraMode] = useState<CameraMode>("overview");
+  const [selection, setSelection] = useState<WorldSelection>(() =>
+    welcomeId ? { kind: "agent", id: welcomeId } : null
+  );
+  const [cameraMode, setCameraMode] = useState<CameraMode>(() => (welcomeId ? "follow" : "overview"));
   const lastJson = useRef("");
+
+  // Scene settings (saved per browser). Sound always starts off: browsers
+  // only allow audio after a click, so it's the viewer's choice each visit.
+  const [settings, setSettings] = useState<WorldSettings>(() =>
+    typeof window === "undefined" ? loadSettingsSafe() : { ...loadSettings(), sound: false }
+  );
+  const [detected] = useState<QualityTier>(() =>
+    typeof window === "undefined" ? "high" : detectTier(readDevice())
+  );
+  const theme = useResolvedTheme();
+  const [clock, setClock] = useState(() => new Date());
+  useEffect(() => {
+    if (settings.sky !== "realtime") return;
+    const t = setInterval(() => setClock(new Date()), 60_000);
+    return () => clearInterval(t);
+  }, [settings.sky]);
+  const options = useMemo<WorldOptions>(
+    () => ({
+      phase: resolveSky(settings.sky, theme, clock),
+      weather: settings.weather,
+      tier: settings.quality === "auto" ? detected : settings.quality,
+      welcomeId,
+    }),
+    [settings.sky, settings.weather, settings.quality, theme, clock, detected, welcomeId]
+  );
+  const updateSettings = useCallback((next: WorldSettings) => {
+    setSettings(next);
+    saveSettings(next);
+  }, []);
 
   const load = useCallback(async () => {
     try {
@@ -76,7 +131,36 @@ export default function WorldPage() {
 
   // Stages logged negotiations as walk-up / bubble / deal scenes.
   // When a live scene ends, refresh so budgets and stock catch up.
-  const director = useWorldDirector(snapshot, load);
+  const director = useWorldDirector(snapshot, load, replayId);
+
+  // Village sound: ambience follows the sky and weather; the director cues
+  // footsteps, deal chimes and the court's gavel
+  const sound = useMemo(() => (typeof window === "undefined" ? null : new VillageSound()), []);
+  useEffect(() => {
+    if (!sound) return;
+    director.setOnCue((cue) => sound.cue(cue));
+    return () => sound.dispose();
+  }, [sound, director]);
+  useEffect(() => {
+    if (!sound) return;
+    if (settings.sound) void sound.start();
+    else sound.stop();
+  }, [sound, settings.sound]);
+  useEffect(() => {
+    sound?.setScene(options.phase, options.weather);
+  }, [sound, options.phase, options.weather]);
+
+  const [copied, setCopied] = useState(false);
+  async function shareReplay() {
+    if (!replayId) return;
+    try {
+      await navigator.clipboard.writeText(window.location.href);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // clipboard blocked: the address bar has the link anyway
+    }
+  }
 
   const replayRecent = useCallback(async () => {
     director.startReplay(await fetchBeats());
@@ -167,6 +251,7 @@ export default function WorldPage() {
                   </button>
                 ))}
               </div>
+              <WorldSettingsMenu settings={settings} onChange={updateSettings} detected={detected} />
               <button
                 type="button"
                 onClick={() => void load()}
@@ -189,6 +274,19 @@ export default function WorldPage() {
             </div>
           )}
 
+          {welcomeId && snapshot && (
+            <WelcomeBanner agent={snapshot.agents.find((a) => a.id === welcomeId) ?? null} onRan={() => void load()} />
+          )}
+
+          {replayId && (
+            <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-sky-600/25 bg-sky-500/10 px-4 py-3 text-sm text-sky-900">
+              <span>Replaying a shared deal. When it ends, the village goes live.</span>
+              <button type="button" onClick={() => void shareReplay()} className="btn-secondary text-xs">
+                <Link2 size={13} aria-hidden /> {copied ? "Link copied" : "Copy link"}
+              </button>
+            </div>
+          )}
+
           <div className="grid lg:grid-cols-[1fr_320px] gap-4 items-start">
             <div className="min-h-[480px] relative">
               {snapshot ? (
@@ -200,6 +298,7 @@ export default function WorldPage() {
                     cameraMode={cameraMode}
                     followAgentId={followId}
                     director={director}
+                    options={options}
                   />
                   <WorldOverlay
                     director={director}
@@ -302,12 +401,7 @@ export default function WorldPage() {
                       </div>
                     </div>
 
-                    <div className="text-xs text-zinc-600">
-                      Reputation{" "}
-                      <span className="text-zinc-800 font-semibold">
-                        {selectedAgent.reputation}
-                      </span>
-                    </div>
+                    <AgentProfile agentId={selectedAgent.id} reputation={selectedAgent.reputation} />
 
                     {agentListings.length > 0 && (
                       <div>
@@ -509,4 +603,8 @@ export default function WorldPage() {
       </main>
     </div>
   );
+}
+
+function loadSettingsSafe(): WorldSettings {
+  return { sky: "theme", weather: "clear", quality: "auto", sound: false };
 }

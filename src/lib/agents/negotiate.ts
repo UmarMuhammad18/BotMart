@@ -1,4 +1,15 @@
 import { AgentPolicy, NegotiationMessage } from "@/lib/types";
+import { personalityFor } from "@/lib/agents/personality";
+
+/** What this agent remembers about the agent across the table (memory.ts). */
+export type Relationship = {
+  /** 0..1: lowballs and walk-aways it holds against them. */
+  grudge: number;
+  /** 0..1: deals done together before. */
+  loyalty: number;
+  /** Short lines for the LLM prompt, newest first. */
+  notes: string[];
+};
 
 export type AgentContext = {
   name: string;
@@ -10,7 +21,28 @@ export type AgentContext = {
   listingPrice: number;
   currentOffer: number | null;
   messages: NegotiationMessage[];
+  relationship?: Relationship;
 };
+
+/** Personality numbers, nudged by history with this counterpart. */
+export function tactics(ctx: AgentContext) {
+  const p = personalityFor(ctx.policy?.style);
+  const grudge = ctx.relationship?.grudge ?? 0;
+  const loyalty = ctx.relationship?.loyalty ?? 0;
+  return {
+    buyer: {
+      opening: p.buyer.opening - 0.05 * grudge,
+      acceptAt: p.buyer.acceptAt + 0.02 * loyalty,
+      concession: p.buyer.concession,
+    },
+    seller: {
+      floor: p.seller.floor + 0.06 * grudge,
+      acceptAt: p.seller.acceptAt + 0.04 * grudge - 0.03 * loyalty,
+      // A sore seller gives ground more slowly
+      concession: p.seller.concession * (1 - 0.4 * grudge),
+    },
+  };
+}
 
 /**
  * Rule-based fallback when Grok is unavailable.
@@ -18,6 +50,7 @@ export type AgentContext = {
 export function decideNextAction(ctx: AgentContext): NegotiationMessage {
   const lastMessage = ctx.messages[ctx.messages.length - 1];
   const timestamp = new Date().toISOString();
+  const t = tactics(ctx);
   const maxPrice = ctx.policy?.max_price;
   const minPrice = ctx.policy?.min_price;
 
@@ -28,9 +61,9 @@ export function decideNextAction(ctx: AgentContext): NegotiationMessage {
       maxPrice ?? Number.POSITIVE_INFINITY
     );
 
-    // First message → make an opening offer (15-25% below asking)
+    // First message → opening offer below asking (how far depends on personality)
     if (ctx.messages.length === 0) {
-      const openingOffer = Math.round(ctx.listingPrice * 0.8);
+      const openingOffer = Math.round(ctx.listingPrice * t.buyer.opening);
       return {
         from: "buyer",
         type: "offer",
@@ -75,8 +108,8 @@ export function decideNextAction(ctx: AgentContext): NegotiationMessage {
         };
       }
 
-      // Close enough? (within 8%) → accept
-      if (sellerPrice <= ctx.listingPrice * 0.92) {
+      // Close enough → accept
+      if (sellerPrice <= ctx.listingPrice * t.buyer.acceptAt) {
         return {
           from: "buyer",
           type: "accept",
@@ -89,9 +122,9 @@ export function decideNextAction(ctx: AgentContext): NegotiationMessage {
       // Otherwise counter a bit higher than our last offer
       const ourLastOffer =
         [...ctx.messages].reverse().find((m) => m.from === "buyer" && m.price)
-          ?.price || Math.round(ctx.listingPrice * 0.8);
+          ?.price || Math.round(ctx.listingPrice * t.buyer.opening);
 
-      const newOffer = Math.round((ourLastOffer + sellerPrice) / 2);
+      const newOffer = Math.round(ourLastOffer + (sellerPrice - ourLastOffer) * t.buyer.concession);
 
       return {
         from: "buyer",
@@ -114,7 +147,7 @@ export function decideNextAction(ctx: AgentContext): NegotiationMessage {
   // ========== SELLER LOGIC ==========
   const minAcceptable = Math.max(
     minPrice ?? 0,
-    Math.round(ctx.listingPrice * 0.75)
+    Math.round(ctx.listingPrice * t.seller.floor)
   );
 
   // Buyer accepted → confirm
@@ -149,7 +182,7 @@ export function decideNextAction(ctx: AgentContext): NegotiationMessage {
     // Too low → counter hard, but never above a price we already offered
     if (buyerPrice < minAcceptable) {
       const counter = Math.min(
-        Math.round(ctx.listingPrice * 0.9),
+        Math.round(ctx.listingPrice * Math.min(0.97, t.seller.floor + 0.15)),
         ourLastCounter ?? Number.POSITIVE_INFINITY
       );
       return {
@@ -163,7 +196,7 @@ export function decideNextAction(ctx: AgentContext): NegotiationMessage {
 
     // Good enough (or matches our own last counter) → accept
     if (
-      buyerPrice >= ctx.listingPrice * 0.88 ||
+      buyerPrice >= ctx.listingPrice * t.seller.acceptAt ||
       (ourLastCounter !== undefined && buyerPrice >= ourLastCounter)
     ) {
       return {
@@ -175,9 +208,9 @@ export function decideNextAction(ctx: AgentContext): NegotiationMessage {
       };
     }
 
-    // Otherwise meet in the middle
+    // Otherwise move toward the buyer (half-way for a balanced seller)
     const counter = Math.min(
-      Math.round((buyerPrice + ctx.listingPrice) / 2),
+      Math.round(ctx.listingPrice - (ctx.listingPrice - buyerPrice) * t.seller.concession),
       ourLastCounter ?? Number.POSITIVE_INFINITY
     );
     return {

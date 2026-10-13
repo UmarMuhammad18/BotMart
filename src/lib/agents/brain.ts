@@ -1,5 +1,6 @@
 import { grokJson } from "@/lib/grok";
 import { AgentContext, decideNextAction } from "@/lib/agents/negotiate";
+import { personalityFor } from "@/lib/agents/personality";
 import { NegotiationMessage } from "@/lib/types";
 
 type GrokMove = {
@@ -88,6 +89,10 @@ export function sanitizeMove(
  * use the rule engine. Never throws.
  */
 export async function decideAgentTurn(ctx: AgentContext): Promise<AgentTurn> {
+  const persona = personalityFor(ctx.policy?.style);
+  const history = ctx.relationship?.notes?.length
+    ? ctx.relationship.notes.map((n) => `- ${n}`).join("\n")
+    : "- None. You haven't dealt with them before.";
   try {
     const grokMove = await grokJson<GrokMove>(
       `You are a ${ctx.role} commerce agent on BotMart. Reply with STRICT JSON only:
@@ -100,7 +105,9 @@ Rules:
 - "accept" means accepting the other side's latest price exactly.
 - Use accept only when the last price is genuinely good.
 - Use reject to walk away.
-- Prefer counter over endless chat.`,
+- Prefer counter over endless chat.
+Personality: ${persona.label}. ${persona.brief}
+Let your past dealings with this counterpart shape your tone and toughness.`,
       `Agent: ${ctx.name}
 Role: ${ctx.role}
 Budget: ${ctx.budget}
@@ -111,6 +118,8 @@ Listing: ${ctx.listingTitle}
 Asking price: ${ctx.listingPrice}
 Current offer: ${ctx.currentOffer}
 History: ${JSON.stringify(ctx.messages)}
+Your past dealings with them:
+${history}
 Decide the next action.`
     );
 

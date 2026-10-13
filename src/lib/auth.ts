@@ -2,6 +2,7 @@ import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { User } from "@supabase/supabase-js";
+import { isDemoOwner } from "@/lib/owners";
 
 /**
  * Auth helpers for BotMart.
@@ -57,10 +58,7 @@ export async function requireUserId(): Promise<string | null> {
   return user?.id ?? null;
 }
 
-/** Agents created without a login (seed data, demo users) belong to everyone. */
-export function isDemoOwner(ownerId: string | null | undefined) {
-  return !ownerId || ownerId === "hackathon-user";
-}
+export { isDemoOwner };
 
 /**
  * Demo agents can be driven by anyone. An agent with a real owner can only

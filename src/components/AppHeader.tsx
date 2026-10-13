@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import { Bot, LogIn, LogOut, User, Menu, X } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { ThemeMenu, ThemeSegmented } from "@/components/ThemeMenu";
+import { NotificationBell } from "@/components/NotificationBell";
 
 const links = [
   { href: "/agents", label: "Agents" },
@@ -13,6 +14,7 @@ const links = [
   { href: "/negotiate", label: "Negotiate" },
   { href: "/world", label: "World" },
   { href: "/court", label: "Court" },
+  { href: "/leaderboard", label: "Leaderboard" },
   { href: "/dashboard", label: "Dashboard" },
 ];
 
@@ -126,6 +128,7 @@ export function AppHeader({ active }: { active?: string }) {
             <span className="skeleton h-8 w-20" aria-hidden />
           ) : user ? (
             <>
+              <NotificationBell />
               <span className="hidden lg:inline-flex items-center gap-1.5 text-xs text-zinc-600 max-w-[140px] truncate">
                 <User size={12} />
                 {user.email}
@@ -141,13 +144,21 @@ export function AppHeader({ active }: { active?: string }) {
               </button>
             </>
           ) : (
-            <Link
-              href="/login"
-              className="btn-secondary text-xs px-3 py-1.5 hidden sm:inline-flex"
-            >
-              <LogIn size={13} />
-              Sign in
-            </Link>
+            <>
+              <Link
+                href="/start"
+                className="btn-primary text-xs px-3 py-1.5 hidden lg:inline-flex"
+              >
+                Get your agent
+              </Link>
+              <Link
+                href="/login"
+                className="btn-secondary text-xs px-3 py-1.5 hidden sm:inline-flex"
+              >
+                <LogIn size={13} />
+                Sign in
+              </Link>
+            </>
           )}
 
           <button
@@ -190,6 +201,13 @@ export function AppHeader({ active }: { active?: string }) {
           <div className="pt-2">
             <ThemeSegmented />
           </div>
+          <Link
+            href="/start"
+            onClick={() => setOpen(false)}
+            className="flex min-h-[44px] items-center px-3 rounded-lg text-sm font-medium text-emerald-700"
+          >
+            Get your agent
+          </Link>
           {!user && (
             <Link
               href="/login"

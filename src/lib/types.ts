@@ -164,7 +164,8 @@ export type NegotiationStatus =
   | "countered"
   | "accepted"
   | "rejected"
-  | "escalated";
+  | "escalated"
+  | "awaiting_approval";
 export type OrderStatus = "pending" | "paid" | "fulfilled" | "cancelled";
 
 export type AgentMemoryNote = {

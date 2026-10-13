@@ -84,7 +84,7 @@ export async function runListingAuction(
       safety < 14
     ) {
       const turn = await runNextTurn(supabase, current.id);
-      if ("error" in turn && turn.error) break;
+      if ("error" in turn) break;
       if (!turn.data) break;
       current = turn.data;
       safety++;

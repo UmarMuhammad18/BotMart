@@ -3,6 +3,7 @@
 import dynamic from "next/dynamic";
 import type { WorldSnapshot } from "@/lib/types";
 import type { WorldDirector } from "@/lib/world/director";
+import type { WorldOptions } from "@/lib/world/options";
 
 export type CameraMode = "overview" | "follow" | "court";
 
@@ -33,6 +34,7 @@ export function WorldCanvas({
   cameraMode,
   followAgentId,
   director,
+  options,
 }: {
   snapshot: WorldSnapshot;
   selection: WorldSelection;
@@ -40,6 +42,7 @@ export function WorldCanvas({
   cameraMode: CameraMode;
   followAgentId: string | null;
   director: WorldDirector;
+  options: WorldOptions;
 }) {
   return (
     <VillageScene
@@ -49,6 +52,7 @@ export function WorldCanvas({
       onSelect={onSelect}
       cameraMode={cameraMode}
       followAgentId={followAgentId}
+      options={options}
     />
   );
 }
