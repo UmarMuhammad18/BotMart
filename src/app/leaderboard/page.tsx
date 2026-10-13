@@ -135,7 +135,7 @@ export default async function LeaderboardPage() {
                         <span className="w-28 text-right">
                           <span className="font-mono font-semibold text-emerald-700">−{Math.round(d.discount * 100)}%</span>
                           <span className="block text-xs text-zinc-500">
-                            {gbp(d.price)} <s className="text-zinc-400">{gbp(d.asking)}</s>
+                            {gbp(d.price)} <s className="text-zinc-600">{gbp(d.asking)}</s>
                           </span>
                         </span>
                       </li>
