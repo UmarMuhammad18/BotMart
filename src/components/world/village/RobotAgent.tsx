@@ -8,6 +8,7 @@ import { clone as cloneSkinned } from "three/examples/jsm/utils/SkeletonUtils.js
 import { mergeVertices } from "three/examples/jsm/utils/BufferGeometryUtils.js";
 import { ROLE_BY_ID } from "@/lib/agents/roles";
 import { phongSubdivide } from "@/lib/world/subdivide";
+import { clearLine, findPath, type NavGrid, type Vec2 } from "@/lib/world/pathfind";
 import type { WorldAgent, WorldStall } from "@/lib/types";
 import type { WorldDirector } from "@/lib/world/director";
 import { wanderTarget } from "@/components/world/busyMotion";
@@ -89,7 +90,37 @@ type RobotState = {
   base: Base;
   emote: { name: Emote; until: number } | null;
   lastBubble: string | null;
+  /** Waypoints around obstacles to the current goal (empty = walk straight). */
+  path: Vec2[];
+  planGoal: Vec2 | null;
+  planAt: number;
 };
+
+/** Replan when the goal has moved this far, or the plan is this old (s). */
+const REPLAN_DIST = 1.2;
+const REPLAN_AGE = 3;
+
+/**
+ * The point to head for right now: the goal itself when the way is clear,
+ * otherwise the next waypoint of a route around stalls, cottages and the
+ * court. Plans only when needed, so a crowded square stays cheap.
+ */
+function steer(st: RobotState, nav: NavGrid | null, goal: THREE.Vector3, t: number): Vec2 {
+  const g = { x: goal.x, z: goal.z };
+  const here = { x: st.pos.x, z: st.pos.z };
+  if (!nav || clearLine(nav, here, g)) {
+    st.path = [];
+    return g;
+  }
+  const moved = !st.planGoal || Math.hypot(st.planGoal.x - g.x, st.planGoal.z - g.z) > REPLAN_DIST;
+  if (st.path.length === 0 || moved || t - st.planAt > REPLAN_AGE) {
+    st.path = findPath(nav, here, g);
+    st.planGoal = g;
+    st.planAt = t;
+  }
+  while (st.path.length > 1 && Math.hypot(st.path[0].x - here.x, st.path[0].z - here.z) < 0.35) st.path.shift();
+  return st.path[0] ?? g;
+}
 
 /** Cross-fade to an animation clip (once = play through and hold). */
 function playAction(actions: Actions, name: string, fade = 0.25, once = false) {
@@ -118,6 +149,7 @@ function stepRobot(
   roam: WorldAgent,
   stalls: WorldStall[],
   director: WorldDirector,
+  nav: NavGrid | null,
   t: number,
   dt: number
 ) {
@@ -130,9 +162,12 @@ function stepRobot(
     _goal.set(w.x, 0, w.z);
   }
 
-  _dir.copy(_goal).sub(st.pos);
+  // Speed from the distance to the goal, direction from the route
+  const remaining = _dir.copy(_goal).sub(st.pos).length();
+  const next = steer(st, nav, _goal, t);
+  _dir.set(next.x - st.pos.x, 0, next.z - st.pos.z);
   const dist = _dir.length();
-  const speed = THREE.MathUtils.clamp(dist * 1.1, 1.5, 4.6) * Math.max(1, director.speed);
+  const speed = THREE.MathUtils.clamp(remaining * 1.1, 1.5, 4.6) * Math.max(1, director.speed);
   const step = Math.min(dist, speed * dt);
   const moving = dist > 0.05;
   if (moving) st.pos.addScaledVector(_dir, step / dist);
@@ -189,12 +224,14 @@ export function RobotAgent({
   selected,
   onSelect,
   director,
+  nav = null,
 }: {
   agent: WorldAgent;
   stalls: WorldStall[];
   selected: boolean;
   onSelect: () => void;
   director: WorldDirector;
+  nav?: NavGrid | null;
 }) {
   const { scene, animations } = useGLTF(MODEL);
   const root = useRef<THREE.Group>(null);
@@ -204,6 +241,9 @@ export function RobotAgent({
     base: "Idle",
     emote: null,
     lastBubble: null,
+    path: [],
+    planGoal: null,
+    planAt: 0,
   });
   const color = ROLE_BY_ID[agent.role]?.hex || "#94a3b8";
 
@@ -221,7 +261,7 @@ export function RobotAgent({
 
   useFrame(({ clock }, dt) => {
     if (!root.current) return;
-    stepRobot(root.current, state.current, actions, agent, roam, stalls, director, clock.getElapsedTime(), Math.min(dt, 0.1));
+    stepRobot(root.current, state.current, actions, agent, roam, stalls, director, nav, clock.getElapsedTime(), Math.min(dt, 0.1));
   });
 
   const short = agent.name.length > 14 ? agent.name.slice(0, 13) + "…" : agent.name;

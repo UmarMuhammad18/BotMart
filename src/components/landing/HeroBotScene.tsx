@@ -5,7 +5,13 @@ import { Environment, Lightformer, RoundedBox, Sparkles, Text, useAnimations, us
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
 import { clone as cloneSkinned } from "three/examples/jsm/utils/SkeletonUtils.js";
-import { smoothModel } from "@/components/world/village/RobotAgent";
+import { setRobotDetail, smoothModel } from "@/components/world/village/RobotAgent";
+import { detectTier, readDevice } from "@/lib/world/options";
+
+// This module only loads in the browser (dynamic, ssr: false): pick the
+// robot's mesh detail for this device before the model is first smoothed
+const HERO_TIER = typeof window !== "undefined" ? detectTier(readDevice()) : "high";
+setRobotDetail(HERO_TIER === "low" ? 1 : 2);
 import { fbm, seeded } from "@/lib/world/terrain";
 import { useResolvedTheme } from "@/lib/theme";
 
@@ -459,7 +465,7 @@ export default function HeroBotScene({
     <div ref={wrap} className="absolute inset-0">
       <Canvas
         shadows
-        dpr={[1, 1.6]}
+        dpr={HERO_TIER === "low" ? 1 : [1, 1.6]}
         frameloop={visible ? "always" : "never"}
         camera={{ fov: 33, position: [0.4, 2.8, 9.4], near: 0.1, far: 60 }}
         gl={{ alpha: true, antialias: true, toneMapping: THREE.ACESFilmicToneMapping, toneMappingExposure: 1.05 }}

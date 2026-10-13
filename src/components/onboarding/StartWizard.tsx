@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { ArrowRight, Dices, Hammer, LogIn, ShieldCheck, ShoppingBasket, Store } from "lucide-react";
 import { PERSONALITIES, type PersonalityId } from "@/lib/agents/personality";
@@ -31,7 +30,6 @@ type Job = "buyer" | "seller";
  * where its cottage is built while you watch.
  */
 export function StartWizard() {
-  const router = useRouter();
   const [signedIn, setSignedIn] = useState<boolean | null>(null);
   const [demo, setDemo] = useState(false);
   const [name, setName] = useState("");
@@ -92,7 +90,9 @@ export function StartWizard() {
         setError(data.error || "Couldn't create your agent. Try again.");
         return;
       }
-      router.push(`/world?welcome=${data.id}`);
+      // A full load on purpose: the village reads ?welcome= once, when it starts
+      // eslint-disable-next-line @next/next/no-location-assign-relative-destination
+      window.location.assign(`/world?welcome=${data.id}`);
     } catch {
       setError("Network error. Check your connection and try again.");
     } finally {

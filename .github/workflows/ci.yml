@@ -1,0 +1,51 @@
+name: CI
+
+# Runs on every push and pull request. Vercel deploys main as soon as it is
+# pushed, so turn on branch protection for main (Settings → Branches →
+# require the "checks" job) and merge through pull requests: then nothing
+# reaches production without passing.
+on:
+  push:
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      # Read-only use: e2e tests mock every write. Add these as repository
+      # secrets to run the end-to-end suite; without them it's skipped.
+      NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm lint
+      - run: pnpm exec tsc --noEmit
+      - run: pnpm test
+      - run: pnpm build
+
+      - name: Install Playwright browser
+        if: env.NEXT_PUBLIC_SUPABASE_URL != ''
+        run: pnpm exec playwright install --with-deps chromium
+      - name: End-to-end tests
+        if: env.NEXT_PUBLIC_SUPABASE_URL != ''
+        run: pnpm e2e
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-traces
+          path: test-results/
+          retention-days: 7

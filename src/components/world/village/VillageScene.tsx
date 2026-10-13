@@ -26,6 +26,7 @@ import { NightContext } from "./night";
 import { Atmosphere, bloomFor } from "./Atmosphere";
 import { setRobotDetail } from "./RobotAgent";
 import { TIER, type WorldOptions } from "@/lib/world/options";
+import { villageNavGrid } from "@/lib/world/navigation";
 
 function Village({
   snapshot,
@@ -72,6 +73,16 @@ function Village({
   );
   const bloom = bloomFor(phase, weather);
   const ao = t.ao && !lowQuality;
+  // Walkable grid for routes around stalls and cottages; rebuilt when they move
+  const stallKey = snapshot.stalls.map((s) => `${s.x.toFixed(1)},${s.z.toFixed(1)}`).join("|");
+  const nav = useMemo(
+    () =>
+      villageNavGrid(
+        stallKey ? stallKey.split("|").map((p) => ({ x: Number(p.split(",")[0]), z: Number(p.split(",")[1]) })) : [],
+        homes
+      ),
+    [stallKey, homes]
+  );
   const districtColor = useMemo(
     () => new Map((snapshot.districts || []).map((d) => [d.id, d.color])),
     [snapshot.districts]
@@ -128,6 +139,7 @@ function Village({
           selected={selection?.kind === "agent" && selection.id === a.id}
           onSelect={() => onSelect({ kind: "agent", id: a.id })}
           director={director}
+          nav={nav}
         />
       ))}
 

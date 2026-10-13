@@ -59,7 +59,7 @@ export function lookFor(phase: SkyPhase, weather: Weather): Look {
   return {
     ...base,
     key: { ...base.key, intensity: base.key.intensity * 0.7 },
-    fog: { color: fogColor, near: 14, far: 105 },
+    fog: { color: fogColor, near: 32, far: 150 },
   };
 }
 
