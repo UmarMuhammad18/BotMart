@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getSessionUser } from "@/lib/auth";
+import { LIMITS, rateLimit, tooManyRequests } from "@/lib/rate-limit";
 
 export async function GET(request: Request) {
   try {
@@ -34,6 +35,8 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
+    const limited = await rateLimit(request, "create-agent", LIMITS.createAgent);
+    if (!limited.ok) return tooManyRequests(limited, "new agents");
     const supabase = createAdminClient();
     const body = await request.json();
     const { name, description, budget, policy, goal } = body;

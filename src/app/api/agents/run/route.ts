@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { runBuyerAgent, runAllActiveBuyers } from "@/lib/agents/runner";
 import { assertCanControlAgent, DEMO_OWNER_FILTER, getSessionUser } from "@/lib/auth";
+import { LIMITS, rateLimit, tooManyRequests } from "@/lib/rate-limit";
 
 /**
  * POST /api/agents/run
@@ -11,6 +12,8 @@ import { assertCanControlAgent, DEMO_OWNER_FILTER, getSessionUser } from "@/lib/
  */
 export async function POST(request: Request) {
   try {
+    const limited = await rateLimit(request, "run-agents", LIMITS.runAgents);
+    if (!limited.ok) return tooManyRequests(limited, "agent runs");
     const supabase = createAdminClient();
     const body = await request.json();
     const user = await getSessionUser();

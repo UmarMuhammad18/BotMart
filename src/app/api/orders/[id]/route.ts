@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { canControlAgent } from "@/lib/auth";
 
 export async function PATCH(
   request: Request,
@@ -15,6 +16,23 @@ export async function PATCH(
     }
 
     const supabase = createAdminClient();
+    // Only the buyer's or seller's controller may move an order along
+    const { data: order } = await supabase
+      .from("orders")
+      .select("buyer_agent_id, seller_agent_id")
+      .eq("id", id)
+      .single();
+    if (!order) {
+      return NextResponse.json({ error: "Order not found" }, { status: 404 });
+    }
+    const [asBuyer, asSeller] = await Promise.all([
+      canControlAgent(order.buyer_agent_id),
+      canControlAgent(order.seller_agent_id),
+    ]);
+    if (!asBuyer && !asSeller) {
+      return NextResponse.json({ error: "You are not a party to this order" }, { status: 403 });
+    }
+
     const { data, error } = await supabase
       .from("orders")
       .update({ status })

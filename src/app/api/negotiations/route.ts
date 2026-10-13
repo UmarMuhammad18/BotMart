@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { runNextTurn, startNegotiation } from "@/lib/agents/session";
+import { assertCanControlAgent } from "@/lib/auth";
+import { LIMITS, rateLimit, tooManyRequests } from "@/lib/rate-limit";
 
 export async function GET() {
   try {
@@ -28,6 +30,8 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
+    const limited = await rateLimit(request, "negotiate", LIMITS.negotiate);
+    if (!limited.ok) return tooManyRequests(limited, "negotiation turns");
     const supabase = createAdminClient();
     let body: Record<string, unknown>;
     try {
@@ -44,6 +48,11 @@ export async function POST(request: Request) {
           { error: "buyer_agent_id and listing_id are required" },
           { status: 400 }
         );
+      }
+      // You can only send your own agents (or demo agents) shopping
+      const access = await assertCanControlAgent(buyer_agent_id);
+      if (!access.ok) {
+        return NextResponse.json({ error: access.error }, { status: access.status });
       }
       const result = await startNegotiation(supabase, buyer_agent_id, listing_id);
       if ("error" in result && result.error) {

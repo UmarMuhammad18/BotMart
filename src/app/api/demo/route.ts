@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { LIMITS, rateLimit, tooManyRequests } from "@/lib/rate-limit";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { startNegotiation } from "@/lib/agents/session";
 import { seedDemo } from "@/lib/seed";
@@ -27,8 +28,11 @@ const remaining = (a: Buyer) => Number(a.budget) - Number(a.spent);
  * but budgets and stock change as people use the demo, so fall back to
  * another in-stock listing and to the buyer with the most budget left.
  */
-export async function POST() {
+export async function POST(request: Request) {
   try {
+    const limited = await rateLimit(request, "demo", LIMITS.demo);
+    if (!limited.ok) return tooManyRequests(limited, "demo runs");
+
     const supabase = createAdminClient();
 
     // Always ensure seed data exists (idempotent; seed.ts checks before inserting)

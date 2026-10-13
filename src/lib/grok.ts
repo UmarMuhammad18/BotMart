@@ -6,7 +6,10 @@
  *  4. Rule-based  (always available — callers handle null)
  *
  * Invalid keys (401) or network errors never throw; we just try the next provider.
+ * Calls stop for the day once the LLM budget (llm-budget.ts) is spent.
  */
+
+import { llmBudgetAllows, recordLlmUsage } from "@/lib/llm-budget";
 
 type Provider = {
   name: string;
@@ -105,6 +108,9 @@ async function callProvider(
 
     const data = await res.json();
     const content: string = data.choices?.[0]?.message?.content || "";
+    // Providers report usage; if one doesn't, estimate ~4 characters a token
+    const tokens = Number(data.usage?.total_tokens) || Math.ceil((system.length + user.length + content.length) / 4);
+    await recordLlmUsage(tokens);
     const parsed = extractJson(content);
     if (!parsed || typeof parsed !== "object") return null;
     return parsed;
@@ -121,6 +127,7 @@ export async function grokJson<T>(
 ): Promise<T | null> {
   const providers = listProviders();
   if (providers.length === 0) return null;
+  if (!(await llmBudgetAllows())) return null; // over today's budget: rules take over
 
   for (const provider of providers) {
     const parsed = await callProvider(provider, system, user);

@@ -2,9 +2,12 @@ import { NextRequest, NextResponse } from "next/server";
 import { conveneCourt } from "@/lib/court/jury";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { logDecision } from "@/lib/agents/reputation";
+import { LIMITS, rateLimit, tooManyRequests } from "@/lib/rate-limit";
 
 export async function POST(req: NextRequest) {
   try {
+    const limited = await rateLimit(req, "court", LIMITS.court);
+    if (!limited.ok) return tooManyRequests(limited, "court sessions");
     const body = await req.json();
     const negotiation_id = body.negotiation_id as string | undefined;
     if (!negotiation_id) {

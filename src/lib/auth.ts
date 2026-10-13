@@ -6,8 +6,8 @@ import type { User } from "@supabase/supabase-js";
 /**
  * Auth helpers for BotMart.
  *
- * - No session → demo mode (open access, owner_id may be null / "hackathon-user")
- * - With session → ownership enforced on create / control / run
+ * - Demo agents (owner_id null / "hackathon-user") can be driven by anyone
+ * - Agents with an owner can only be controlled by that signed-in user
  *
  * Enable in Supabase Dashboard:
  *   Authentication → Providers → Email → enable Magic Link
@@ -57,14 +57,16 @@ export async function requireUserId(): Promise<string | null> {
   return user?.id ?? null;
 }
 
+/** Agents created without a login (seed data, demo users) belong to everyone. */
+export function isDemoOwner(ownerId: string | null | undefined) {
+  return !ownerId || ownerId === "hackathon-user";
+}
+
 /**
- * When logged in: only owner (or unclaimed agent) can control.
- * When not logged in: demo mode allows everything.
+ * Demo agents can be driven by anyone. An agent with a real owner can only
+ * be controlled by that signed-in owner: being signed out is not a pass.
  */
 export async function canControlAgent(agentId: string): Promise<boolean> {
-  const user = await getSessionUser();
-  if (!user) return true;
-
   const admin = createAdminClient();
   const { data } = await admin
     .from("agents")
@@ -73,8 +75,9 @@ export async function canControlAgent(agentId: string): Promise<boolean> {
     .single();
 
   if (!data) return false;
-  if (!data.owner_id || data.owner_id === "hackathon-user") return true;
-  return data.owner_id === user.id;
+  if (isDemoOwner(data.owner_id)) return true;
+  const user = await getSessionUser();
+  return !!user && data.owner_id === user.id;
 }
 
 export async function assertCanControlAgent(

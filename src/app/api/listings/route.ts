@@ -1,4 +1,6 @@
 import { NextResponse } from "next/server";
+import { assertCanControlAgent } from "@/lib/auth";
+import { LIMITS, rateLimit, tooManyRequests } from "@/lib/rate-limit";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { applyFilters, rankListings, SearchFilters } from "@/lib/marketplace/match";
 import { ListingWithSeller } from "@/lib/types";
@@ -57,11 +59,20 @@ export async function POST(request: Request) {
     const body = await request.json();
     const { seller_agent_id, title, description, price, category, stock } = body;
 
+    const limited = await rateLimit(request, "create-listing", LIMITS.createAgent);
+    if (!limited.ok) return tooManyRequests(limited, "new listings");
+
     if (!seller_agent_id || !title || !price) {
       return NextResponse.json(
         { error: "seller_agent_id, title and price are required" },
         { status: 400 }
       );
+    }
+
+    // Only list goods for an agent you control
+    const access = await assertCanControlAgent(seller_agent_id);
+    if (!access.ok) {
+      return NextResponse.json({ error: access.error }, { status: access.status });
     }
 
     const { data, error } = await supabase

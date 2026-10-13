@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { runListingAuction } from "@/lib/marketplace/auction";
 import { DEMO_OWNER_FILTER, getSessionUser } from "@/lib/auth";
+import { LIMITS, rateLimit, tooManyRequests } from "@/lib/rate-limit";
 
 /**
  * POST { listing_id, max_buyers? } — multi-buyer race on one listing.
@@ -10,6 +11,8 @@ import { DEMO_OWNER_FILTER, getSessionUser } from "@/lib/auth";
  */
 export async function POST(request: Request) {
   try {
+    const limited = await rateLimit(request, "auction", LIMITS.auction);
+    if (!limited.ok) return tooManyRequests(limited, "auctions");
     const body = await request.json();
     if (!body.listing_id) {
       return NextResponse.json(
